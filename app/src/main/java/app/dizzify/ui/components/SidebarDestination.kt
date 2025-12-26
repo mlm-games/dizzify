@@ -1,5 +1,7 @@
 package app.dizzify.ui.components
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandHorizontally
@@ -49,7 +51,9 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.dizzify.platform.SettingsShortcuts
 import app.dizzify.ui.theme.LauncherAnimation
 import app.dizzify.ui.theme.LauncherColors
 import app.dizzify.ui.theme.LauncherSpacing
@@ -334,6 +338,10 @@ private fun SidebarItem(
 
 @Composable
 private fun SidebarQuickActions(isExpanded: Boolean) {
+
+    var showPowerMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -342,7 +350,7 @@ private fun SidebarQuickActions(isExpanded: Boolean) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            onClick = { /* TODO */ },
+            onClick = { showPowerMenu = true },
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
@@ -361,7 +369,7 @@ private fun SidebarQuickActions(isExpanded: Boolean) {
                 Spacer(modifier = Modifier.width(LauncherSpacing.sm))
 
                 IconButton(
-                    onClick = { /* TODO */ },
+                    onClick = { SettingsShortcuts.openWifi(context) },
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
@@ -372,7 +380,7 @@ private fun SidebarQuickActions(isExpanded: Boolean) {
                 }
 
                 IconButton(
-                    onClick = { /* TODO */ },
+                    onClick = { SettingsShortcuts.openBluetooth(context) },
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
@@ -382,6 +390,26 @@ private fun SidebarQuickActions(isExpanded: Boolean) {
                     )
                 }
             }
+        }
+
+        if (showPowerMenu) {
+            AlertDialog(
+                onDismissRequest = { showPowerMenu = false },
+                title = { Text("Power") },
+                text = { Text("Choose an action") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showPowerMenu = false
+                        // lock / sleep may need accessibility?
+                    }) { Text("Sleep") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showPowerMenu = false
+                        SettingsShortcuts.openPower(context)
+                    }) { Text("Settings") }
+                }
+            )
         }
     }
 }

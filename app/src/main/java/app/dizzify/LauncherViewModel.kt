@@ -11,6 +11,8 @@ import app.dizzify.helper.SearchAliasUtils
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
 import app.dizzify.settings.SearchType
+import app.dizzify.settings.SortOrder
+import app.dizzify.settings.ThemeMode
 import app.dizzify.settings.markLaunched
 import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -196,5 +198,47 @@ class LauncherViewModel(
             ti++
         }
         return pi == p.length
+    }
+
+    fun updateTheme(mode: ThemeMode) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(theme = mode) }
+        }
+    }
+
+    fun updateShowAppIcons(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showAppIcons = show) }
+        }
+    }
+
+    fun updateSortOrder(order: SortOrder) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(sortOrder = order) }
+        }
+    }
+
+    fun updateSearchType(type: SearchType) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(searchType = type) }
+        }
+    }
+
+    fun updateSearchIncludePackageNames(include: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(searchIncludePackageNames = include) }
+        }
+    }
+
+    fun updateShowHiddenAppsOnSearch(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showHiddenAppsOnSearch = show) }
+        }
+    }
+
+    fun updateShowNonTvApps(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showNonTvApps = show) }
+        }
     }
 }

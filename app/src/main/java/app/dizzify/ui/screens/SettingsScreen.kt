@@ -18,13 +18,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.dizzify.BuildConfig
 import app.dizzify.LauncherViewModel
+import app.dizzify.helper.openUrl
+import app.dizzify.settings.SearchType
+import app.dizzify.settings.SortOrder
+import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.theme.*
 
 sealed class SettingsCategory(
@@ -65,9 +73,10 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val settings by viewModel.settings.collectAsState()
-    
+    val context = LocalContext.current
+
     var selectedCategory by remember { mutableStateOf<SettingsCategory?>(null) }
-    
+
     val categories = listOf(
         SettingsCategory.Appearance,
         SettingsCategory.HomeScreen,
@@ -75,7 +84,7 @@ fun SettingsScreen(
         SettingsCategory.Behavior,
         SettingsCategory.About
     )
-    
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -93,7 +102,7 @@ fun SettingsScreen(
                     .width(400.dp)
                     .fillMaxHeight()
             )
-            
+
             // Divider
             Box(
                 modifier = Modifier
@@ -101,27 +110,19 @@ fun SettingsScreen(
                     .fillMaxHeight()
                     .background(LauncherColors.DarkSurfaceVariant)
             )
-            
+
             // Settings content
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
             ) {
-                selectedCategory?.let { category ->
-                    SettingsCategoryContent(
-                        category = category,
-                        viewModel = viewModel,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } ?: run {
-                    // Default: show first category
-                    SettingsCategoryContent(
-                        category = SettingsCategory.Appearance,
-                        viewModel = viewModel,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                val effectiveCategory = selectedCategory ?: SettingsCategory.Appearance
+                SettingsCategoryContent(
+                    category = effectiveCategory,
+                    viewModel = viewModel,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
@@ -142,9 +143,9 @@ private fun SettingsCategoriesList(
             style = MaterialTheme.typography.displayMedium,
             color = Color.White
         )
-        
+
         Spacer(modifier = Modifier.height(LauncherSpacing.xl))
-        
+
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(LauncherSpacing.sm)
         ) {
@@ -166,7 +167,8 @@ private fun SettingsCategoryItem(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    
+    val focusRequester = remember { FocusRequester() }
+
     val backgroundColor by animateColorAsState(
         targetValue = when {
             isFocused -> LauncherColors.AccentBlue.copy(alpha = 0.3f)
@@ -175,12 +177,12 @@ private fun SettingsCategoryItem(
         },
         label = "category_bg"
     )
-    
+
     val scale by animateFloatAsState(
         targetValue = if (isFocused) 1.02f else 1f,
         label = "category_scale"
     )
-    
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -197,6 +199,7 @@ private fun SettingsCategoryItem(
                     shape = RoundedCornerShape(16.dp)
                 ) else Modifier
             )
+            .focusRequester(focusRequester)
             .onFocusChanged { isFocused = it.isFocused }
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown &&
@@ -215,9 +218,9 @@ private fun SettingsCategoryItem(
                 .size(48.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isSelected || isFocused) 
+                    if (isSelected || isFocused)
                         LauncherColors.AccentBlue.copy(alpha = 0.2f)
-                    else 
+                    else
                         LauncherColors.DarkSurfaceVariant
                 ),
             contentAlignment = Alignment.Center
@@ -225,15 +228,15 @@ private fun SettingsCategoryItem(
             Icon(
                 imageVector = category.icon,
                 contentDescription = null,
-                tint = if (isSelected || isFocused) 
-                    LauncherColors.AccentBlue 
-                else 
+                tint = if (isSelected || isFocused)
+                    LauncherColors.AccentBlue
+                else
                     LauncherColors.TextSecondary
             )
         }
-        
+
         Spacer(modifier = Modifier.width(LauncherSpacing.md))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = category.title,
@@ -246,7 +249,7 @@ private fun SettingsCategoryItem(
                 color = LauncherColors.TextSecondary
             )
         }
-        
+
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
@@ -264,7 +267,8 @@ private fun SettingsCategoryContent(
     modifier: Modifier = Modifier
 ) {
     val settings by viewModel.settings.collectAsState()
-    
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = modifier.padding(LauncherSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(LauncherSpacing.md)
@@ -277,110 +281,150 @@ private fun SettingsCategoryContent(
             )
             Spacer(modifier = Modifier.height(LauncherSpacing.lg))
         }
-        
+
         when (category) {
             is SettingsCategory.Appearance -> {
                 item {
                     SettingsSection(title = "Theme") {
-                        SettingsToggle(
-                            title = "Dark Mode",
-                            description = "Use dark theme (recommended for TV)",
-                            isChecked = true,
-                            onCheckedChange = { /* TODO */ }
+                        SettingsDropdown(
+                            title = "Theme Mode",
+                            description = "Choose app theme",
+                            currentValue = settings.theme.name,
+                            options = ThemeMode.entries.map { it.name },
+                            onOptionSelected = { selected ->
+                                val mode = ThemeMode.valueOf(selected)
+                                viewModel.updateTheme(mode)
+                            }
                         )
+
                         SettingsToggle(
                             title = "Show App Icons",
                             description = "Display app icons in launcher",
-                            isChecked = settings?.showAppIcons ?: true,
-                            onCheckedChange = { /* TODO */ }
-                        )
-                    }
-                }
-                
-                item {
-                    SettingsSection(title = "Icon Pack") {
-                        SettingsClickable(
-                            title = "Icon Pack",
-                            description = "Default", // TODO: Remove it, there are no banner packs for TVs
-                            onClick = { /* TODO */ }
+                            isChecked = settings.showAppIcons,
+                            onCheckedChange = { viewModel.updateShowAppIcons(it) }
                         )
                     }
                 }
             }
-            
+
             is SettingsCategory.HomeScreen -> {
                 item {
-                    SettingsSection(title = "Favorites") {
+                    SettingsSection(title = "Layout") {
                         SettingsClickable(
                             title = "Edit Favorites",
-                            description = "Choose apps for home screen",
-                            onClick = { /* TODO */ }
+                            description = "Long-press apps to add to favorites",
+                            onClick = { /* Navigate to home and show hint */ }
                         )
                     }
                 }
             }
-            
+
             is SettingsCategory.AppDrawer -> {
                 item {
+                    SettingsSection(title = "Sorting") {
+                        SettingsDropdown(
+                            title = "Sort Order",
+                            description = "How apps are sorted",
+                            currentValue = when (settings.sortOrder) {
+                                SortOrder.AZ -> "A-Z"
+                                SortOrder.ZA -> "Z-A"
+                                SortOrder.Recent -> "Recent"
+                            },
+                            options = listOf("A-Z", "Z-A", "Recent"),
+                            onOptionSelected = { selected ->
+                                val order = when (selected) {
+                                    "A-Z" -> SortOrder.AZ
+                                    "Z-A" -> SortOrder.ZA
+                                    "Recent" -> SortOrder.Recent
+                                    else -> SortOrder.AZ
+                                }
+                                viewModel.updateSortOrder(order)
+                            }
+                        )
+                    }
+                }
+
+                item {
                     SettingsSection(title = "Search") {
+                        SettingsDropdown(
+                            title = "Search Type",
+                            description = "How search matches apps",
+                            currentValue = when (settings.searchType) {
+                                SearchType.Contains -> "Contains"
+                                SearchType.Fuzzy -> "Fuzzy"
+                                SearchType.StartsWith -> "Starts With"
+                            },
+                            options = listOf("Contains", "Fuzzy", "Starts With"),
+                            onOptionSelected = { selected ->
+                                val type = when (selected) {
+                                    "Contains" -> SearchType.Contains
+                                    "Fuzzy" -> SearchType.Fuzzy
+                                    "Starts With" -> SearchType.StartsWith
+                                    else -> SearchType.Contains
+                                }
+                                viewModel.updateSearchType(type)
+                            }
+                        )
+
                         SettingsToggle(
                             title = "Search Package Names",
                             description = "Include package names in search",
-                            isChecked = settings?.searchIncludePackageNames ?: false,
-                            onCheckedChange = { /* TODO */ }
+                            isChecked = settings.searchIncludePackageNames,
+                            onCheckedChange = { viewModel.updateSearchIncludePackageNames(it) }
                         )
-                    }
-                }
-                
-                item {
-                    SettingsSection(title = "Sorting") {
-                        SettingsClickable(
-                            title = "Sort Order",
-                            description = "Alphabetical",
-                            onClick = { /* TODO */ }
+
+                        SettingsToggle(
+                            title = "Show Hidden in Search",
+                            description = "Include hidden apps in search results",
+                            isChecked = settings.showHiddenAppsOnSearch,
+                            onCheckedChange = { viewModel.updateShowHiddenAppsOnSearch(it) }
                         )
                     }
                 }
             }
-            
+
             is SettingsCategory.Behavior -> {
                 item {
-                    SettingsSection(title = "Animations") {
+                    SettingsSection(title = "TV Options") {
                         SettingsToggle(
-                            title = "Enable Animations",
-                            description = "Show smooth transitions",
-                            isChecked = true,
-                            onCheckedChange = { /* TODO */ }
+                            title = "Show Non-TV Apps",
+                            description = "Show apps without Leanback support",
+                            isChecked = settings.showNonTvApps,
+                            onCheckedChange = { viewModel.updateShowNonTvApps(it) }
                         )
                     }
                 }
             }
-            
+
             is SettingsCategory.About -> {
                 item {
                     SettingsSection(title = "App Info") {
                         SettingsInfo(
                             title = "Version",
-                            value = "1.0.0"
+                            value = BuildConfig.VERSION_NAME
                         )
                         SettingsInfo(
                             title = "Build",
-                            value = "Release"
+                            value = BuildConfig.BUILD_TYPE.replaceFirstChar { it.uppercase() }
                         )
                     }
                 }
-                
+
                 item {
                     SettingsSection(title = "Links") {
                         SettingsClickable(
                             title = "Source Code",
                             description = "View on GitHub",
-                            onClick = { /* TODO */ }
+                            onClick = {
+                                context.openUrl("https://github.com/user/dizzify")
+                            }
                         )
                         SettingsClickable(
                             title = "Report Issue",
                             description = "Submit bug report",
-                            onClick = { /* TODO */ }
+                            onClick = {
+                                context.openUrl("https://github.com/user/dizzify/issues")
+                            }
                         )
                     }
                 }
@@ -401,7 +445,7 @@ private fun SettingsSection(
             color = LauncherColors.AccentBlue,
             modifier = Modifier.padding(bottom = LauncherSpacing.sm)
         )
-        
+
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -424,12 +468,14 @@ private fun SettingsToggle(
     onCheckedChange: (Boolean) -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    
+    val focusRequester = remember { FocusRequester() }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(if (isFocused) LauncherColors.DarkSurfaceVariant else Color.Transparent)
+            .focusRequester(focusRequester)
             .onFocusChanged { isFocused = it.isFocused }
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown &&
@@ -456,7 +502,7 @@ private fun SettingsToggle(
                 color = LauncherColors.TextSecondary
             )
         }
-        
+
         Switch(
             checked = isChecked,
             onCheckedChange = onCheckedChange,
@@ -475,12 +521,14 @@ private fun SettingsClickable(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    
+    val focusRequester = remember { FocusRequester() }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(if (isFocused) LauncherColors.DarkSurfaceVariant else Color.Transparent)
+            .focusRequester(focusRequester)
             .onFocusChanged { isFocused = it.isFocused }
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown &&
@@ -507,12 +555,107 @@ private fun SettingsClickable(
                 color = LauncherColors.TextSecondary
             )
         }
-        
+
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             tint = LauncherColors.TextSecondary
         )
+    }
+}
+
+@Composable
+private fun SettingsDropdown(
+    title: String,
+    description: String,
+    currentValue: String,
+    options: List<String>,
+    onOptionSelected: (String) -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isFocused) LauncherColors.DarkSurfaceVariant else Color.Transparent)
+            .focusRequester(focusRequester)
+            .onFocusChanged { isFocused = it.isFocused }
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter)
+                ) {
+                    expanded = true
+                    true
+                } else false
+            }
+            .focusable()
+            .padding(LauncherSpacing.sm)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LauncherColors.TextSecondary
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = currentValue,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = LauncherColors.AccentBlue
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = LauncherColors.TextSecondary
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(LauncherColors.DarkSurface)
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option,
+                            color = if (option == currentValue) LauncherColors.AccentBlue else Color.White
+                        )
+                    },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    },
+                    leadingIcon = if (option == currentValue) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = LauncherColors.AccentBlue
+                            )
+                        }
+                    } else null
+                )
+            }
+        }
     }
 }
 

@@ -70,10 +70,9 @@ object HomeItemAppSerializer : KSerializer<HomeItem.App> {
             }
         }
 
-        // TODO: Remove later, backward safety: treat "", "null" as null
         val activityClassName = activityClassNameRaw
             .trim()
-            .takeIf { it.isNotBlank() && !it.equals("null", ignoreCase = true) }
+            .takeIf { it.isNotBlank() }
 
         val appModel = AppModel(
             appLabel = appLabel,
