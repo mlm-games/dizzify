@@ -36,7 +36,7 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:banner="@drawable/clauncher_icon"
+        android:banner="@drawable/ic_banner_foreground"
         android:theme="@style/Theme.Material3.Dark.NoActionBar"
         android:enableOnBackInvokedCallback="true"
         tools:ignore="UnusedAttribute">
