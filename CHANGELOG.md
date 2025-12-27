@@ -1,3 +1,15 @@
+## vv1.0.4
+
+- banner
+- Icons and descs.
+- move theme file and erase readme
+- Refactor Android release workflow configuration
+- Show banners by default
+- Wire most settings
+- rename to dizzify
+- Usable
+
+
 ## vv1.0.3
 
 - Icons and descs.
