@@ -1,9 +1,5 @@
-## vv1.0.1
-
 - Refactor Android release workflow configuration
 - Show banners by default
 - Wire most settings
 - rename to dizzify
 - Usable
-
-
