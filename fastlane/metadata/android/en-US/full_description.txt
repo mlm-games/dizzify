@@ -1,20 +1,23 @@
-Dizzify is a minimalist Android launcher designed to help reduce screen time and distractions due to all the apps present (like social media apps for example). Unlike traditional launchers, apps are hidden by default.
+Dizzify is a open-source launcher for Android TV devices. It tries to provide a clean, and fast home screen experience without any big-banner advertisements optimized for remote control navigation.
 
-Key Features:
+<b>Features:</b>
 
-- Apps invisible by default (type to search)
-- Digital wellbeing tools (screen time tracking)
-- Double-tap to lock screen
-- Customizable gestures (swipe left/right/up/down shortcuts)
-- App renaming/hiding capabilities
-- Plain black/white wallpapers for focus
-- No ads, no tracking, no internet permission - 100% private
+• <b>TV-First Design</b> - For 10-foot UI with D-pad navigation and focus handling
+• <b>App Organization</b> - Favorites and Hidden apps
+• <b>Quick Access Sidebar</b> - Expandable sidebar with clock
+• <b>Recent Apps</b> - Quickly access your most recently used apps
 
-Usage Tips:
+<b>Privacy Focused:</b>
 
-1. Swipe up to search apps
-2. Long press empty space for settings
-3. Enable double-tap lock in Accessibility settings
-4. Rename duplicate-named apps for easier launching
+• No ads or tracking
+• No internet permission required
+• No data collection
+• Fully open source
 
-This is a modern rewrite of Clauncher using Kotlin and Jetpack Compose, maintaining most of the minimalism while improving functionality (and maybe performance...)
+<b>Requirements:</b>
+
+• Android TV or device with Leanback support
+• Android 7.0 (API 24) or higher
+
+Dizzify aims to be a dizziness causing alternative to stock Android TV launchers, while removing bloat or sponsored content.
+If you would prefer a simpler looking launcher, would recommend LeanBackOnFire instead.
