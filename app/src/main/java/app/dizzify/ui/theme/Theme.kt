@@ -62,9 +62,9 @@ object LauncherCardSizes {
     val appCardWidth = 160.dp
     val appCardHeight = 200.dp
 
-    // Large featured cards
-    val featuredCardWidth = 320.dp
-    val featuredCardHeight = 180.dp
+    // Banner cards (TV banners - 16:9 aspect ratio)
+    val bannerCardWidth = 320.dp
+    val bannerCardHeight = 180.dp
 
     // Wide cards (for widgets/banners)
     val wideCardWidth = 340.dp
@@ -78,6 +78,7 @@ object LauncherCardSizes {
     val appIconMedium = 48.dp
     val appIconSmall = 32.dp
 }
+
 
 // Animation configuration
 object LauncherAnimation {

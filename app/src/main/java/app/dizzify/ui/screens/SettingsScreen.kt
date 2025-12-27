@@ -298,8 +298,8 @@ private fun SettingsCategoryContent(
                         )
 
                         SettingsToggle(
-                            title = "Show App Icons",
-                            description = "Display app icons in launcher",
+                            title = "Show Banners & Icons",
+                            description = "Display app banners and icons in launcher",
                             isChecked = settings.showAppIcons,
                             onCheckedChange = { viewModel.updateShowAppIcons(it) }
                         )

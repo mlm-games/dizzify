@@ -2,7 +2,9 @@ package app.dizzify.data.repository
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.os.Build
 import app.dizzify.data.AppModel
 import app.dizzify.helper.PrivateSpaceHelper
@@ -25,6 +27,7 @@ class AppRepository(
     coroutineScope: CoroutineScope
 ) {
     private val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+    private val packageManager = context.packageManager
 
     private val _appListAll = MutableStateFlow<List<AppModel>>(emptyList())
     val appListAll: StateFlow<List<AppModel>> = _appListAll.asStateFlow()
@@ -36,10 +39,10 @@ class AppRepository(
     val hiddenApps: StateFlow<List<AppModel>> = _hiddenApps.asStateFlow()
 
     init {
-        // Reload apps when icon pack or icon visibility changes
+        // Reload apps when icon pack, icon visibility, or TV app setting changes
         coroutineScope.launch {
             settingsRepo.flow
-                .map { it.iconPack to it.showAppIcons }
+                .map { Triple(it.iconPack, it.showAppIcons, it.showNonTvApps) }
                 .distinctUntilChanged()
                 .drop(1)
                 .collect {
@@ -48,7 +51,7 @@ class AppRepository(
                 }
         }
 
-        // Reload when hidden apps set changes (so visible list updates)
+        // Reload when hidden apps set changes
         coroutineScope.launch {
             stateRepo.flow
                 .map { it.hiddenApps }
@@ -61,23 +64,52 @@ class AppRepository(
         }
     }
 
+    private fun hasTvLauncherActivity(packageName: String): Boolean {
+        return try {
+            val tvIntent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+                `package` = packageName
+            }
+            val tvActivities = packageManager.queryIntentActivities(tvIntent, 0)
+            tvActivities.isNotEmpty()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun getTvBanner(packageName: String): android.graphics.drawable.Drawable? {
+        return try {
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            if (appInfo.banner != 0) {
+                packageManager.getDrawable(packageName, appInfo.banner, appInfo)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     suspend fun loadApps() = withContext(Dispatchers.IO) {
+        val settings = settingsRepo.flow.first()
+        val showNonTvApps = settings.showNonTvApps
+
         val appsVisible = getAppsList(
             context = context,
             settingsRepo = settingsRepo,
             stateRepo = stateRepo,
             includeRegularApps = true,
-            includeHiddenApps = false
+            includeHiddenApps = false,
+            filterTvApps = !showNonTvApps
         )
 
-        // "All apps" (including hidden) is useful for search + internal mapping
         _appListAll.value = getAppsList(
             context = context,
             settingsRepo = settingsRepo,
             stateRepo = stateRepo,
             includeRegularApps = true,
-            includeHiddenApps = true
+            includeHiddenApps = true,
+            filterTvApps = !showNonTvApps
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
@@ -95,19 +127,21 @@ class AppRepository(
     }
 
     suspend fun loadHiddenApps() = withContext(Dispatchers.IO) {
+        val settings = settingsRepo.flow.first()
+
         _hiddenApps.value = getAppsList(
             context = context,
             settingsRepo = settingsRepo,
             stateRepo = stateRepo,
             includeRegularApps = false,
-            includeHiddenApps = true
+            includeHiddenApps = true,
+            filterTvApps = !settings.showNonTvApps
         )
     }
 
     suspend fun toggleAppHidden(app: AppModel) = withContext(Dispatchers.IO) {
         val appKey = app.getKey()
         stateRepo.toggleHidden(appKey)
-        // observers will reload lists, but we can also eager-refresh:
         loadApps()
         loadHiddenApps()
     }
@@ -118,7 +152,6 @@ class AppRepository(
                 ?: throw AppLaunchException("Missing activityClassName for ${appModel.appLabel}")
 
             val component = ComponentName(appModel.appPackage, cls)
-
             val user = appModel.resolveUser(context)
 
             launcherApps.startMainActivity(component, user, null, null)

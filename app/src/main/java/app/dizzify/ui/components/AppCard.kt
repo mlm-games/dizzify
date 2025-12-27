@@ -38,7 +38,7 @@ import app.dizzify.ui.theme.*
 enum class CardStyle {
     STANDARD,    // Regular app grid card
     COMPACT,     // Smaller, icon-focused
-    BANNER,      // Wide, for featured content
+    BANNER,      // Wide, for featured content (TV banners)
     MINIMAL      // Icon only with label on focus
 }
 
@@ -54,22 +54,24 @@ fun AppCard(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
-    
+
     val cardShape = RoundedCornerShape(
         when (style) {
             CardStyle.COMPACT -> 12.dp
             CardStyle.MINIMAL -> 16.dp
+            CardStyle.BANNER -> 12.dp
             else -> 20.dp
         }
     )
-    
+
+    // Adjust size for banner style
     val cardSize = when (style) {
         CardStyle.STANDARD -> Modifier.size(LauncherCardSizes.appCardWidth, LauncherCardSizes.appCardHeight)
         CardStyle.COMPACT -> Modifier.size(120.dp, 150.dp)
-        CardStyle.BANNER -> Modifier.size(LauncherCardSizes.featuredCardWidth, LauncherCardSizes.featuredCardHeight)
+        CardStyle.BANNER -> Modifier.size(LauncherCardSizes.bannerCardWidth, LauncherCardSizes.bannerCardHeight)
         CardStyle.MINIMAL -> Modifier.size(LauncherCardSizes.smallCardSize + 20.dp)
     }
-    
+
     // Animation values
     val scale by animateFloatAsState(
         targetValue = when {
@@ -83,19 +85,19 @@ fun AppCard(
         ),
         label = "card_scale"
     )
-    
+
     val elevation by animateDpAsState(
         targetValue = if (isFocused) 24.dp else 4.dp,
         animationSpec = tween(LauncherAnimation.FastDuration),
         label = "card_elevation"
     )
-    
+
     val borderAlpha by animateFloatAsState(
         targetValue = if (isFocused) 1f else 0f,
         animationSpec = tween(LauncherAnimation.FastDuration),
         label = "border_alpha"
     )
-    
+
     // Glow effect
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -107,7 +109,7 @@ fun AppCard(
         ),
         label = "glow_alpha"
     )
-    
+
     Box(
         modifier = modifier
             .then(cardSize)
@@ -185,7 +187,7 @@ fun AppCard(
         when (style) {
             CardStyle.STANDARD -> StandardCardContent(app, isFocused, showNewBadge)
             CardStyle.COMPACT -> CompactCardContent(app, isFocused, showNewBadge)
-            CardStyle.BANNER -> BannerCardContent(app, isFocused)
+            CardStyle.BANNER -> BannerCardContent(app, isFocused, showNewBadge)
             CardStyle.MINIMAL -> MinimalCardContent(app, isFocused)
         }
     }
@@ -203,14 +205,13 @@ private fun StandardCardContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Icon container with subtle animation
+        // Icon container
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            // Icon background glow when focused
             if (isFocused) {
                 Box(
                     modifier = Modifier
@@ -221,14 +222,13 @@ private fun StandardCardContent(
                         )
                 )
             }
-            
+
             AppIcon(
                 app = app,
                 size = LauncherCardSizes.appIconLarge,
                 showShadow = isFocused
             )
-            
-            // New badge
+
             if (showNewBadge) {
                 NewBadge(
                     modifier = Modifier
@@ -237,34 +237,19 @@ private fun StandardCardContent(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
-        // App name
+
+        // App name only - no package name
         Text(
             text = app.appLabel,
             style = MaterialTheme.typography.titleMedium,
             color = if (isFocused) Color.White else LauncherColors.TextPrimary,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-        
-        // Package name (shown on focus)
-        AnimatedVisibility(visible = isFocused) {
-            Text(
-                text = app.appPackage.substringAfterLast('.'),
-                style = MaterialTheme.typography.labelSmall,
-                color = LauncherColors.TextTertiary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
-            )
-        }
     }
 }
 
@@ -287,7 +272,7 @@ private fun CompactCardContent(
                 size = LauncherCardSizes.appIconMedium,
                 showShadow = isFocused
             )
-            
+
             if (showNewBadge) {
                 NewBadge(
                     modifier = Modifier
@@ -296,9 +281,9 @@ private fun CompactCardContent(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
             text = app.appLabel,
             style = MaterialTheme.typography.labelLarge,
@@ -313,39 +298,101 @@ private fun CompactCardContent(
 @Composable
 private fun BannerCardContent(
     app: AppModel,
-    isFocused: Boolean
+    isFocused: Boolean,
+    showNewBadge: Boolean
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        AppIcon(
-            app = app,
-            size = LauncherCardSizes.appIconLarge,
-            showShadow = isFocused
-        )
-        
-        Spacer(modifier = Modifier.width(20.dp))
-        
-        Column(modifier = Modifier.weight(1f)) {
+        val icon = app.appIcon
+        if (icon != null && app.hasBanner) {
+            Image(
+                bitmap = icon,
+                contentDescription = app.appLabel,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // Gradient overlay at bottom for text readability
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.8f)
+                            )
+                        )
+                    )
+            )
+        } else if (icon != null) {
+            // No banner - show icon on left side
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AppIcon(
+                    app = app,
+                    size = LauncherCardSizes.appIconLarge,
+                    showShadow = isFocused
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = app.appLabel,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = if (isFocused) Color.White else LauncherColors.TextPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            // No icon at all - just show name centered
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(LauncherColors.DarkSurfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = app.appLabel,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = if (isFocused) Color.White else LauncherColors.TextPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
+        // App label at bottom (for banner mode)
+        if (app.hasBanner && app.appIcon != null) {
             Text(
                 text = app.appLabel,
-                style = MaterialTheme.typography.headlineMedium,
-                color = if (isFocused) Color.White else LauncherColors.TextPrimary,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(12.dp)
             )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            Text(
-                text = app.appPackage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = LauncherColors.TextSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+        }
+
+        // New badge
+        if (showNewBadge) {
+            NewBadge(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
             )
         }
     }
@@ -376,7 +423,7 @@ fun AppIcon(
     showShadow: Boolean = false,
 ) {
     val icon = app.appIcon
-    
+
     Box(
         modifier = modifier
             .size(size)
@@ -430,4 +477,3 @@ private fun NewBadge(modifier: Modifier = Modifier) {
         )
     }
 }
-

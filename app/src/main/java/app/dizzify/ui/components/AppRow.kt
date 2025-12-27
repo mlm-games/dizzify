@@ -44,7 +44,7 @@ fun AppRow(
         when (cardStyle) {
             CardStyle.STANDARD -> LauncherCardSizes.appCardWidth.toPx()
             CardStyle.COMPACT -> 120.dp.toPx()
-            CardStyle.BANNER -> LauncherCardSizes.featuredCardWidth.toPx()
+            CardStyle.BANNER -> LauncherCardSizes.bannerCardWidth.toPx()
             CardStyle.MINIMAL -> (LauncherCardSizes.smallCardSize + 20.dp).toPx()
         } + LauncherSpacing.cardGap.toPx()
     }

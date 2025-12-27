@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.*
@@ -42,7 +43,7 @@ fun AppsScreen(
     val context = LocalContext.current
     var selectedApp by remember { mutableStateOf<AppModel?>(null) }
     var showOptions by remember { mutableStateOf(false) }
-    var viewMode by remember { mutableStateOf(AppsViewMode.GRID) }
+    var viewMode by remember { mutableStateOf(AppsViewMode.LIST) }
 
     val searchFocusRequester = remember { FocusRequester() }
     val gridState = rememberLazyGridState()
@@ -180,14 +181,14 @@ private fun AppsHeader(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 ViewModeButton(
+                    icon = Icons.AutoMirrored.Filled.ViewList,
+                    isSelected = viewMode == AppsViewMode.LIST,
+                    onClick = { onViewModeChange(AppsViewMode.LIST) }
+                )
+                ViewModeButton(
                     icon = Icons.Default.GridView,
                     isSelected = viewMode == AppsViewMode.GRID,
                     onClick = { onViewModeChange(AppsViewMode.GRID) }
-                )
-                ViewModeButton(
-                    icon = Icons.Default.ViewList,
-                    isSelected = viewMode == AppsViewMode.LIST,
-                    onClick = { onViewModeChange(AppsViewMode.LIST) }
                 )
             }
         }

@@ -31,32 +31,32 @@ enum class SearchType { Contains, Fuzzy, StartsWith }
 @SchemaVersion(version = 1)
 @Serializable
 data class LauncherSettings(
-    @Setting(
-        title = "Theme",
-        category = General::class,
-        type = Dropdown::class,
-        key = "theme",
-        options = ["System", "Light", "Dark"]
-    )
+//    @Setting(
+//        title = "Theme",
+//        category = General::class,
+//        type = Dropdown::class,
+//        key = "theme",
+//        options = ["System", "Light", "Dark"]
+//    )
     val theme: ThemeMode = ThemeMode.System,
 
     @Setting(
-        title = "Show App Icons",
+        title = "Show Banners & Icons",
+        description = "Display app banners and icons in launcher",
         category = General::class,
         type = Toggle::class,
         key = "show_app_icons"
     )
     val showAppIcons: Boolean = true,
 
-    // If you plan a picker UI, this can be Toggle/TextInput/custom later; keep persisted as String for now.
-    @Setting(
-        title = "Icon Pack",
-        description = "Applies to app icons",
-        category = General::class,
-        type = Dropdown::class,
-        key = "icon_pack",
-        options = ["Default"] // you’ll override in your UI with real installed packs
-    )
+//    @Setting(
+//        title = "Icon Pack",
+//        description = "Applies to app icons",
+//        category = General::class,
+//        type = Dropdown::class,
+//        key = "icon_pack",
+//        options = ["Default"]
+//    )
     val iconPack: String = "default",
 
     @Setting(

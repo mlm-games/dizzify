@@ -1,7 +1,5 @@
 package app.dizzify.ui.components
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandHorizontally
@@ -29,9 +27,9 @@ import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SportsEsports
+import androidx.compose.material.icons.outlined.VideoSettings
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.*
@@ -197,7 +195,7 @@ fun LauncherSidebar(
 
 @Composable
 private fun SidebarClock(isExpanded: Boolean) {
-    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -354,8 +352,8 @@ private fun SidebarQuickActions(isExpanded: Boolean) {
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
-                imageVector = Icons.Outlined.PowerSettingsNew,
-                contentDescription = "Power",
+                imageVector = Icons.Outlined.VideoSettings,
+                contentDescription = "Settings",
                 tint = LauncherColors.TextSecondary
             )
         }
@@ -393,23 +391,23 @@ private fun SidebarQuickActions(isExpanded: Boolean) {
         }
 
         if (showPowerMenu) {
-            AlertDialog(
-                onDismissRequest = { showPowerMenu = false },
-                title = { Text("Power") },
-                text = { Text("Choose an action") },
-                confirmButton = {
-                    TextButton(onClick = {
+//            AlertDialog(
+//                onDismissRequest = { showPowerMenu = false },
+//                title = { Text("Power") },
+//                text = { Text("Choose an action") },
+////                confirmButton = {
+////                    TextButton(onClick = {
+////                        showPowerMenu = false
+////                        // lock / sleep may need accessibility?
+////                    }) { Text("Sleep") }
+////                },
+//                dismissButton = {
+//                    TextButton(onClick = {
                         showPowerMenu = false
-                        // lock / sleep may need accessibility?
-                    }) { Text("Sleep") }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showPowerMenu = false
-                        SettingsShortcuts.openPower(context)
-                    }) { Text("Settings") }
-                }
-            )
+                        SettingsShortcuts.openDeviceSettings(context)
+//                    }) { Text("Settings") }
+//                }
+//            )
         }
     }
 }

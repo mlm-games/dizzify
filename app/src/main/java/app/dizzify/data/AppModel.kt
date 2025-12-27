@@ -23,7 +23,8 @@ data class AppModel(
     val isHidden: Boolean = false,
     val userString: String = user.toString(),
     @Transient
-    val lastLaunchTime: Long = 0
+    val lastLaunchTime: Long = 0,
+    val hasBanner: Boolean = false
 ) : Comparable<AppModel> {
     override fun compareTo(other: AppModel): Int = when {
         key != null && other.key != null -> key.compareTo(other.key)
@@ -32,6 +33,7 @@ data class AppModel(
 
     fun getKey(): String = AppKey.of(appPackage, userString)
 }
+
 
 object AppKey {
     fun of(packageName: String, userString: String): String =

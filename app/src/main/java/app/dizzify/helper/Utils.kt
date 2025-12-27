@@ -14,6 +14,7 @@ import android.content.pm.LauncherApps
 import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Point
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.UserHandle
 import android.os.UserManager
@@ -29,6 +30,7 @@ import android.view.animation.LinearInterpolator
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import app.dizzify.R
@@ -39,6 +41,7 @@ import app.dizzify.data.AnimationConfig
 import app.dizzify.data.AppKey
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
+import app.dizzify.settings.SortOrder
 import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.flow.first
 import java.text.Collator
@@ -51,6 +54,7 @@ suspend fun getAppsList(
     stateRepo: SettingsRepository<LauncherState>,
     includeRegularApps: Boolean = true,
     includeHiddenApps: Boolean = false,
+    filterTvApps: Boolean = true // When true, only show TV apps
 ): MutableList<AppModel> {
 
     val appList: MutableList<AppModel> = mutableListOf()
@@ -68,16 +72,54 @@ suspend fun getAppsList(
 
         val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
         val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val packageManager = context.packageManager
         val collator = Collator.getInstance()
 
         val iconCache = IconCache(context)
 
+        val tvPackages = if (filterTvApps) {
+            val tvIntent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+            }
+            packageManager.queryIntentActivities(tvIntent, 0)
+                .map { it.activityInfo.packageName }
+                .toSet()
+        } else {
+            emptySet()
+        }
+
         for (profile in userManager.userProfiles) {
+            val tvActivities = if (filterTvApps) {
+                val tvIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+                }
+                launcherApps.getActivityList(null, profile)
+                    .filter { activity ->
+                        val pkgTvIntent = Intent(Intent.ACTION_MAIN).apply {
+                            addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+                            `package` = activity.applicationInfo.packageName
+                        }
+                        packageManager.queryIntentActivities(pkgTvIntent, 0).any {
+                            it.activityInfo.name == activity.componentName.className
+                        }
+                    }
+                    .associateBy { it.applicationInfo.packageName }
+            } else {
+                emptyMap()
+            }
+
             for (activity in launcherApps.getActivityList(null, profile)) {
                 val pkg = activity.applicationInfo.packageName
 
-                // Skip the launcher itself
                 if (pkg == context.packageName) continue
+
+                if (filterTvApps) {
+                    val tvActivity = tvActivities[pkg] ?: continue
+                    // Use TV activity instead if different
+                    if (tvActivity.componentName.className != activity.componentName.className) {
+                        continue
+                    }
+                }
 
                 val userString = profile.toString()
                 val appKey = AppKey.of(pkg, userString)
@@ -88,13 +130,21 @@ suspend fun getAppsList(
                 val shownLabel = renamedApps[appKey] ?: defaultLabel
 
                 val appIcon = if (includeIcons) {
-                    iconCache.getIcon(
-                        packageName = pkg,
-                        className = activity.componentName.className,
-                        user = profile,
-                        iconPackName = selectedIconPack
-                    )
+                    // Try to get TV banner first
+                    val banner = getTvBanner(context, pkg)
+                    if (banner != null) {
+                        BitmapUtils.drawableToBitmap(banner)?.asImageBitmap()
+                    } else {
+                        iconCache.getIcon(
+                            packageName = pkg,
+                            className = activity.componentName.className,
+                            user = profile,
+                            iconPackName = selectedIconPack
+                        )
+                    }
                 } else null
+
+                val hasBanner = hasTvBanner(context, pkg)
 
                 val model = AppModel(
                     appLabel = shownLabel,
@@ -106,7 +156,8 @@ suspend fun getAppsList(
                     appIcon = appIcon,
                     isHidden = hiddenApps.contains(appKey),
                     userString = userString,
-                    lastLaunchTime = recentHistory[appKey] ?: 0L
+                    lastLaunchTime = recentHistory[appKey] ?: 0L,
+                    hasBanner = hasBanner
                 )
 
                 val isHidden = hiddenApps.contains(appKey)
@@ -118,13 +169,13 @@ suspend fun getAppsList(
         }
 
         when (settings.sortOrder) {
-            app.dizzify.settings.SortOrder.Recent -> {
+            SortOrder.Recent -> {
                 appList.sortWith(
                     compareByDescending<AppModel> { it.lastLaunchTime }
                         .thenBy { it.appLabel.lowercase() }
                 )
             }
-            app.dizzify.settings.SortOrder.ZA -> {
+            SortOrder.ZA -> {
                 appList.sortByDescending { it.appLabel.lowercase() }
             }
             else -> {
@@ -137,6 +188,30 @@ suspend fun getAppsList(
     }
 
     return appList
+}
+
+fun getTvBanner(context: Context, packageName: String): Drawable? {
+    return try {
+        val pm = context.packageManager
+        val appInfo = pm.getApplicationInfo(packageName, 0)
+        if (appInfo.banner != 0) {
+            pm.getDrawable(packageName, appInfo.banner, appInfo)
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun hasTvBanner(context: Context, packageName: String): Boolean {
+    return try {
+        val pm = context.packageManager
+        val appInfo = pm.getApplicationInfo(packageName, 0)
+        appInfo.banner != 0
+    } catch (e: Exception) {
+        false
+    }
 }
 
 fun isPackageInstalled(context: Context, packageName: String, userString: String): Boolean {

@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import app.dizzify.ui.components.snackbar.snackbar
 
 object SettingsShortcuts {
 
@@ -32,7 +31,7 @@ object SettingsShortcuts {
         context.startFirstResolvable(intents)
     }
 
-    fun openPower(context: Context) {
+    fun openDeviceSettings(context: Context) {
         val intents = listOf(
             Intent(Settings.ACTION_SETTINGS),
         )
