@@ -21,4 +21,7 @@ data class LauncherState(
     @Persisted(key = "home_layout")
     @Serialized
     val homeLayout: HomeLayout = HomeLayout(),
+
+    @Persisted(key = "favorite_apps")
+    val favoriteApps: Set<String> = emptySet(),
 )
