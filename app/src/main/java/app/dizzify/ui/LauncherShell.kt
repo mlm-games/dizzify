@@ -19,6 +19,7 @@ import app.dizzify.LauncherViewModel
 import app.dizzify.ui.components.SidebarDestination
 import app.dizzify.ui.components.LauncherSidebar
 import app.dizzify.ui.screens.AppsScreen
+import app.dizzify.ui.screens.AppDetailsScreen
 import app.dizzify.ui.screens.GamesScreen
 import app.dizzify.ui.screens.HiddenAppsScreen
 import app.dizzify.ui.screens.HomeScreen
@@ -131,11 +132,12 @@ fun LauncherShell(
                                 SettingsScreen(viewModel = viewModel)
                             }
 
-                            // details route (UI later)
                             entry<LauncherKey.AppDetails> { key ->
-                                // just pop for now
-                                BackHandler { backStack.removeAt(backStack.lastIndex) }
-                                // AppDetailsScreen(appKey = key.appKey, viewModel = viewModel, onBack = { ... })
+                                AppDetailsScreen(
+                                    appKey = key.appKey,
+                                    viewModel = viewModel,
+                                    onBack = { backStack.removeAt(backStack.lastIndex) }
+                                )
                             }
                         }
                     )
