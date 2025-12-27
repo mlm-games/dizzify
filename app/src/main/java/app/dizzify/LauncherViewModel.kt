@@ -17,22 +17,34 @@ import app.dizzify.settings.markLaunched
 import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 data class LauncherUiState(
     val query: String = "",
     val isLoading: Boolean = true
 )
 
+/**
+ * Main ViewModel for the Dizzify launcher.
+ * 
+ * Manages app lists, search functionality, favorites, and user settings.
+ * Uses reactive StateFlows for UI state management.
+ * 
+ * @param app Application context
+ * @param settingsRepo Repository for user settings (theme, search preferences, etc.)
+ * @param stateRepo Repository for launcher state (hidden apps, favorites, recent history)
+ * @param appRepository Repository for app data and operations
+ */
 class LauncherViewModel(
     app: Application,
     private val settingsRepo: SettingsRepository<LauncherSettings>,
     private val stateRepo: SettingsRepository<LauncherState>,
+    private val appRepository: AppRepository,
 ) : AndroidViewModel(app) {
 
     private val context = app.applicationContext
-
-    private val appRepository = AppRepository(context, settingsRepo, stateRepo, viewModelScope)
 
     private val _ui = MutableStateFlow(LauncherUiState())
     val ui: StateFlow<LauncherUiState> = _ui.asStateFlow()
@@ -52,6 +64,10 @@ class LauncherViewModel(
     val hiddenApps: StateFlow<List<AppModel>> =
         appRepository.hiddenApps.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val favoriteApps: StateFlow<Set<String>> =
+        state.map { it.favoriteApps }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     private val homeLayout: StateFlow<HomeLayout> =
         state.map { it.homeLayout }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeLayout())
@@ -60,9 +76,12 @@ class LauncherViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            Timber.d("Initializing LauncherViewModel - loading apps")
             runCatching {
                 appRepository.loadApps()
                 appRepository.loadHiddenApps()
+            }.onFailure { e ->
+                Timber.e(e, "Failed to load apps on init")
             }
             _ui.update { it.copy(isLoading = false) }
         }
@@ -98,6 +117,11 @@ class LauncherViewModel(
         }
     }
 
+    /**
+     * Updates the search query and triggers app filtering.
+     * 
+     * @param q The search query string
+     */
     fun setQuery(q: String) {
         _ui.update { it.copy(query = q) }
     }
@@ -162,6 +186,11 @@ class LauncherViewModel(
                 .toList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /**
+     * Launches the specified app.
+     * 
+     * @param app The app to launch
+     */
     fun launch(app: AppModel) {
         viewModelScope.launch {
             runCatching { appRepository.launchApp(app) }
@@ -171,18 +200,48 @@ class LauncherViewModel(
         }
     }
 
+    /**
+     * Toggles the hidden state of an app.
+     * 
+     * @param app The app to show/hide
+     */
     fun toggleHidden(app: AppModel) {
         viewModelScope.launch {
             runCatching { appRepository.toggleAppHidden(app) }
         }
     }
 
+    /**
+     * Toggles the favorite state of an app.
+     * 
+     * @param app The app to mark/unmark as favorite
+     */
+    fun toggleFavorite(app: AppModel) {
+        viewModelScope.launch {
+            runCatching {
+                stateRepo.update { state ->
+                    val appKey = app.getKey()
+                    if (appKey in state.favoriteApps) {
+                        state.copy(favoriteApps = state.favoriteApps - appKey)
+                    } else {
+                        state.copy(favoriteApps = state.favoriteApps + appKey)
+                    }
+                }
+            }.onFailure { e ->
+                Timber.e(e, "Failed to toggle favorite for ${app.appLabel}")
+            }
+        }
+    }
+
     fun refreshApps() {
         viewModelScope.launch(Dispatchers.IO) {
+            Timber.d("Refreshing apps")
             _ui.update { it.copy(isLoading = true) }
             runCatching {
                 appRepository.loadApps()
                 appRepository.loadHiddenApps()
+            }.onFailure { e ->
+                Timber.e(e, "Failed to refresh apps")
             }
             _ui.update { it.copy(isLoading = false) }
         }
