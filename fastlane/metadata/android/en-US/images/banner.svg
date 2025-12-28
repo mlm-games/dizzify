@@ -7,7 +7,7 @@
    viewBox="0 0 169.33333 95.25"
    version="1.1"
    id="svg1"
-   inkscape:version="1.4.2 (ebf0e94, 2025-05-08)"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
    sodipodi:docname="banner.svg"
    inkscape:export-filename="icon.png"
    inkscape:export-xdpi="96"
@@ -26,11 +26,11 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="0.81764678"
-     inkscape:cx="362.01451"
-     inkscape:cy="177.9497"
-     inkscape:window-width="1536"
-     inkscape:window-height="902"
+     inkscape:zoom="0.1445409"
+     inkscape:cx="-1698.4812"
+     inkscape:cy="335.54517"
+     inkscape:window-width="1920"
+     inkscape:window-height="1128"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -46,19 +46,19 @@
        d="m 185.23881,62.128838 c -12.11273,5.540119 -9.65709,30.785158 0,39.958552 10.55788,10.02905 25.76208,35.67715 43.62833,-2.24257 17.86623,-37.919852 -26.1465,-45.711838 -43.62833,-37.715982 z"
        id="path1"
        sodipodi:nodetypes="ssss" />
-    <rect
-       style="fill:#48373e;fill-opacity:1;stroke:none;stroke-width:0.361234"
-       id="rect12"
-       width="261.92993"
-       height="147.46687"
-       x="-76.691124"
-       y="-11.604598"
-       ry="2.3693504" />
     <path
        style="fill:#999999;stroke:#ffffff;stroke-width:6.26768e-06"
        d="m 221.73548,-1.6902373 c 12.1127,5.540118 9.65704,30.7851513 0,39.9585473 -10.55782,10.02908 -25.762,35.67712 -43.62827,-2.242574 -17.86629,-37.9198433 26.14651,-45.7118303 43.62827,-37.7159733 z"
        id="path2"
        sodipodi:nodetypes="ssss" />
+    <rect
+       style="fill:#48373e;fill-opacity:1;stroke:none;stroke-width:1.0245"
+       id="rect12"
+       width="742.8587"
+       height="418.23035"
+       x="-284.34741"
+       y="-146.98633"
+       ry="6.7197075" />
     <g
        id="g1"
        transform="translate(-2.9181659,13.129794)">
