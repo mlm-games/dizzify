@@ -24,12 +24,13 @@ import app.dizzify.ui.screens.GamesScreen
 import app.dizzify.ui.screens.HiddenAppsScreen
 import app.dizzify.ui.screens.HomeScreen
 import app.dizzify.ui.screens.SettingsScreen
+import app.dizzify.ui.theme.LauncherTheme
 import androidx.navigation3.runtime.NavKey
 import app.dizzify.ui.components.LauncherWidgetHost
+import app.dizzify.ui.components.SidebarDestinations
 import app.dizzify.ui.components.snackbar.LauncherSnackbarHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
 import app.dizzify.ui.screens.WidgetPickerScreen
-import app.dizzify.ui.theme.DizzifyTheme
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
@@ -39,7 +40,7 @@ import org.koin.compose.koinInject
 fun LauncherShell(
     viewModel: LauncherViewModel
 ) {
-    DizzifyTheme {
+    LauncherTheme {
         val backStack = rememberLauncherBackStack()
 
         val snackbarHostState = remember { SnackbarHostState() }
@@ -143,10 +144,10 @@ fun LauncherShell(
                                         LauncherKey.Apps
                                     )
                                     },
-                                    widgetHost = widgetHost,
-                                    onNavigateToWidgetPicker = {
-                                        backStack.add(LauncherKey.WidgetPicker)
-                                    }
+//                                    widgetHost = widgetHost,
+//                                    onNavigateToWidgetPicker = {
+//                                        backStack.add(LauncherKey.WidgetPicker)
+//                                    }
                                 )
                             }
 

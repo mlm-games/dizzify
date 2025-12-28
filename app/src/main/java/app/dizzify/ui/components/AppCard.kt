@@ -1,5 +1,6 @@
 package app.dizzify.ui.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -36,11 +38,73 @@ import app.dizzify.data.AppModel
 import app.dizzify.ui.theme.*
 
 enum class CardStyle {
-    STANDARD,    // Regular app grid card
-    COMPACT,     // Smaller, icon-focused
-    BANNER,      // Wide, for featured content (TV banners)
-    MINIMAL      // Icon only with label on focus
+    STANDARD,
+    COMPACT,
+    BANNER,
+    MINIMAL
 }
+
+data class CardVisualConfig(
+    val shape: RoundedCornerShape,
+    val useGlow: Boolean,
+    val focusedElevation: Dp,
+    val unfocusedElevation: Dp,
+    val focusScale: Float,
+    val pressScale: Float
+)
+
+@Composable
+private fun rememberCardVisualConfig(
+    style: CardStyle,
+    hasBannerContent: Boolean
+): CardVisualConfig {
+    return remember(style, hasBannerContent) {
+        when (style) {
+            CardStyle.BANNER if hasBannerContent -> CardVisualConfig(
+                shape = RoundedCornerShape(8.dp),
+                useGlow = false,
+                focusedElevation = 12.dp,
+                unfocusedElevation = 2.dp,
+                focusScale = 1.03f,
+                pressScale = 0.98f
+            )
+            CardStyle.BANNER -> CardVisualConfig(
+                shape = RoundedCornerShape(12.dp),
+                useGlow = true,
+                focusedElevation = 16.dp,
+                unfocusedElevation = 4.dp,
+                focusScale = 1.05f,
+                pressScale = 0.97f
+            )
+            CardStyle.COMPACT -> CardVisualConfig(
+                shape = RoundedCornerShape(12.dp),
+                useGlow = true,
+                focusedElevation = 20.dp,
+                unfocusedElevation = 4.dp,
+                focusScale = 1.08f,
+                pressScale = 0.95f
+            )
+            CardStyle.MINIMAL -> CardVisualConfig(
+                shape = RoundedCornerShape(16.dp),
+                useGlow = true,
+                focusedElevation = 16.dp,
+                unfocusedElevation = 2.dp,
+                focusScale = 1.1f,
+                pressScale = 0.95f
+            )
+            else -> CardVisualConfig(
+                shape = RoundedCornerShape(20.dp),
+                useGlow = true,
+                focusedElevation = 24.dp,
+                unfocusedElevation = 4.dp,
+                focusScale = 1.08f,
+                pressScale = 0.95f
+            )
+        }
+    }
+}
+
+private const val LONG_PRESS_THRESHOLD_MS = 500L
 
 @Composable
 fun AppCard(
@@ -54,17 +118,14 @@ fun AppCard(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isPressed by remember { mutableStateOf(false) }
+    val view = LocalView.current
 
-    val cardShape = RoundedCornerShape(
-        when (style) {
-            CardStyle.COMPACT -> 12.dp
-            CardStyle.MINIMAL -> 16.dp
-            CardStyle.BANNER -> 12.dp
-            else -> 20.dp
-        }
-    )
+    // Simple time-based long press detection
+    var pressStartTime by remember { mutableLongStateOf(0L) }
 
-    // Adjust size for banner style
+    val hasBannerContent = style == CardStyle.BANNER && app.hasBanner && app.appIcon != null
+    val visualConfig = rememberCardVisualConfig(style, hasBannerContent)
+
     val cardSize = when (style) {
         CardStyle.STANDARD -> Modifier.size(LauncherCardSizes.appCardWidth, LauncherCardSizes.appCardHeight)
         CardStyle.COMPACT -> Modifier.size(120.dp, 150.dp)
@@ -72,11 +133,10 @@ fun AppCard(
         CardStyle.MINIMAL -> Modifier.size(LauncherCardSizes.smallCardSize + 20.dp)
     }
 
-    // Animation values
     val scale by animateFloatAsState(
         targetValue = when {
-            isPressed -> 0.95f
-            isFocused -> 1.08f
+            isPressed -> visualConfig.pressScale
+            isFocused -> visualConfig.focusScale
             else -> 1f
         },
         animationSpec = spring(
@@ -87,7 +147,7 @@ fun AppCard(
     )
 
     val elevation by animateDpAsState(
-        targetValue = if (isFocused) 24.dp else 4.dp,
+        targetValue = if (isFocused) visualConfig.focusedElevation else visualConfig.unfocusedElevation,
         animationSpec = tween(LauncherAnimation.FastDuration),
         label = "card_elevation"
     )
@@ -98,7 +158,6 @@ fun AppCard(
         label = "border_alpha"
     )
 
-    // Glow effect
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -110,6 +169,16 @@ fun AppCard(
         label = "glow_alpha"
     )
 
+    LaunchedEffect(isFocused) {
+        if (isFocused) {
+            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        } else {
+            // Reset press state when losing focus
+            isPressed = false
+            pressStartTime = 0L
+        }
+    }
+
     Box(
         modifier = modifier
             .then(cardSize)
@@ -118,7 +187,7 @@ fun AppCard(
                 scaleY = scale
             }
             .then(
-                if (isFocused) {
+                if (isFocused && visualConfig.useGlow) {
                     Modifier.drawBehind {
                         drawRoundRect(
                             color = LauncherColors.AccentBlue.copy(alpha = glowAlpha * 0.3f),
@@ -132,52 +201,80 @@ fun AppCard(
                     }
                 } else Modifier
             )
-            .shadow(elevation, cardShape)
-            .clip(cardShape)
+            .shadow(elevation, visualConfig.shape, clip = false)
+            .clip(visualConfig.shape)
             .background(
-                if (isFocused) {
-                    Brush.verticalGradient(
-                        colors = listOf(
+                when {
+                    hasBannerContent -> Brush.verticalGradient(
+                        listOf(Color.Transparent, Color.Transparent)
+                    )
+                    isFocused -> Brush.verticalGradient(
+                        listOf(
                             LauncherColors.DarkCardBackground,
                             LauncherColors.DarkCardBackground.copy(alpha = 0.95f)
                         )
                     )
-                } else {
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            LauncherColors.DarkCardBackground,
-                            LauncherColors.DarkSurface
-                        )
+                    else -> Brush.verticalGradient(
+                        listOf(LauncherColors.DarkCardBackground, LauncherColors.DarkSurface)
                     )
                 }
             )
             .then(
-                if (borderAlpha > 0f) {
-                    Modifier.border(
+                when {
+                    hasBannerContent && isFocused -> Modifier.border(
+                        width = 3.dp,
+                        color = Color.White,
+                        shape = visualConfig.shape
+                    )
+                    borderAlpha > 0f && !hasBannerContent -> Modifier.border(
                         width = 2.dp,
                         color = Color.White.copy(alpha = borderAlpha),
-                        shape = cardShape
+                        shape = visualConfig.shape
                     )
-                } else Modifier
+                    else -> Modifier
+                }
             )
             .focusRequester(focusRequester)
-            .onFocusChanged { state ->
-                isFocused = state.isFocused
-            }
+            .onFocusChanged { state -> isFocused = state.isFocused }
             .onKeyEvent { event ->
+                val isSelectKey = event.key == Key.DirectionCenter || event.key == Key.Enter
+
                 when (event.type) {
-                    KeyEventType.KeyDown if (event.key == Key.DirectionCenter || event.key == Key.Enter) -> {
-                        isPressed = true
-                        true
+                    KeyEventType.KeyDown -> {
+                        when {
+                            isSelectKey -> {
+                                if (pressStartTime == 0L) {
+                                    pressStartTime = System.currentTimeMillis()
+                                    isPressed = true
+                                }
+                                true
+                            }
+                            event.key == Key.Menu || event.key == Key.TvMediaContextMenu -> {
+                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                onLongClick()
+                                true
+                            }
+                            else -> false
+                        }
                     }
-                    KeyEventType.KeyUp if (event.key == Key.DirectionCenter || event.key == Key.Enter) -> {
-                        isPressed = false
-                        onClick()
-                        true
-                    }
-                    KeyEventType.KeyDown if event.key == Key.Menu -> {
-                        onLongClick()
-                        true
+                    KeyEventType.KeyUp -> {
+                        when {
+                            isSelectKey -> {
+                                val pressDuration = System.currentTimeMillis() - pressStartTime
+                                isPressed = false
+                                pressStartTime = 0L
+
+                                if (pressDuration >= LONG_PRESS_THRESHOLD_MS) {
+                                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                    onLongClick()
+                                } else if (pressDuration > 0) {
+                                    view.performHapticFeedback(buttonPressFeedbackConstant())
+                                    onClick()
+                                }
+                                true
+                            }
+                            else -> false
+                        }
                     }
                     else -> false
                 }
@@ -205,28 +302,17 @@ private fun StandardCardContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Icon container
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            if (isFocused) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .background(
-                            LauncherColors.AccentBlue.copy(alpha = 0.1f),
-                            CircleShape
-                        )
-                )
-            }
-
             AppIcon(
                 app = app,
                 size = LauncherCardSizes.appIconLarge,
-                showShadow = isFocused
+                showShadow = isFocused,
+                showGlow = isFocused
             )
 
             if (showNewBadge) {
@@ -240,7 +326,6 @@ private fun StandardCardContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // App name only - no package name
         Text(
             text = app.appLabel,
             style = MaterialTheme.typography.titleMedium,
@@ -270,7 +355,8 @@ private fun CompactCardContent(
             AppIcon(
                 app = app,
                 size = LauncherCardSizes.appIconMedium,
-                showShadow = isFocused
+                showShadow = isFocused,
+                showGlow = isFocused
             )
 
             if (showNewBadge) {
@@ -301,93 +387,101 @@ private fun BannerCardContent(
     isFocused: Boolean,
     showNewBadge: Boolean
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        val icon = app.appIcon
-        if (icon != null && app.hasBanner) {
-            Image(
-                bitmap = icon,
-                contentDescription = app.appLabel,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
+    val hasBanner = app.hasBanner && app.appIcon != null
 
-            // Gradient overlay at bottom for text readability
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.8f)
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            hasBanner -> {
+                Image(
+                    bitmap = app.appIcon,
+                    contentDescription = app.appLabel,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                val gradientHeight by animateDpAsState(
+                    targetValue = if (isFocused) 80.dp else 60.dp,
+                    label = "gradient_height"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(gradientHeight)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = if (isFocused) 0.9f else 0.75f)
+                                )
                             )
                         )
+                )
+
+                Text(
+                    text = app.appLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(12.dp)
+                )
+            }
+
+            app.appIcon != null -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(LauncherColors.DarkCardBackground, LauncherColors.DarkSurface)
+                            )
+                        )
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppIcon(
+                        app = app,
+                        size = LauncherCardSizes.appIconLarge,
+                        showShadow = isFocused,
+                        showGlow = isFocused
                     )
-            )
-        } else if (icon != null) {
-            // No banner - show icon on left side
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AppIcon(
-                    app = app,
-                    size = LauncherCardSizes.appIconLarge,
-                    showShadow = isFocused
-                )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                Text(
-                    text = app.appLabel,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (isFocused) Color.White else LauncherColors.TextPrimary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
+                    Text(
+                        text = app.appLabel,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (isFocused) Color.White else LauncherColors.TextPrimary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
-        } else {
-            // No icon at all - just show name centered
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(LauncherColors.DarkSurfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = app.appLabel,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (isFocused) Color.White else LauncherColors.TextPrimary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
-                )
+
+            else -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(LauncherColors.DarkSurfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = app.appLabel,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (isFocused) Color.White else LauncherColors.TextPrimary,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
 
-        // App label at bottom (for banner mode)
-        if (app.hasBanner && app.appIcon != null) {
-            Text(
-                text = app.appLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(12.dp)
-            )
-        }
-
-        // New badge
         if (showNewBadge) {
             NewBadge(
                 modifier = Modifier
@@ -410,7 +504,8 @@ private fun MinimalCardContent(
         AppIcon(
             app = app,
             size = LauncherCardSizes.appIconMedium,
-            showShadow = isFocused
+            showShadow = isFocused,
+            showGlow = isFocused
         )
     }
 }
@@ -421,15 +516,27 @@ fun AppIcon(
     size: Dp,
     modifier: Modifier = Modifier,
     showShadow: Boolean = false,
+    showGlow: Boolean = false,
 ) {
     val icon = app.appIcon
+    val cornerRadius = size / 4
 
     Box(
         modifier = modifier
             .size(size)
             .then(
+                if (showGlow) {
+                    Modifier.drawBehind {
+                        drawCircle(
+                            color = LauncherColors.AccentBlue.copy(alpha = 0.15f),
+                            radius = this.size.minDimension / 2 + 12.dp.toPx()
+                        )
+                    }
+                } else Modifier
+            )
+            .then(
                 if (showShadow) {
-                    Modifier.shadow(8.dp, RoundedCornerShape(size / 4))
+                    Modifier.shadow(8.dp, RoundedCornerShape(cornerRadius))
                 } else Modifier
             ),
         contentAlignment = Alignment.Center
@@ -440,14 +547,14 @@ fun AppIcon(
                 contentDescription = app.appLabel,
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(size / 4)),
+                    .clip(RoundedCornerShape(cornerRadius)),
                 contentScale = ContentScale.Fit
             )
         } else {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(size / 4))
+                    .clip(RoundedCornerShape(cornerRadius))
                     .background(LauncherColors.DarkSurfaceVariant),
                 contentAlignment = Alignment.Center
             ) {

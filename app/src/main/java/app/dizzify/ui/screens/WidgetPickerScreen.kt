@@ -3,8 +3,12 @@ package app.dizzify.ui.screens
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -17,14 +21,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.ListItem as TvListItem
 import app.dizzify.helper.BitmapUtils
+import app.dizzify.ui.components.buttonPressFeedbackConstant
 import app.dizzify.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,17 +51,24 @@ fun WidgetPickerScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dims = LocalLauncherDimens.current
     val context = LocalContext.current
     val widgetManager = AppWidgetManager.getInstance(context)
 
     var widgetList by remember { mutableStateOf<List<WidgetListItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
+    val backFocusRequester = remember { FocusRequester() }
+
     LaunchedEffect(Unit) {
         isLoading = true
         widgetList = loadInstalledWidgets(context, widgetManager)
         isLoading = false
+    }
+
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            backFocusRequester.requestFocus()
+        }
     }
 
     Box(
@@ -63,19 +80,27 @@ fun WidgetPickerScreen(
             WidgetPickerHeader(
                 onDismiss = onDismiss,
                 widgetCount = widgetList.sumOf { it.widgets.size },
-                modifier = Modifier.padding(dims.screenPadding)
+                backFocusRequester = backFocusRequester
             )
 
             when {
-                isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = LauncherColors.AccentBlue)
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = LauncherColors.AccentBlue)
+                    }
                 }
-                widgetList.isEmpty() -> EmptyWidgetsState(modifier = Modifier.fillMaxSize())
-                else -> WidgetList(
-                    widgetList = widgetList,
-                    onWidgetSelected = onWidgetSelected,
-                    modifier = Modifier.fillMaxSize()
-                )
+                widgetList.isEmpty() -> {
+                    EmptyWidgetsState(modifier = Modifier.fillMaxSize())
+                }
+                else -> {
+                    WidgetList(
+                        widgetList = widgetList,
+                        onWidgetSelected = onWidgetSelected
+                    )
+                }
             }
         }
     }
@@ -85,10 +110,15 @@ fun WidgetPickerScreen(
 private fun WidgetPickerHeader(
     onDismiss: () -> Unit,
     widgetCount: Int,
-    modifier: Modifier = Modifier
+    backFocusRequester: FocusRequester
 ) {
+    var backFocused by remember { mutableStateOf(false) }
+    val view = LocalView.current
+
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(LauncherSpacing.screenPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
@@ -96,12 +126,36 @@ private fun WidgetPickerHeader(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(LauncherColors.DarkSurface)
+                .background(
+                    if (backFocused) LauncherColors.AccentBlue.copy(alpha = 0.2f)
+                    else Color.Transparent
+                )
+                .then(
+                    if (backFocused) Modifier.border(
+                        2.dp, LauncherColors.AccentBlue, RoundedCornerShape(12.dp)
+                    ) else Modifier
+                )
+                .focusRequester(backFocusRequester)
+                .onFocusChanged { state ->
+                    backFocused = state.isFocused
+                    if (state.isFocused) {
+                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    }
+                }
+                .onKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown &&
+                        (event.key == Key.DirectionCenter || event.key == Key.Enter)
+                    ) {
+                        onDismiss()
+                        true
+                    } else false
+                }
+                .focusable()
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.White
+                tint = if (backFocused) LauncherColors.AccentBlue else Color.White
             )
         }
 
@@ -125,17 +179,15 @@ private fun WidgetPickerHeader(
 @Composable
 private fun WidgetList(
     widgetList: List<WidgetListItem>,
-    onWidgetSelected: (AppWidgetProviderInfo) -> Unit,
-    modifier: Modifier = Modifier
+    onWidgetSelected: (AppWidgetProviderInfo) -> Unit
 ) {
-    val dims = LocalLauncherDimens.current
     val context = LocalContext.current
 
     LazyColumn(
-        modifier = modifier,
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = dims.screenPadding,
-            end = dims.screenPadding,
+            start = LauncherSpacing.screenPadding,
+            end = LauncherSpacing.screenPadding,
             bottom = LauncherSpacing.xxxl
         ),
         verticalArrangement = Arrangement.spacedBy(LauncherSpacing.sm)
@@ -153,7 +205,7 @@ private fun WidgetList(
             itemsIndexed(
                 items = group.widgets,
                 key = { _, info -> info.provider.flattenToString() }
-            ) { _, widgetInfo ->
+            ) { index, widgetInfo ->
                 WidgetInfoItem(
                     context = context,
                     widgetInfo = widgetInfo,
@@ -161,6 +213,7 @@ private fun WidgetList(
                 )
             }
 
+            // Spacer between app groups
             item(key = "spacer_${group.appPackage}") {
                 Spacer(modifier = Modifier.height(LauncherSpacing.md))
             }
@@ -175,97 +228,163 @@ private fun WidgetInfoItem(
     onClick: () -> Unit
 ) {
     val pm = context.packageManager
+    val view = LocalView.current
+    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
 
     var previewImage by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+
     LaunchedEffect(widgetInfo) {
         previewImage = loadWidgetPreview(context, widgetInfo)
     }
 
-    val label = remember(widgetInfo) { widgetInfo.loadLabel(pm) }
-    val sizeText = remember(widgetInfo) { "${widgetInfo.minWidth / 80}×${widgetInfo.minHeight / 80} cells" }
-    val desc = remember(widgetInfo) { widgetInfo.loadDescription(context)?.toString() }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.02f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "item_scale"
+    )
 
-    TvListItem(
-        selected = false,
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(LauncherColors.DarkBackground),
-                contentAlignment = Alignment.Center
-            ) {
-                val imageBitmap = previewImage?.asImageBitmap()
-                if (imageBitmap != null) {
-                    Image(
-                        bitmap = imageBitmap,
-                        contentDescription = "Widget preview",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                } else {
-                    Icon(
-                        Icons.Default.Widgets,
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = LauncherColors.TextTertiary
-                    )
+    val label = remember(widgetInfo) { widgetInfo.loadLabel(pm) }
+    val sizeText = remember(widgetInfo) {
+        "${widgetInfo.minWidth / 80}×${widgetInfo.minHeight / 80} cells"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                if (isFocused) LauncherColors.DarkSurfaceVariant
+                else LauncherColors.DarkSurface
+            )
+            .then(
+                if (isFocused) Modifier.border(
+                    width = 2.dp,
+                    color = LauncherColors.AccentBlue,
+                    shape = RoundedCornerShape(16.dp)
+                ) else Modifier
+            )
+            .focusRequester(focusRequester)
+            .onFocusChanged { state ->
+                isFocused = state.isFocused
+                if (state.isFocused) {
+                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 }
             }
-        },
-        headlineContent = {
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter)
+                ) {
+                    view.performHapticFeedback(buttonPressFeedbackConstant())
+                    onClick()
+                    true
+                } else false
+            }
+            .focusable()
+            .padding(LauncherSpacing.md),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(LauncherColors.DarkBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            val imageBitmap = previewImage?.asImageBitmap()
+            if (imageBitmap != null) {
+                Image(
+                    bitmap = imageBitmap,
+                    contentDescription = "Widget preview",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                Icon(
+                    Icons.Default.Widgets,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = LauncherColors.TextTertiary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(LauncherSpacing.md))
+
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = label.toString(),
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (isFocused) Color.White else LauncherColors.TextPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        },
-        supportingContent = {
-            Column {
-                Text(text = sizeText, style = MaterialTheme.typography.bodySmall, color = LauncherColors.TextSecondary)
-                if (!desc.isNullOrBlank()) {
-                    Text(
-                        text = desc,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LauncherColors.TextTertiary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        },
-        trailingContent = {
-            if (widgetInfo.configure != null) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = LauncherColors.AccentBlue.copy(alpha = 0.1f)
-                ) {
-                    Text(
-                        text = "Configurable",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LauncherColors.AccentBlue,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = sizeText,
+                style = MaterialTheme.typography.bodySmall,
+                color = LauncherColors.TextSecondary
+            )
+
+            // If available
+            widgetInfo.loadDescription(context)?.let { desc ->
+                Text(
+                    text = desc.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LauncherColors.TextTertiary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
-    )
+
+        // Configuration indicator
+        if (widgetInfo.configure != null) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = LauncherColors.AccentBlue.copy(alpha = 0.1f)
+            ) {
+                Text(
+                    text = "Configurable",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LauncherColors.AccentBlue,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
 private fun EmptyWidgetsState(modifier: Modifier = Modifier) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Icon(
                 Icons.Default.Widgets,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
                 tint = LauncherColors.TextTertiary
             )
+
             Spacer(modifier = Modifier.height(LauncherSpacing.lg))
-            Text(text = "No Widgets Available", style = MaterialTheme.typography.headlineMedium, color = Color.White)
+
+            Text(
+                text = "No Widgets Available",
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color.White
+            )
+
             Text(
                 text = "Install apps with widgets to see them here",
                 style = MaterialTheme.typography.bodyMedium,
@@ -302,7 +421,7 @@ private suspend fun loadWidgetPreview(
         val drawable = widgetInfo.loadPreviewImage(context, context.resources.displayMetrics.densityDpi)
             ?: widgetInfo.loadIcon(context, context.resources.displayMetrics.densityDpi)
         BitmapUtils.drawableToBitmap(drawable, defaultSize = 160)
-    } catch (_: Exception) {
+    } catch (e: Exception) {
         null
     }
 }

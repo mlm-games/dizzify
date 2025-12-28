@@ -1,51 +1,37 @@
 package app.dizzify.ui.components
 
 import android.view.HapticFeedbackConstants
-import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Widgets
-import androidx.compose.material.icons.outlined.AspectRatio
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.tv.material3.ListItem as TvListItem
 import app.dizzify.data.HomeItem
-import app.dizzify.ui.theme.LauncherColors
-import app.dizzify.ui.theme.LauncherSpacing
+import app.dizzify.ui.theme.*
 
 data class WidgetOption(
     val id: String,
@@ -66,80 +52,75 @@ fun WidgetOptionsSheet(
     onResize: (rowSpan: Int, columnSpan: Int) -> Unit
 ) {
     var showResizeDialog by remember { mutableStateOf(false) }
-    val view = LocalView.current
 
     val options = remember(widget) {
         buildList {
-            add(
-                WidgetOption(
-                    id = "configure",
-                    label = "Configure Widget",
-                    icon = Icons.Outlined.Settings,
-                    iconTint = LauncherColors.AccentBlue,
-                    action = onConfigure
-                )
-            )
-            add(
-                WidgetOption(
-                    id = "resize",
-                    label = "Resize Widget",
-                    icon = Icons.Outlined.AspectRatio,
-                    iconTint = LauncherColors.AccentTeal,
-                    action = { showResizeDialog = true }
-                )
-            )
-            add(
-                WidgetOption(
-                    id = "remove",
-                    label = "Remove Widget",
-                    icon = Icons.Outlined.Delete,
-                    iconTint = LauncherColors.Error,
-                    isDestructive = true,
-                    action = onRemove
-                )
-            )
+            add(WidgetOption(
+                id = "configure",
+                label = "Configure Widget",
+                icon = Icons.Outlined.Settings,
+                iconTint = LauncherColors.AccentBlue,
+                action = onConfigure
+            ))
+
+            add(WidgetOption(
+                id = "resize",
+                label = "Resize Widget",
+                icon = Icons.Outlined.AspectRatio,
+                iconTint = LauncherColors.AccentTeal,
+                action = { showResizeDialog = true }
+            ))
+
+            add(WidgetOption(
+                id = "remove",
+                label = "Remove Widget",
+                icon = Icons.Outlined.Delete,
+                iconTint = LauncherColors.Error,
+                isDestructive = true,
+                action = onRemove
+            ))
         }
     }
 
-    if (!isVisible) return
-
-    BackHandler(onBack = {
-        if (showResizeDialog) showResizeDialog = false else onDismiss()
-    })
-
-    Dialog(
-        onDismissRequest = {
-            if (showResizeDialog) showResizeDialog = false else onDismiss()
-        },
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.70f)),
-            contentAlignment = Alignment.Center
+    if (isVisible) {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                usePlatformDefaultWidth = false
+            )
         ) {
-            if (showResizeDialog) {
-                WidgetResizeDialog(
-                    currentRowSpan = widget.rowSpan,
-                    currentColumnSpan = widget.columnSpan,
-                    onResize = { rows, cols ->
-                        onResize(rows, cols)
-                        showResizeDialog = false
-                        onDismiss()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .onKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown && event.key == Key.Back) {
+                            onDismiss()
+                            true
+                        } else false
                     },
-                    onDismiss = { showResizeDialog = false }
-                )
-            } else {
-                WidgetOptionsContent(
-                    widget = widget,
-                    options = options,
-                    onDismiss = onDismiss
-                )
+                contentAlignment = Alignment.Center
+            ) {
+                if (showResizeDialog) {
+                    WidgetResizeDialog(
+                        currentRowSpan = widget.rowSpan,
+                        currentColumnSpan = widget.columnSpan,
+                        onResize = { rows, cols ->
+                            onResize(rows, cols)
+                            showResizeDialog = false
+                            onDismiss()
+                        },
+                        onDismiss = { showResizeDialog = false }
+                    )
+                } else {
+                    WidgetOptionsContent(
+                        widget = widget,
+                        options = options,
+                        onDismiss = onDismiss
+                    )
+                }
             }
         }
     }
@@ -151,18 +132,17 @@ private fun WidgetOptionsContent(
     options: List<WidgetOption>,
     onDismiss: () -> Unit
 ) {
+    val focusRequesters = remember { options.map { FocusRequester() } }
     val view = LocalView.current
 
-    // FIX: must be keyed to options
-    val focusRequesters = remember(options) { List(options.size) { FocusRequester() } }
-
-    LaunchedEffect(options) {
+    LaunchedEffect(Unit) {
         focusRequesters.firstOrNull()?.requestFocus()
     }
 
     Column(
         modifier = Modifier
-            .widthIn(min = 320.dp, max = 520.dp)
+            .width(380.dp)
+            .shadow(24.dp, RoundedCornerShape(28.dp))
             .clip(RoundedCornerShape(28.dp))
             .background(
                 Brush.verticalGradient(
@@ -218,34 +198,20 @@ private fun WidgetOptionsContent(
             modifier = Modifier.padding(bottom = LauncherSpacing.md)
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(LauncherSpacing.xs)) {
+        // Options
+        Column(
+            verticalArrangement = Arrangement.spacedBy(LauncherSpacing.xs)
+        ) {
             options.forEachIndexed { index, option ->
-                TvListItem(
-                    selected = false,
-                    onClick = {
+                WidgetOptionItem(
+                    option = option,
+                    focusRequester = focusRequesters[index],
+                    onAction = {
                         view.performHapticFeedback(buttonPressFeedbackConstant())
                         option.action()
-                        if (option.id != "resize") onDismiss()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequesters[index]),
-                    headlineContent = {
-                        Text(
-                            text = option.label,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = when {
-                                option.isDestructive -> LauncherColors.Error
-                                else -> LauncherColors.TextPrimary
-                            }
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = option.icon,
-                            contentDescription = option.label,
-                            tint = option.iconTint
-                        )
+                        if (option.id != "resize") {
+                            onDismiss()
+                        }
                     }
                 )
             }
@@ -254,13 +220,104 @@ private fun WidgetOptionsContent(
         Spacer(modifier = Modifier.height(LauncherSpacing.md))
 
         Text(
-            text = "BACK to close",
+            text = "Press BACK to close",
             style = MaterialTheme.typography.labelSmall,
             color = LauncherColors.TextTertiary
         )
     }
 }
 
+@Composable
+private fun WidgetOptionItem(
+    option: WidgetOption,
+    focusRequester: FocusRequester,
+    onAction: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val view = LocalView.current
+
+    val backgroundColor by animateColorAsState(
+        targetValue = when {
+            isFocused && option.isDestructive -> LauncherColors.Error.copy(alpha = 0.2f)
+            isFocused -> LauncherColors.AccentBlue.copy(alpha = 0.2f)
+            else -> Color.Transparent
+        },
+        label = "option_bg"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.02f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "option_scale"
+    )
+
+    LaunchedEffect(isFocused) {
+        if (isFocused) {
+            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
+            .then(
+                if (isFocused) Modifier.border(
+                    width = 2.dp,
+                    color = if (option.isDestructive)
+                        LauncherColors.Error.copy(alpha = 0.5f)
+                    else
+                        LauncherColors.AccentBlue.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(16.dp)
+                ) else Modifier
+            )
+            .focusRequester(focusRequester)
+            .onFocusChanged { isFocused = it.isFocused }
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter)
+                ) {
+                    onAction()
+                    true
+                } else false
+            }
+            .focusable()
+            .padding(LauncherSpacing.md),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(option.iconTint.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = option.icon,
+                contentDescription = option.label,
+                tint = option.iconTint,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(LauncherSpacing.md))
+
+        Text(
+            text = option.label,
+            style = MaterialTheme.typography.titleMedium,
+            color = when {
+                option.isDestructive && isFocused -> LauncherColors.Error
+                isFocused -> Color.White
+                else -> LauncherColors.TextPrimary
+            }
+        )
+    }
+}
 
 @Composable
 private fun WidgetResizeDialog(
@@ -352,8 +409,7 @@ private fun WidgetResizeDialog(
             Button(
                 onClick = { onResize(rowSpan, columnSpan) },
                 modifier = Modifier.weight(1f),
-                colors =
-                    ButtonDefaults.buttonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = LauncherColors.AccentBlue
                 )
             ) {
@@ -448,6 +504,7 @@ private fun SizeSelector(
         }
     }
 }
+
 
 fun buttonPressFeedbackConstant() = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
     HapticFeedbackConstants.CONFIRM
