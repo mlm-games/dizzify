@@ -1,6 +1,7 @@
 package app.dizzify
 
 import android.app.Application
+import android.appwidget.AppWidgetProviderInfo
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.dizzify.data.AppModel
@@ -239,6 +240,116 @@ class LauncherViewModel(
     fun updateShowNonTvApps(show: Boolean) {
         viewModelScope.launch {
             settingsRepo.update { it.copy(showNonTvApps = show) }
+        }
+    }
+
+    fun clearFromRecent(app: AppModel) {
+        viewModelScope.launch {
+            stateRepo.update { state ->
+                val history = state.recentAppHistory.toMutableMap()
+                history.remove(app.getKey())
+                state.copy(recentAppHistory = history)
+            }
+        }
+    }
+
+    fun addWidget(
+        appWidgetId: Int,
+        providerInfo: AppWidgetProviderInfo,
+        row: Int = 0,
+        column: Int = 0,
+        rowSpan: Int = 2,
+        columnSpan: Int = 2
+    ) {
+        viewModelScope.launch {
+            val widget = HomeItem.Widget(
+                appWidgetId = appWidgetId,
+                providerInfo = providerInfo,
+                packageName = providerInfo.provider.packageName,
+                providerClassName = providerInfo.provider.className,
+                row = row,
+                column = column,
+                rowSpan = rowSpan,
+                columnSpan = columnSpan
+            )
+
+            stateRepo.update { state ->
+                val currentLayout = state.homeLayout
+                val newItems = currentLayout.items + widget
+                state.copy(homeLayout = currentLayout.copy(items = newItems))
+            }
+        }
+    }
+
+    fun removeWidget(appWidgetId: Int) {
+        viewModelScope.launch {
+            stateRepo.update { state ->
+                val currentLayout = state.homeLayout
+                val newItems = currentLayout.items.filterNot { item ->
+                    item is HomeItem.Widget && item.appWidgetId == appWidgetId
+                }
+                state.copy(homeLayout = currentLayout.copy(items = newItems))
+            }
+        }
+    }
+
+    fun toggleFavorite(app: AppModel) {
+        viewModelScope.launch {
+            stateRepo.update { state ->
+                val currentLayout = state.homeLayout
+                val appKey = app.getKey()
+
+                val existingApp = currentLayout.items.filterIsInstance<HomeItem.App>()
+                    .find { it.id == appKey }
+
+                val newItems = if (existingApp != null) {
+                    currentLayout.items.filter { it.id != appKey }
+                } else {
+                    val nextColumn = currentLayout.items
+                        .filterIsInstance<HomeItem.App>()
+                        .maxOfOrNull { it.column + it.columnSpan } ?: 0
+
+                    currentLayout.items + HomeItem.App(
+                        appModel = app,
+                        row = 0,
+                        column = nextColumn
+                    )
+                }
+
+                state.copy(homeLayout = currentLayout.copy(items = newItems))
+            }
+        }
+    }
+
+    fun updateWidgetPosition(appWidgetId: Int, row: Int, column: Int) {
+        viewModelScope.launch {
+            stateRepo.update { state ->
+                val currentLayout = state.homeLayout
+                val newItems = currentLayout.items.map { item ->
+                    if (item is HomeItem.Widget && item.appWidgetId == appWidgetId) {
+                        item.copy(row = row, column = column)
+                    } else {
+                        item
+                    }
+                }
+                state.copy(homeLayout = currentLayout.copy(items = newItems))
+            }
+        }
+    }
+
+    fun updateWidgetSize(appWidgetId: Int, rowSpan: Int, columnSpan: Int) {
+        viewModelScope.launch {
+            stateRepo.update { state ->
+                val currentLayout = state.homeLayout
+                val newItems = currentLayout.items.map { item ->
+                    if (item is HomeItem.Widget && item.appWidgetId == appWidgetId) {
+                        item.copy(rowSpan = rowSpan, columnSpan = columnSpan)
+                    } else {
+                        item
+                    }
+                }
+                state.copy(homeLayout = currentLayout.copy(items = newItems))
+            }
         }
     }
 }

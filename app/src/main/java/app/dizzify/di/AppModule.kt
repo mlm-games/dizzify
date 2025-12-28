@@ -5,6 +5,7 @@ import app.dizzify.data.repository.AppRepository
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherSettingsSchema
 import app.dizzify.settings.LauncherStateSchema
+import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
 import io.github.mlmgames.settings.core.SettingsRepository
 import io.github.mlmgames.settings.core.datastore.createSettingsDataStore
@@ -27,6 +28,8 @@ val appModule = module {
 
 
     single { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+
+    single { LauncherWidgetHost(androidContext()) }
 
     single { SnackbarManager() }
 

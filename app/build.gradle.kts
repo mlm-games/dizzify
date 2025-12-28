@@ -123,9 +123,6 @@ dependencies {
     // Android lifecycle
     implementation(libs.lifecycle.viewmodel.ktx)
 
-    // Navigation
-    implementation(libs.navigation.fragment.ktx)
-
     // Work Manager
     implementation(libs.work.runtime.ktx)
 
@@ -143,9 +140,6 @@ dependencies {
     implementation(libs.kmp.settings.ui.compose)
     ksp(libs.kmp.settings.ksp)
 
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
@@ -158,13 +152,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     // Compose dependencies
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.navigation.compose)
     implementation(libs.constraintlayout.compose.android)
-    implementation(libs.kotlin.reflect)
+
     implementation(libs.androidbrowserhelper)
     implementation(libs.androidx.datastore.preferences.core)
 

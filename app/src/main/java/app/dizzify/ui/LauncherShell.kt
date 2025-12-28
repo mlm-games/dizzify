@@ -1,5 +1,6 @@
 package app.dizzify.ui
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -23,19 +24,22 @@ import app.dizzify.ui.screens.GamesScreen
 import app.dizzify.ui.screens.HiddenAppsScreen
 import app.dizzify.ui.screens.HomeScreen
 import app.dizzify.ui.screens.SettingsScreen
-import app.dizzify.ui.theme.LauncherTheme
 import androidx.navigation3.runtime.NavKey
+import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.LauncherSnackbarHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
+import app.dizzify.ui.screens.WidgetPickerScreen
+import app.dizzify.ui.theme.DizzifyTheme
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LauncherShell(
     viewModel: LauncherViewModel
 ) {
-    LauncherTheme {
+    DizzifyTheme {
         val backStack = rememberLauncherBackStack()
 
         val snackbarHostState = remember { SnackbarHostState() }
@@ -50,6 +54,7 @@ fun LauncherShell(
                 LauncherKey.Games -> SidebarDestination.Games
                 LauncherKey.Hidden -> SidebarDestination.Hidden
                 LauncherKey.Settings -> SidebarDestination.Settings
+                LauncherKey.WidgetPicker -> SidebarDestination.Home
                 is LauncherKey.AppDetails -> SidebarDestination.Apps
             }
         }
@@ -61,7 +66,7 @@ fun LauncherShell(
                     manager = snackbarManager
                 )
             }
-        ) { _ ->
+        ) {
             Row(modifier = Modifier.fillMaxSize()) {
                 LauncherSidebar(
                     currentDestination = currentDestination,
@@ -104,13 +109,43 @@ fun LauncherShell(
                             )
                         ),
                         entryProvider = entryProvider {
+                            entry<LauncherKey.WidgetPicker> {
+                                val widgetHost: LauncherWidgetHost = koinInject()
+
+                                WidgetPickerScreen(
+                                    onWidgetSelected = { providerInfo ->
+                                        val widgetId = widgetHost.allocateWidgetId()
+                                        if (widgetHost.bindWidget(widgetId, providerInfo)) {
+                                            viewModel.addWidget(widgetId, providerInfo)
+
+                                            if (widgetHost.needsConfiguration(widgetId)) {
+                                                val intent = widgetHost.createConfigurationIntent(widgetId)
+                                                if (intent != null) {
+                                                    // TODO: snack
+                                                }
+                                            }
+                                        }
+                                        backStack.removeAt(backStack.lastIndex)
+                                    },
+                                    onDismiss = {
+                                        backStack.removeAt(backStack.lastIndex)
+                                    }
+                                )
+                            }
+
                             entry<LauncherKey.Home> {
+                                val widgetHost: LauncherWidgetHost = koinInject()
+
                                 HomeScreen(
                                     viewModel = viewModel,
                                     onNavigateToApps = {
                                         backStack.clear(); backStack.add(
                                         LauncherKey.Apps
                                     )
+                                    },
+                                    widgetHost = widgetHost,
+                                    onNavigateToWidgetPicker = {
+                                        backStack.add(LauncherKey.WidgetPicker)
                                     }
                                 )
                             }
@@ -163,6 +198,9 @@ sealed interface LauncherKey : NavKey {
 
     @Serializable
     data object Hidden : LauncherKey
+
+    @Serializable
+    data object WidgetPicker : LauncherKey
 
     @Serializable
     data object Settings : LauncherKey

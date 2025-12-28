@@ -33,6 +33,3 @@ fun LauncherSnackbarHost(
 
     SnackbarHost(hostState = hostState)
 }
-
-@Composable
-fun snackbar(): SnackbarManager = koinInject()
