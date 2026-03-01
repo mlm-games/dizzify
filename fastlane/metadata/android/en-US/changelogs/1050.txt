@@ -1,0 +1,4 @@
+- Fix long press menu, and pause dev for some time
+- Add widgets screen (for testing)
+- banner fix
+- Update README.md
