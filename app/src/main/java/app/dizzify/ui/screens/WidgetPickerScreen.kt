@@ -3,6 +3,7 @@ package app.dizzify.ui.screens
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -333,14 +334,16 @@ private fun WidgetInfoItem(
             )
 
             // If available
-            widgetInfo.loadDescription(context)?.let { desc ->
-                Text(
-                    text = desc.toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LauncherColors.TextTertiary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                widgetInfo.loadDescription(context)?.let { desc ->
+                    Text(
+                        text = desc.toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LauncherColors.TextTertiary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
 
