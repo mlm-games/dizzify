@@ -24,12 +24,12 @@ kotlin {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.dizzify"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1050
         versionName = "v1.0.6"
 
