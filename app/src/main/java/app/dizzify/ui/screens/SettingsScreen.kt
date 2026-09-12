@@ -419,6 +419,10 @@ private fun SettingsCategoryContent(
                 item {
                     FontSettingsSection(viewModel = viewModel)
                 }
+
+                item {
+                    WallpaperSettingsSection(viewModel = viewModel)
+                }
             }
 
             is SettingsCategory.HomeScreen -> {
@@ -558,6 +562,20 @@ private fun SettingsCategoryContent(
                         )
 
                         SettingsToggle(
+                            title = "TV Inputs Row",
+                            description = "Show HDMI and other TV inputs on Home",
+                            isChecked = settings.showTvInputs,
+                            onCheckedChange = { viewModel.updateShowTvInputs(it) }
+                        )
+
+                        SettingsToggle(
+                            title = "Continue Watching",
+                            description = "Show Watch-Next programs from your apps",
+                            isChecked = settings.showWatchNext,
+                            onCheckedChange = { viewModel.updateShowWatchNext(it) }
+                        )
+
+                        SettingsToggle(
                             title = "Return to Home",
                             description = "Go back to Home after opening an app",
                             isChecked = settings.returnToHomeAfterApp,
@@ -640,6 +658,38 @@ private fun SettingsCategoryContent(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun WallpaperSettingsSection(viewModel: LauncherViewModel) {
+    val settings by viewModel.settings.collectAsState()
+
+    val wallpaperPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) viewModel.setWallpaperImage(uri)
+    }
+
+    SettingsSection(title = "Wallpaper") {
+        SettingsInfo(
+            title = "Home Background",
+            value = if (settings.wallpaperPath.isNotBlank()) "Custom image" else "Default",
+        )
+
+        SettingsClickable(
+            title = "Choose Wallpaper Image",
+            description = "Stored locally; used when the TV has no system wallpaper",
+            onClick = { wallpaperPicker.launch("image/*") },
+        )
+
+        if (settings.wallpaperPath.isNotBlank()) {
+            SettingsClickable(
+                title = "Reset Wallpaper",
+                description = "Back to the default background",
+                onClick = { viewModel.clearWallpaper() },
+            )
         }
     }
 }

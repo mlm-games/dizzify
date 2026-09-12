@@ -4,7 +4,6 @@ package app.dizzify.helper
 
 import android.annotation.SuppressLint
 import android.app.SearchManager
-import android.app.WallpaperManager
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -32,7 +31,6 @@ import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import app.dizzify.R
 import app.dizzify.data.AnimationConstants
@@ -310,17 +308,12 @@ fun setPlainWallpaperByTheme(context: Context, appTheme: Int) {
     }
 }
 
+/**
+ * Plain-color wallpaper with guaranteed fallback for TV firmware without
+ * WallpaperManager (see [WallpaperHelper]).
+ */
 fun setPlainWallpaper(context: Context, color: Int) {
-    try {
-        val bitmap = createBitmap(1000, 2000)
-        bitmap.eraseColor(context.getColor(color))
-        val manager = WallpaperManager.getInstance(context.applicationContext)
-        manager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_SYSTEM)
-        manager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_LOCK)
-        bitmap.recycle()
-    } catch (e: Exception) {
-        Log.e(TAG, "setPlainWallpaper failed", e)
-    }
+    WallpaperHelper.applyPlain(context, context.getColor(color))
 }
 
 fun getChangedAppTheme(context: Context, currentAppTheme: Int): Int {

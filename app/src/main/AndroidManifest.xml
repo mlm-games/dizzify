@@ -9,6 +9,8 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- for reading Watch-Next / preview channels published by media apps -->
+    <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
     <!--Used only for opening alarm app-->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 <!--    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"-->

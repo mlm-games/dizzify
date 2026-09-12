@@ -8,12 +8,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
+import app.dizzify.helper.WallpaperHelper
 import app.dizzify.LauncherViewModel
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
@@ -31,7 +30,10 @@ fun HomeScreen(
     val allApps by viewModel.apps.collectAsState()
     val hiddenApps by viewModel.hiddenApps.collectAsState()
     val launcherState by viewModel.state.collectAsState()
+    val settings by viewModel.settings.collectAsState()
     val ui by viewModel.ui.collectAsState()
+    val tvInputs by viewModel.tvInputs.collectAsState()
+    val watchNext by viewModel.watchNext.collectAsState()
 
     val context = LocalContext.current
     var selectedApp by remember { mutableStateOf<AppModel?>(null) }
@@ -56,24 +58,16 @@ fun HomeScreen(
         }.take(12)
     }
 
+    val wallpaperBackground = remember(settings.wallpaperPath) {
+        WallpaperHelper.resolveBackground(context, settings.wallpaperPath)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(LauncherColors.DarkBackground)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            LauncherColors.AccentBlue.copy(alpha = 0.05f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
+        HomeWallpaperLayer(background = wallpaperBackground)
 
         Column(
             modifier = Modifier
@@ -95,6 +89,15 @@ fun HomeScreen(
             )
 
             Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
+
+            if (settings.showWatchNext && watchNext.isNotEmpty()) {
+                WatchNextRow(
+                    items = watchNext,
+                    onItemClick = { viewModel.playWatchNext(it) }
+                )
+
+                Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
+            }
 
             if (homeApps.isNotEmpty()) {
                 AppRow(
@@ -156,6 +159,15 @@ fun HomeScreen(
                     },
                     cardStyle = CardStyle.STANDARD,
                     accentColor = LauncherColors.AccentTeal
+                )
+
+                Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
+            }
+
+            if (settings.showTvInputs && tvInputs.isNotEmpty()) {
+                TvInputsRow(
+                    inputs = tvInputs,
+                    onInputClick = { viewModel.switchTvInput(it) }
                 )
 
                 Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))

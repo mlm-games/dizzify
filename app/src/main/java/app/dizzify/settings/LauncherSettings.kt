@@ -47,7 +47,7 @@ enum class SearchBarPosition { Top, Bottom }
 @Serializable
 enum class DefaultScreen { Home, Apps }
 
-@SchemaVersion(version = 4) // v4: int modes (fontWeight, alignments, spacing, bar position, default screen, alias mode) became enums
+@SchemaVersion(version = 5)
 @Serializable
 data class LauncherSettings(
 //    @Setting(
@@ -138,6 +138,27 @@ data class LauncherSettings(
         key = "prefer_tv_launch"
     )
     val preferTvLaunch: Boolean = true,
+
+    @Setting(
+        title = "Show TV Inputs Row",
+        description = "HDMI and other TV inputs on the home screen",
+        category = Tv::class,
+        type = Toggle::class,
+        key = "show_tv_inputs"
+    )
+    val showTvInputs: Boolean = true,
+
+    @Setting(
+        title = "Show Continue Watching",
+        description = "Watch-Next programs published by your apps",
+        category = Tv::class,
+        type = Toggle::class,
+        key = "show_watch_next"
+    )
+    val showWatchNext: Boolean = true,
+
+    @Persisted(key = "wallpaper_path")
+    val wallpaperPath: String = "",
 
     @Setting(
         title = "Show System Apps",

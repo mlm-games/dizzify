@@ -27,7 +27,13 @@ import app.dizzify.data.WidgetConstants
 import app.dizzify.data.repository.AppRepository
 import app.dizzify.helper.PermissionManager
 import app.dizzify.helper.SearchAliasUtils
+import app.dizzify.helper.VoiceSearch
+import app.dizzify.helper.WallpaperHelper
 import app.dizzify.helper.getScreenDimensions
+import app.dizzify.platform.tv.TvInputEntry
+import app.dizzify.platform.tv.TvInputs
+import app.dizzify.platform.tv.WatchNext
+import app.dizzify.platform.tv.WatchNextItem
 import app.dizzify.settings.ImportExportState
 import app.dizzify.settings.LauncherBackupHelper
 import app.dizzify.settings.LauncherSettings
@@ -147,6 +153,10 @@ class LauncherViewModel(
             runCatching {
                 appRepository.loadApps(forceEmit = forceEmit)
                 appRepository.loadHiddenApps()
+                _tvInputs.value = TvInputs.list(context)
+                if (settingsRepo.flow.first().showWatchNext) {
+                    _watchNext.value = WatchNext.query(context)
+                }
             }.onFailure { e -> Logger.e(e) { "Reload failed ($reason)" } }
         }
     }
@@ -154,12 +164,26 @@ class LauncherViewModel(
     override fun onCleared() {
         runCatching { launcherAppsService.unregisterCallback(launcherAppsCallback) }
         runCatching { context.unregisterReceiver(refreshReceiver) }
+        runCatching {
+            WatchNext.unobserve(context.contentResolver, watchNextObserver)
+            watchNextObserver = null
+        }
         super.onCleared()
     }
 
+
+    private val _tvInputs = MutableStateFlow<List<TvInputEntry>>(emptyList())
+    val tvInputs: StateFlow<List<TvInputEntry>> = _tvInputs.asStateFlow()
+
+    private val _watchNext = MutableStateFlow<List<WatchNextItem>>(emptyList())
+    val watchNext: StateFlow<List<WatchNextItem>> = _watchNext.asStateFlow()
+
+    private var watchNextJob: Job? = null
+    private var watchNextObserver: android.database.ContentObserver? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     private val _ui = MutableStateFlow(LauncherUiState())
     val ui: StateFlow<LauncherUiState> = _ui.asStateFlow()
-
     val settings: StateFlow<LauncherSettings> =
         settingsRepo.flow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LauncherSettings())
 
@@ -215,7 +239,21 @@ class LauncherViewModel(
             }
         }.onFailure { e -> Logger.e(e) { "Failed to register refresh receiver" } }
 
-        // Sync home-grid dimensions from settings (ported from CCLauncher).
+        viewModelScope.launch(Dispatchers.IO) {
+            _tvInputs.value = TvInputs.list(context)
+            if (settingsRepo.flow.first().showWatchNext) {
+                _watchNext.value = WatchNext.query(context)
+            }
+        }
+        watchNextObserver = WatchNext.observe(context.contentResolver, mainHandler) {
+            refreshWatchNext()
+        }
+        viewModelScope.launch {
+            settingsRepo.flow.map { it.showWatchNext }.distinctUntilChanged().collect {
+                refreshWatchNext()
+            }
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             settingsRepo.flow
                 .map { it.homeScreenRows to it.homeScreenColumns }
@@ -328,6 +366,22 @@ class LauncherViewModel(
                 .take(12)
                 .toList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun refreshTvInputs() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _tvInputs.value = TvInputs.list(context)
+        }
+    }
+
+    fun refreshWatchNext() {
+        watchNextJob?.cancel()
+        watchNextJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(400) // Debounce observer bursts.
+            _watchNext.value =
+                if (settingsRepo.flow.first().showWatchNext) WatchNext.query(context)
+                else emptyList()
+        }
+    }
 
     fun launch(app: AppModel, forceMode: AppLaunchMode = AppLaunchMode.AUTO) {
         viewModelScope.launch {
@@ -819,6 +873,60 @@ class LauncherViewModel(
             settingsRepo.update { it.copy(showNonTvApps = show) }
         }
     }
+
+    fun updateShowTvInputs(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showTvInputs = show) }
+        }
+    }
+
+    fun updateShowWatchNext(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showWatchNext = show) }
+        }
+    }
+
+    fun switchTvInput(entry: TvInputEntry) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (!TvInputs.switch(context, entry)) {
+                snackbarManager.show(message = "Couldn't switch to ${entry.label}")
+            }
+        }
+    }
+
+    fun playWatchNext(item: WatchNextItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (!WatchNext.play(context, item)) {
+                snackbarManager.show(message = "Couldn't open ${item.title}")
+            }
+        }
+    }
+
+    fun setWallpaperImage(uri: Uri?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val path = uri?.let { WallpaperHelper.storeCustom(context, it) }
+            if (uri != null && path == null) {
+                snackbarManager.show(message = "Couldn't set wallpaper")
+                return@launch
+            }
+            runCatching { settingsRepo.update { it.copy(wallpaperPath = path.orEmpty()) } }
+        }
+    }
+
+    fun clearWallpaper() {
+        viewModelScope.launch(Dispatchers.IO) {
+            WallpaperHelper.clear(context)
+            runCatching { settingsRepo.update { it.copy(wallpaperPath = "") } }
+        }
+    }
+
+    fun applyPlainWallpaper(@androidx.annotation.ColorInt color: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            WallpaperHelper.applyPlain(context, color)
+        }
+    }
+
+    fun isVoiceSearchAvailable(): Boolean = VoiceSearch.isAvailable(context)
 
     fun updatePreferTvLaunch(prefer: Boolean) {
         viewModelScope.launch {

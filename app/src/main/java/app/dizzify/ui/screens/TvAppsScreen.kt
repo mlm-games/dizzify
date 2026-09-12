@@ -1,5 +1,7 @@
 package app.dizzify.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
+import app.dizzify.helper.VoiceSearch
 import app.dizzify.helper.openSearch
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
@@ -53,8 +56,15 @@ fun AppsScreen(
     val searchFocusRequester = remember { FocusRequester() }
     val gridState = rememberLazyGridState()
 
-    // Auto-open the sole match (ported from CCLauncher autoOpenFilteredApp).
-    // consumedQuery guards against relaunching when returning from the app.
+    val voiceAvailable = remember { viewModel.isVoiceSearchAvailable() }
+    val voiceLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            VoiceSearch.parseResult(result.data)?.let { viewModel.setQuery(it) }
+        }
+    }
+
     var consumedQuery by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(apps, ui.query, settings.autoOpenFilteredApp) {
         if (settings.autoOpenFilteredApp &&
@@ -82,6 +92,9 @@ fun AppsScreen(
                 onViewModeChange = { viewMode = it },
                 appCount = apps.size,
                 searchFocusRequester = searchFocusRequester,
+                onVoiceSearch = if (voiceAvailable) {
+                    { runCatching { voiceLauncher.launch(VoiceSearch.intent()) } }
+                } else null,
                 modifier = Modifier.padding(
                     start = LauncherSpacing.screenPadding,
                     end = LauncherSpacing.screenPadding,
@@ -179,6 +192,7 @@ private fun AppsHeader(
     onViewModeChange: (AppsViewMode) -> Unit,
     appCount: Int,
     searchFocusRequester: FocusRequester,
+    onVoiceSearch: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -228,6 +242,7 @@ private fun AppsHeader(
             onQueryChange = onQueryChange,
             onSearch = onSearch,
             focusRequester = searchFocusRequester,
+            onVoiceSearch = onVoiceSearch,
             modifier = Modifier.fillMaxWidth()
         )
     }
