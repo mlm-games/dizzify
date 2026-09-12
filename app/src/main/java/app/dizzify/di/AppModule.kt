@@ -65,7 +65,8 @@ val appModule = module {
         LauncherViewModel(
             app = androidContext().applicationContext as android.app.Application,
             settingsRepo = get(named("settings")),
-            stateRepo = get(named("state"))
+            stateRepo = get(named("state")),
+            appRepository = get()
         )
     }
 }

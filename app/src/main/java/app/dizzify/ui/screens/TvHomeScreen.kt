@@ -177,7 +177,7 @@ fun HomeScreen(
                 },
                 onOpen = { viewModel.launch(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) },
-                onToggleFavorite = { /* TODO: Implement favorites */ },
+                onToggleFavorite = { viewModel.toggleFavorite(app) },
                 isFavorite = homeApps.any { it.getKey() == app.getKey() },
                 isHidden = hiddenApps.any { it.getKey() == app.getKey() }
             )
