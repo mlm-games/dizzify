@@ -33,8 +33,10 @@ import app.dizzify.BuildConfig
 import app.dizzify.LauncherViewModel
 import app.dizzify.helper.openUrl
 import app.dizzify.settings.ImportExportState
+import app.dizzify.settings.DefaultScreen
 import app.dizzify.settings.SearchType
 import app.dizzify.settings.SortOrder
+import app.dizzify.settings.TextWeight
 import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.dialogs.PinLockDialog
 import app.dizzify.ui.theme.*
@@ -565,10 +567,12 @@ private fun SettingsCategoryContent(
                         SettingsDropdown(
                             title = "Default Screen",
                             description = "Where the launcher starts and Home returns",
-                            currentValue = if (settings.defaultScreen == 1) "Apps" else "Home",
+                            currentValue = if (settings.defaultScreen == DefaultScreen.Apps) "Apps" else "Home",
                             options = listOf("Home", "Apps"),
                             onOptionSelected = { selected ->
-                                viewModel.updateDefaultScreen(if (selected == "Apps") 1 else 0)
+                                viewModel.updateDefaultScreen(
+                                    if (selected == "Apps") DefaultScreen.Apps else DefaultScreen.Home
+                                )
                             }
                         )
                     }
@@ -652,6 +656,7 @@ private fun FontSettingsSection(viewModel: LauncherViewModel) {
     }
 
     val weightNames = listOf("Thin", "Light", "Normal", "Medium", "Bold", "Black")
+    val weightValues = TextWeight.entries
 
     SettingsSection(title = "Font") {
         SettingsInfo(
@@ -671,10 +676,11 @@ private fun FontSettingsSection(viewModel: LauncherViewModel) {
         SettingsDropdown(
             title = "Font Weight",
             description = "Bolder text reads better from the couch",
-            currentValue = weightNames.getOrElse(settings.fontWeight) { "Normal" },
+            currentValue = weightNames[settings.fontWeight.ordinal.coerceIn(weightNames.indices)],
             options = weightNames,
             onOptionSelected = { selected ->
-                viewModel.updateFontWeight(weightNames.indexOf(selected).coerceAtLeast(0))
+                val index = weightNames.indexOf(selected).coerceIn(weightValues.indices)
+                viewModel.updateFontWeight(weightValues[index])
             }
         )
 

@@ -1,6 +1,7 @@
 package app.dizzify.helper
 
 import android.icu.text.Transliterator
+import app.dizzify.settings.SearchAliasesMode
 import java.text.Normalizer
 import java.util.Locale
 
@@ -8,13 +9,6 @@ import java.util.Locale
  * Utilities for building and matching search aliases (transliteration and keyboard layout swap).
  */
 object SearchAliasUtils {
-
-    object Mode {
-        const val OFF = 0
-        const val TRANSLITERATION = 1
-        const val KEYBOARD_SWAP = 2
-        const val BOTH = 3
-    }
 
     // RU<->EN keyboard layout (ЙЦУКЕН ↔ QWERTY) mapping; includes some punctuation on main rows
     private val en = charArrayOf(
@@ -78,7 +72,7 @@ object SearchAliasUtils {
     fun buildAppAliases(
         label: String,
         packageName: String?,
-        mode: Int,
+        mode: SearchAliasesMode,
         includePkg: Boolean
     ): Set<String> {
         val out = LinkedHashSet<String>(8)
@@ -92,7 +86,7 @@ object SearchAliasUtils {
             out += asciiFold(pkgTail)
         }
 
-        if (mode == Mode.TRANSLITERATION || mode == Mode.BOTH) {
+        if (mode == SearchAliasesMode.Transliteration || mode == SearchAliasesMode.Both) {
             val toLatin = normalize(anyToLatin(label))
             val toCyr = normalize(latinToCyrillic(label))
             out += toLatin
@@ -100,7 +94,7 @@ object SearchAliasUtils {
             out += toCyr
         }
 
-        if (mode == Mode.KEYBOARD_SWAP || mode == Mode.BOTH) {
+        if (mode == SearchAliasesMode.KeyboardSwap || mode == SearchAliasesMode.Both) {
             out += normalize(swapKeyboardLayout(label, ruToEnDirection = true))
             out += normalize(swapKeyboardLayout(label, ruToEnDirection = false))
         }
@@ -111,13 +105,13 @@ object SearchAliasUtils {
     /**
      * Build normalized variants of a user query based on selected mode.
      */
-    fun buildQueryVariants(query: String, mode: Int): Set<String> {
+    fun buildQueryVariants(query: String, mode: SearchAliasesMode): Set<String> {
         val q = normalize(query)
         val out = LinkedHashSet<String>(8)
         out += q
         out += asciiFold(q)
 
-        if (mode == Mode.TRANSLITERATION || mode == Mode.BOTH) {
+        if (mode == SearchAliasesMode.Transliteration || mode == SearchAliasesMode.Both) {
             val toLatin = normalize(anyToLatin(query))
             val toCyr = normalize(latinToCyrillic(query))
             out += toLatin
@@ -125,7 +119,7 @@ object SearchAliasUtils {
             out += toCyr
         }
 
-        if (mode == Mode.KEYBOARD_SWAP || mode == Mode.BOTH) {
+        if (mode == SearchAliasesMode.KeyboardSwap || mode == SearchAliasesMode.Both) {
             out += normalize(swapKeyboardLayout(query, ruToEnDirection = true))
             out += normalize(swapKeyboardLayout(query, ruToEnDirection = false))
         }

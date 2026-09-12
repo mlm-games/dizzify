@@ -193,7 +193,7 @@ fun HomeScreen(
                 isHidden = hiddenApps.any { it.getKey() == app.getKey() },
                 onOpenTv = if (app.supportsBoth) ({ viewModel.launchInTvMode(app) }) else null,
                 onOpenMobile = if (app.supportsBoth) ({ viewModel.launchInMobileMode(app) }) else null,
-                launchMode = AppLaunchMode.of(launcherState.appLaunchModes[app.getKey()]),
+                launchMode = launcherState.appLaunchModes[app.getKey()] ?: AppLaunchMode.AUTO,
                 onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
                 onRename = { viewModel.renameApp(app, it) },
                 onToggleHome = { viewModel.toggleHomeApp(app) },

@@ -29,7 +29,25 @@ enum class SortOrder { AZ, ZA, Recent }
 @Serializable
 enum class SearchType { Contains, Fuzzy, StartsWith, Exact }
 
-@SchemaVersion(version = 3)
+@Serializable
+enum class SearchAliasesMode { Off, Transliteration, KeyboardSwap, Both }
+
+@Serializable
+enum class TextWeight { Thin, Light, Normal, Medium, Bold, Black }
+
+@Serializable
+enum class ItemSpacing { None, Small, Medium, Large }
+
+@Serializable
+enum class LabelAlignment { Left, Center, Right }
+
+@Serializable
+enum class SearchBarPosition { Top, Bottom }
+
+@Serializable
+enum class DefaultScreen { Home, Apps }
+
+@SchemaVersion(version = 4) // v4: int modes (fontWeight, alignments, spacing, bar position, default screen, alias mode) became enums
 @Serializable
 data class LauncherSettings(
 //    @Setting(
@@ -85,7 +103,7 @@ data class LauncherSettings(
         key = "search_aliases_mode",
         options = ["Off", "Transliteration", "Keyboard Swap", "Both"]
     )
-    val searchAliasesMode: Int = 0,
+    val searchAliasesMode: SearchAliasesMode = SearchAliasesMode.Off,
 
     @Setting(
         title = "Include Package Names in Search",
@@ -156,7 +174,7 @@ data class LauncherSettings(
     val returnToHomeAfterApp: Boolean = false,
 
     @Persisted(key = "default_screen")
-    val defaultScreen: Int = 0,
+    val defaultScreen: DefaultScreen = DefaultScreen.Home,
 
     @Persisted(key = "show_web_search_option")
     val showWebSearchOption: Boolean = true,
@@ -168,7 +186,7 @@ data class LauncherSettings(
     val animationSpeed: Float = 1.0f,
 
     @Persisted(key = "font_weight")
-    val fontWeight: Int = 2,
+    val fontWeight: TextWeight = TextWeight.Normal,
 
     @Persisted(key = "use_system_font")
     val useSystemFont: Boolean = true,
@@ -177,7 +195,7 @@ data class LauncherSettings(
     val customFontPath: String = "",
 
     @Persisted(key = "item_spacing")
-    val itemSpacing: Int = 1,
+    val itemSpacing: ItemSpacing = ItemSpacing.Small,
 
     @Persisted(key = "search_results_use_home_font")
     val searchResultsUseHomeFont: Boolean = false,
@@ -198,10 +216,10 @@ data class LauncherSettings(
     val showHomeScreenIcons: Boolean = false,
 
     @Persisted(key = "app_label_alignment")
-    val appLabelAlignment: Int = 0,
+    val appLabelAlignment: LabelAlignment = LabelAlignment.Left,
 
     @Persisted(key = "search_results_alignment")
-    val searchResultsAlignment: Int = 0,
+    val searchResultsAlignment: LabelAlignment = LabelAlignment.Left,
 
     @Persisted(key = "scale_home_apps")
     val scaleHomeApps: Boolean = true,
@@ -213,7 +231,7 @@ data class LauncherSettings(
     val homeScreenColumns: Int = 4,
 
     @Persisted(key = "search_bar_position")
-    val searchBarPosition: Int = 0,
+    val searchBarPosition: SearchBarPosition = SearchBarPosition.Top,
 
     @Persisted(key = "reverse_search_results")
     val reverseSearchResults: Boolean = false,

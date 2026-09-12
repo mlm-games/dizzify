@@ -46,10 +46,10 @@ suspend fun SettingsRepository<LauncherState>.setHomeLayout(layout: app.dizzify.
     update { it.copy(homeLayout = layout) }
 }
 
-suspend fun SettingsRepository<LauncherState>.setAppLaunchMode(appKey: String, mode: String?) {
+suspend fun SettingsRepository<LauncherState>.setAppLaunchMode(appKey: String, mode: AppLaunchMode?) {
     update { cur ->
         val map = cur.appLaunchModes.toMutableMap()
-        if (mode.isNullOrBlank() || mode == AppLaunchMode.AUTO.name) {
+        if (mode == null || mode == AppLaunchMode.AUTO) {
             map.remove(appKey)
         } else {
             map[appKey] = mode

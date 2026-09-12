@@ -402,7 +402,7 @@ class AppRepository(
         val preferTv = try { settings?.preferTvLaunch } catch (_: Exception) { true } ?: true
 
         val storedOverride = try {
-            AppLaunchMode.of(stateRepo.flow.first().appLaunchModes[appModel.getKey()])
+            stateRepo.flow.first().appLaunchModes[appModel.getKey()] ?: AppLaunchMode.AUTO
         } catch (_: Exception) {
             AppLaunchMode.AUTO
         }

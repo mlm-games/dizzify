@@ -25,6 +25,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import app.dizzify.LauncherViewModel
+import app.dizzify.settings.DefaultScreen
 import app.dizzify.ui.components.SidebarDestination
 import app.dizzify.ui.components.LauncherSidebar
 import app.dizzify.ui.screens.AppsScreen
@@ -60,7 +61,7 @@ fun LauncherShell(
         useSystemFont = settings.useSystemFont
     ) {
         val backStack = rememberLauncherBackStack(
-            if (settings.defaultScreen == 1) LauncherKey.Apps else LauncherKey.Home
+            if (settings.defaultScreen == DefaultScreen.Apps) LauncherKey.Apps else LauncherKey.Home
         )
 
         val snackbarHostState = remember { SnackbarHostState() }
@@ -106,7 +107,7 @@ fun LauncherShell(
                     }
                     LauncherEvent.NavigateHome -> {
                         val home: LauncherKey =
-                            if (settings.defaultScreen == 1) LauncherKey.Apps else LauncherKey.Home
+                            if (settings.defaultScreen == DefaultScreen.Apps) LauncherKey.Apps else LauncherKey.Home
                         backStack.apply { clear(); add(home) }
                     }
                 }

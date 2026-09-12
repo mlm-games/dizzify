@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.dizzify.settings.TextWeight
 import app.dizzify.settings.ThemeMode
 import java.io.File
 
@@ -233,12 +234,12 @@ private val LightColorScheme = lightColorScheme(
     onError = Color.White
 )
 
-fun fontWeightOf(setting: Int): FontWeight? = when (setting) {
-    0 -> FontWeight.Thin
-    1 -> FontWeight.Light
-    3 -> FontWeight.Medium
-    4 -> FontWeight.Bold
-    5 -> FontWeight.Black
+fun fontWeightOf(weight: TextWeight): FontWeight? = when (weight) {
+    TextWeight.Thin -> FontWeight.Thin
+    TextWeight.Light -> FontWeight.Light
+    TextWeight.Medium -> FontWeight.Medium
+    TextWeight.Bold -> FontWeight.Bold
+    TextWeight.Black -> FontWeight.Black
     else -> null
 }
 
@@ -246,7 +247,7 @@ fun fontWeightOf(setting: Int): FontWeight? = when (setting) {
 fun LauncherTheme(
     theme: ThemeMode = ThemeMode.System,
     textSizeScale: Float = 1f,
-    fontWeight: Int = 2,
+    fontWeight: TextWeight = TextWeight.Normal,
     customFontPath: String = "",
     useSystemFont: Boolean = true,
     content: @Composable () -> Unit

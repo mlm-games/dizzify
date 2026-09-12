@@ -56,11 +56,7 @@ object AppKey {
 }
 
 /** How a specific app should be launched when it supports both TV and mobile entries. */
+@Serializable
 enum class AppLaunchMode {
-    AUTO, TV, MOBILE;
-
-    companion object {
-        fun of(raw: String?): AppLaunchMode =
-            runCatching { valueOf(raw ?: "AUTO") }.getOrDefault(AUTO)
-    }
+    AUTO, TV, MOBILE
 }

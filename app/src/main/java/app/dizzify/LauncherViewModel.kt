@@ -32,8 +32,14 @@ import app.dizzify.settings.ImportExportState
 import app.dizzify.settings.LauncherBackupHelper
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
+import app.dizzify.settings.LabelAlignment
+import app.dizzify.settings.DefaultScreen
+import app.dizzify.settings.ItemSpacing
+import app.dizzify.settings.SearchAliasesMode
+import app.dizzify.settings.SearchBarPosition
 import app.dizzify.settings.SearchType
 import app.dizzify.settings.SortOrder
+import app.dizzify.settings.TextWeight
 import app.dizzify.settings.ThemeMode
 import app.dizzify.settings.clearCustomFont
 import app.dizzify.settings.markLaunched
@@ -234,7 +240,7 @@ class LauncherViewModel(
                     .map { it.searchAliasesMode to it.searchIncludePackageNames }
                     .distinctUntilChanged()
             ) { allApps, (mode, includePkg) ->
-                if (mode == SearchAliasUtils.Mode.OFF && !includePkg) {
+                if (mode == SearchAliasesMode.Off && !includePkg) {
                     emptyMap()
                 } else {
                     buildMap(allApps.size) {
@@ -480,7 +486,7 @@ class LauncherViewModel(
         viewModelScope.launch { settingsRepo.update { it.copy(returnToHomeAfterApp = returnHome) } }
     }
 
-    fun updateDefaultScreen(screen: Int) {
+    fun updateDefaultScreen(screen: DefaultScreen) {
         viewModelScope.launch { settingsRepo.update { it.copy(defaultScreen = screen) } }
     }
 
@@ -496,7 +502,7 @@ class LauncherViewModel(
         viewModelScope.launch { settingsRepo.update { it.copy(animationSpeed = speed) } }
     }
 
-    fun updateFontWeight(weight: Int) {
+    fun updateFontWeight(weight: TextWeight) {
         viewModelScope.launch { settingsRepo.update { it.copy(fontWeight = weight) } }
     }
 
@@ -504,7 +510,7 @@ class LauncherViewModel(
         viewModelScope.launch { settingsRepo.update { it.copy(useSystemFont = use) } }
     }
 
-    fun updateItemSpacing(spacing: Int) {
+    fun updateItemSpacing(spacing: ItemSpacing) {
         viewModelScope.launch { settingsRepo.update { it.copy(itemSpacing = spacing) } }
     }
 
@@ -532,11 +538,11 @@ class LauncherViewModel(
         viewModelScope.launch { settingsRepo.update { it.copy(showHomeScreenIcons = show) } }
     }
 
-    fun updateAppLabelAlignment(alignment: Int) {
+    fun updateAppLabelAlignment(alignment: LabelAlignment) {
         viewModelScope.launch { settingsRepo.update { it.copy(appLabelAlignment = alignment) } }
     }
 
-    fun updateSearchResultsAlignment(alignment: Int) {
+    fun updateSearchResultsAlignment(alignment: LabelAlignment) {
         viewModelScope.launch { settingsRepo.update { it.copy(searchResultsAlignment = alignment) } }
     }
 
@@ -593,7 +599,7 @@ class LauncherViewModel(
         }
     }
 
-    fun updateSearchBarPosition(position: Int) {
+    fun updateSearchBarPosition(position: SearchBarPosition) {
         viewModelScope.launch { settingsRepo.update { it.copy(searchBarPosition = position) } }
     }
 
@@ -790,6 +796,12 @@ class LauncherViewModel(
         }
     }
 
+    fun updateSearchAliasesMode(mode: SearchAliasesMode) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(searchAliasesMode = mode) }
+        }
+    }
+
     fun updateSearchIncludePackageNames(include: Boolean) {
         viewModelScope.launch {
             settingsRepo.update { it.copy(searchIncludePackageNames = include) }
@@ -845,7 +857,7 @@ class LauncherViewModel(
 
     fun setAppLaunchMode(app: AppModel, mode: AppLaunchMode) {
         viewModelScope.launch {
-            runCatching { stateRepo.setAppLaunchMode(app.getKey(), mode.name) }
+            runCatching { stateRepo.setAppLaunchMode(app.getKey(), mode) }
                 .onFailure { e ->
                     Logger.e(e) { "Failed to set launch mode for ${app.appLabel}" }
                 }
