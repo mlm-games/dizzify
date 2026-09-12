@@ -28,13 +28,12 @@ android {
         applicationId = "app.dizzify"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1060
-        versionName = "v1.0.6"
+        versionCode = 1100
+        versionName = "v1.1.0"
 
         androidResources {
             localeFilters += setOf("en", "ar", "de", "es-rES", "es-rUS", "fr", "hr", "hu", "in", "it", "ja", "pl", "pt-rBR", "ru-rRU", "sv", "tr", "uk", "zh")
         }
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -166,18 +165,7 @@ dependencies {
 
     implementation(libs.androidbrowserhelper)
     implementation(libs.androidx.datastore.preferences.core)
-    implementation(libs.timber)
-
-    // Testing
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    testImplementation(libs.turbine)
-    testImplementation(libs.kotlinx.coroutines.test)
-
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation(libs.kermit)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

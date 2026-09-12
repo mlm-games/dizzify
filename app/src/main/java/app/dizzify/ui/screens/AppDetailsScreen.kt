@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import app.dizzify.LauncherViewModel
 import app.dizzify.ui.theme.LauncherColors
 import app.dizzify.ui.theme.LauncherSpacing
-import timber.log.Timber
+import co.touchlab.kermit.Logger
 
 @Composable
 fun AppDetailsScreen(
@@ -42,7 +42,7 @@ fun AppDetailsScreen(
     if (app == null) {
         // App not found, go back
         LaunchedEffect(Unit) {
-            Timber.w("App with key $appKey not found")
+            Logger.w { "App with key $appKey not found" }
             onBack()
         }
         return
@@ -154,7 +154,7 @@ fun AppDetailsScreen(
                                 }
                                 context.startActivity(intent)
                             } catch (e: Exception) {
-                                Timber.e(e, "Failed to open app info for ${app.appPackage}")
+                                Logger.e(e) { "Failed to open app info for ${app.appPackage}" }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -176,7 +176,7 @@ fun AppDetailsScreen(
                                 }
                                 context.startActivity(intent)
                             } catch (e: Exception) {
-                                Timber.e(e, "Failed to uninstall ${app.appPackage}")
+                                Logger.e(e) { "Failed to uninstall ${app.appPackage}" }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),

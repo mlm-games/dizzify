@@ -4,14 +4,15 @@ import android.app.Application
 import app.dizzify.di.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
-import timber.log.Timber
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Severity
 
 class LauncherApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
         if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
+            Logger.setMinSeverity(Severity.Debug)
         }
 
         startKoin {

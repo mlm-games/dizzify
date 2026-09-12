@@ -26,14 +26,8 @@ kmpSettingsCore = "0.8.3"
 koinBom = "4.2.2"
 navigation3Runtime = "1.1.4"
 koin-annotations = "4.2.2"
-koin-ksp = "2.3.1"
-timber = "5.0.1"
-junit = "4.13.2"
-mockk = "1.14.11"
-turbine = "1.2.1"
-androidxTestExtJunit = "1.3.0"
-androidxTestEspressoCore = "3.7.0"
-kotlinxCoroutines = "1.11.0"
+koin-ksp = "1.3.0"
+kermit = "2.1.0"
 
 
 [libraries]
@@ -76,15 +70,7 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelCompose" }
 
-timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
-junit = { module = "junit:junit", version.ref = "junit" }
-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
-kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
-androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExtJunit" }
-androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidxTestEspressoCore" }
-androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
 
 [plugins]

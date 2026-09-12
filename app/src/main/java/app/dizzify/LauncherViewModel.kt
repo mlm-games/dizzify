@@ -19,24 +19,13 @@ import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import timber.log.Timber
+import co.touchlab.kermit.Logger
 
 data class LauncherUiState(
     val query: String = "",
     val isLoading: Boolean = true
 )
 
-/**
- * Main ViewModel for the Dizzify launcher.
- * 
- * Manages app lists, search functionality, favorites, and user settings.
- * Uses reactive StateFlows for UI state management.
- * 
- * @param app Application context
- * @param settingsRepo Repository for user settings (theme, search preferences, etc.)
- * @param stateRepo Repository for launcher state (hidden apps, favorites, recent history)
- * @param appRepository Repository for app data and operations
- */
 class LauncherViewModel(
     app: Application,
     private val settingsRepo: SettingsRepository<LauncherSettings>,
@@ -76,12 +65,12 @@ class LauncherViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            Timber.d("Initializing LauncherViewModel - loading apps")
+            Logger.d { "Initializing LauncherViewModel - loading apps" }
             runCatching {
                 appRepository.loadApps()
                 appRepository.loadHiddenApps()
             }.onFailure { e ->
-                Timber.e(e, "Failed to load apps on init")
+                Logger.e(e) { "Failed to load apps on init" }
             }
             _ui.update { it.copy(isLoading = false) }
         }
@@ -117,11 +106,6 @@ class LauncherViewModel(
         }
     }
 
-    /**
-     * Updates the search query and triggers app filtering.
-     * 
-     * @param q The search query string
-     */
     fun setQuery(q: String) {
         _ui.update { it.copy(query = q) }
     }
@@ -186,11 +170,6 @@ class LauncherViewModel(
                 .toList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /**
-     * Launches the specified app.
-     * 
-     * @param app The app to launch
-     */
     fun launch(app: AppModel) {
         viewModelScope.launch {
             runCatching { appRepository.launchApp(app) }
@@ -200,22 +179,12 @@ class LauncherViewModel(
         }
     }
 
-    /**
-     * Toggles the hidden state of an app.
-     * 
-     * @param app The app to show/hide
-     */
     fun toggleHidden(app: AppModel) {
         viewModelScope.launch {
             runCatching { appRepository.toggleAppHidden(app) }
         }
     }
 
-    /**
-     * Toggles the favorite state of an app.
-     * 
-     * @param app The app to mark/unmark as favorite
-     */
     fun toggleFavorite(app: AppModel) {
         viewModelScope.launch {
             runCatching {
@@ -228,20 +197,20 @@ class LauncherViewModel(
                     }
                 }
             }.onFailure { e ->
-                Timber.e(e, "Failed to toggle favorite for ${app.appLabel}")
+                Logger.e(e) { "Failed to toggle favorite for ${app.appLabel}" }
             }
         }
     }
 
     fun refreshApps() {
         viewModelScope.launch(Dispatchers.IO) {
-            Timber.d("Refreshing apps")
+            Logger.d { "Refreshing apps" }
             _ui.update { it.copy(isLoading = true) }
             runCatching {
                 appRepository.loadApps()
                 appRepository.loadHiddenApps()
             }.onFailure { e ->
-                Timber.e(e, "Failed to refresh apps")
+                Logger.e(e) { "Failed to refresh apps" }
             }
             _ui.update { it.copy(isLoading = false) }
         }
@@ -351,13 +320,6 @@ class LauncherViewModel(
         }
     }
 
-    /**
-     * Pins/unpins an app to the home layout.
-     *
-     * NOTE: Historically misnamed `toggleFavorite` on main; renamed to avoid
-     * clashing with the true favorites system (`toggleFavorite` backed by
-     * `LauncherState.favoriteApps`).
-     */
     fun toggleHomeApp(app: AppModel) {
         viewModelScope.launch {
             stateRepo.update { state ->
