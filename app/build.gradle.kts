@@ -1,7 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.android.build.gradle.internal.api.ApkVariantOutputImpl
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,7 +11,7 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
     compilerOptions {
         optIn.addAll(
             "androidx.compose.material3.ExperimentalMaterial3Api",
@@ -30,7 +28,7 @@ android {
         applicationId = "app.dizzify"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1050
+        versionCode = 1060
         versionName = "v1.0.6"
 
         androidResources {

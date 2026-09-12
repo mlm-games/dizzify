@@ -1,31 +1,32 @@
 [versions]
-activityCompose = "1.12.2"
+activityCompose = "1.13.0"
 appcompat = "1.7.1"
-coreKtx = "1.17.0"
-datastorePreferences = "1.2.0"
-androidGradlePlugin = "8.13.2"
-gson = "2.13.2"
-kotlinStdlib = "2.3.0"
-kotlinxSerializationJson = "1.9.0"
-lifecycleViewmodelCompose = "2.10.0"
-material = "1.13.0"
+coreKtx = "1.19.0"
+datastorePreferences = "1.2.1"
+androidGradlePlugin = "9.3.0"
+gson = "2.14.0"
+kotlinStdlib = "2.4.10"
+kotlinxSerializationJson = "1.11.0"
+lifecycleViewmodelCompose = "2.11.0"
+material = "1.14.0"
 materialIconsExtended = "1.7.8"
 recyclerview = "1.4.0"
-workRuntimeKtx = "2.11.0"
-kotlin = "2.3.0"
+workRuntimeKtx = "2.11.2"
+kotlin = "2.4.10"
 material3Android = "1.4.0"
 constraintlayoutComposeAndroid = "1.1.1"
-androidbrowserhelper = "2.6.2"
-datastorePreferencesCore = "1.2.0"
+androidbrowserhelper = "2.7.2"
+datastorePreferencesCore = "1.2.1"
 apkDist = "0.5.2"
-ksp = "2.3.0"
-composeBom = "2025.12.01"
-tvMaterial = "1.0.1"
-kmpSettingsCore = "0.2.2"
+ksp = "2.3.10"
+composeBom = "2026.06.01"
+tvMaterial = "1.1.0"
+kmpSettingsCore = "0.8.1"
 
-koinBom = "4.1.1"
-navigation3Runtime = "1.0.0"
-koin-annotations = "2.3.1"
+koinBom = "4.2.2"
+navigation3Runtime = "1.1.4"
+koin-annotations = "4.2.2"
+koin-ksp = "1.3.0"
 
 
 [libraries]
@@ -60,7 +61,7 @@ koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }
 
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin-annotations" }
-koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
+koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-ksp" }
 
 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3Runtime" }
