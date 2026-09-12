@@ -24,6 +24,7 @@ fun GamesScreen(
 ) {
     val allApps by viewModel.apps.collectAsState()
     val hiddenApps by viewModel.hiddenApps.collectAsState()
+    val homeApps by viewModel.homeApps.collectAsState()
     val launcherState by viewModel.state.collectAsState()
     
     val games = remember(allApps) {
@@ -123,6 +124,8 @@ fun GamesScreen(
                 launchMode = AppLaunchMode.of(launcherState.appLaunchModes[app.getKey()]),
                 onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
                 onRename = { viewModel.renameApp(app, it) },
+                onToggleHome = { viewModel.toggleHomeApp(app) },
+                isOnHome = homeApps.any { it.getKey() == app.getKey() },
             )
         }
     }

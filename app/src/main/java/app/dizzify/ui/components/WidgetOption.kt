@@ -49,12 +49,21 @@ fun WidgetOptionsSheet(
     onDismiss: () -> Unit,
     onConfigure: () -> Unit,
     onRemove: () -> Unit,
-    onResize: (rowSpan: Int, columnSpan: Int) -> Unit
+    onResize: (rowSpan: Int, columnSpan: Int) -> Unit,
+    onMove: () -> Unit = {}
 ) {
     var showResizeDialog by remember { mutableStateOf(false) }
 
     val options = remember(widget) {
         buildList {
+            add(WidgetOption(
+                id = "move",
+                label = "Move Widget",
+                icon = Icons.Outlined.OpenWith,
+                iconTint = LauncherColors.AccentTeal,
+                action = onMove
+            ))
+
             add(WidgetOption(
                 id = "configure",
                 label = "Configure Widget",

@@ -88,12 +88,14 @@ fun AppOptionsSheet(
     launchMode: AppLaunchMode = AppLaunchMode.AUTO,
     onLaunchModeChange: ((AppLaunchMode) -> Unit)? = null,
     onRename: ((String?) -> Unit)? = null,
+    onToggleHome: (() -> Unit)? = null,
+    isOnHome: Boolean = false,
 ) {
     val androidContext = LocalContext.current
     var showRename by remember { mutableStateOf(false) }
     var renameText by remember(app) { mutableStateOf(app.appLabel) }
 
-    val options = remember(app, isFavorite, isHidden, context, launchMode) {
+    val options = remember(app, isFavorite, isHidden, isOnHome, context, launchMode) {
         buildList {
             add(AppOption(
                 id = "open",
@@ -183,6 +185,18 @@ fun AppOptionsSheet(
                 }
 
                 is AppOptionContext.FromHidden -> { }
+            }
+
+            if (onToggleHome != null &&
+                (context is AppOptionContext.FromApps || context is AppOptionContext.FromGames)
+            ) {
+                add(AppOption(
+                    id = "home",
+                    label = if (isOnHome) "Remove from Home" else "Add to Home",
+                    icon = if (isOnHome) Icons.Filled.Home else Icons.Outlined.Home,
+                    iconTint = if (isOnHome) LauncherColors.Error else LauncherColors.AccentTeal,
+                    action = onToggleHome
+                ))
             }
 
             add(AppOption(

@@ -2,6 +2,8 @@ package app.dizzify.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -30,10 +32,13 @@ import androidx.compose.ui.unit.dp
 import app.dizzify.BuildConfig
 import app.dizzify.LauncherViewModel
 import app.dizzify.helper.openUrl
+import app.dizzify.settings.ImportExportState
 import app.dizzify.settings.SearchType
 import app.dizzify.settings.SortOrder
 import app.dizzify.settings.ThemeMode
+import app.dizzify.ui.dialogs.PinLockDialog
 import app.dizzify.ui.theme.*
+import kotlinx.coroutines.launch
 
 sealed class SettingsCategory(
     val title: String,
@@ -74,8 +79,19 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var selectedCategory by remember { mutableStateOf<SettingsCategory?>(null) }
+
+    val showLockDialog by viewModel.showLockDialog.collectAsState()
+    val isSettingPin by viewModel.isSettingPin.collectAsState()
+    val locked by viewModel.effectiveLockState.collectAsState()
+    var pinError by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(showLockDialog) { if (!showLockDialog) pinError = null }
+
+    DisposableEffect(Unit) {
+        onDispose { viewModel.resetUnlockState() }
+    }
 
     val categories = listOf(
         SettingsCategory.Appearance,
@@ -117,13 +133,76 @@ fun SettingsScreen(
                     .weight(1f)
                     .fillMaxHeight()
             ) {
-                val effectiveCategory = selectedCategory ?: SettingsCategory.Appearance
-                SettingsCategoryContent(
-                    category = effectiveCategory,
-                    viewModel = viewModel,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (locked) {
+                    LockedSettingsGate(
+                        onUnlock = { viewModel.setShowLockDialog(true, false) },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    val effectiveCategory = selectedCategory ?: SettingsCategory.Appearance
+                    SettingsCategoryContent(
+                        category = effectiveCategory,
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
+        }
+
+        if (showLockDialog) {
+            PinLockDialog(
+                isSettingPin = isSettingPin,
+                validateError = pinError,
+                onDismiss = { viewModel.setShowLockDialog(false) },
+                onConfirm = { pin ->
+                    if (isSettingPin) {
+                        viewModel.setPin(pin)
+                        // Lock only ever engages with a PIN set — no lockout trap.
+                        if (!settings.lockSettings) viewModel.toggleLockSettings(true)
+                        viewModel.setShowLockDialog(false)
+                    } else {
+                        scope.launch {
+                            if (!viewModel.validatePin(pin)) {
+                                pinError = "Wrong PIN, try again"
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun LockedSettingsGate(
+    onUnlock: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(LauncherSpacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Lock,
+            contentDescription = null,
+            tint = LauncherColors.TextSecondary,
+            modifier = Modifier.size(64.dp)
+        )
+        Spacer(modifier = Modifier.height(LauncherSpacing.lg))
+        Text(
+            text = "Settings are locked",
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.White
+        )
+        Text(
+            text = "Enter your PIN to make changes",
+            style = MaterialTheme.typography.bodyLarge,
+            color = LauncherColors.TextSecondary
+        )
+        Spacer(modifier = Modifier.height(LauncherSpacing.lg))
+        Button(onClick = onUnlock) {
+            Text("Unlock Settings")
         }
     }
 }
@@ -334,6 +413,10 @@ private fun SettingsCategoryContent(
                         )
                     }
                 }
+
+                item {
+                    FontSettingsSection(viewModel = viewModel)
+                }
             }
 
             is SettingsCategory.HomeScreen -> {
@@ -490,6 +573,30 @@ private fun SettingsCategoryContent(
                         )
                     }
                 }
+
+                item {
+                    SettingsSection(title = "Settings Lock") {
+                        SettingsToggle(
+                            title = "Lock Settings",
+                            description = "Require PIN to change settings",
+                            isChecked = settings.lockSettings,
+                            onCheckedChange = { locked ->
+                                if (locked && settings.settingsLockPin.isEmpty()) {
+                                    // No PIN yet — the dialog enables lock after one is set.
+                                    viewModel.setShowLockDialog(true, true)
+                                } else {
+                                    viewModel.toggleLockSettings(locked)
+                                }
+                            }
+                        )
+
+                        SettingsClickable(
+                            title = if (settings.settingsLockPin.isEmpty()) "Set PIN" else "Change PIN",
+                            description = "6 digits max, stored as salted hash",
+                            onClick = { viewModel.setShowLockDialog(true, true) }
+                        )
+                    }
+                }
             }
 
             is SettingsCategory.About -> {
@@ -504,6 +611,10 @@ private fun SettingsCategoryContent(
                             value = BuildConfig.BUILD_TYPE.replaceFirstChar { it.uppercase() }
                         )
                     }
+                }
+
+                item {
+                    BackupRestoreSection(viewModel = viewModel)
                 }
 
                 item {
@@ -524,6 +635,121 @@ private fun SettingsCategoryContent(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FontSettingsSection(viewModel: LauncherViewModel) {
+    val settings by viewModel.settings.collectAsState()
+    val fontInfo by viewModel.customFontInfo.collectAsState()
+
+    val fontPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) viewModel.setCustomFont(uri)
+    }
+
+    val weightNames = listOf("Thin", "Light", "Normal", "Medium", "Bold", "Black")
+
+    SettingsSection(title = "Font") {
+        SettingsInfo(
+            title = "Current Font",
+            value = fontInfo?.let { (name, size) ->
+                "$name (${size / 1024} KB)"
+            } ?: "System font"
+        )
+
+        SettingsToggle(
+            title = "Use System Font",
+            description = "Off when a custom font file is active",
+            isChecked = settings.useSystemFont,
+            onCheckedChange = { viewModel.updateUseSystemFont(it) }
+        )
+
+        SettingsDropdown(
+            title = "Font Weight",
+            description = "Bolder text reads better from the couch",
+            currentValue = weightNames.getOrElse(settings.fontWeight) { "Normal" },
+            options = weightNames,
+            onOptionSelected = { selected ->
+                viewModel.updateFontWeight(weightNames.indexOf(selected).coerceAtLeast(0))
+            }
+        )
+
+        SettingsClickable(
+            title = "Choose Font File",
+            description = "Pick a .ttf/.otf file (copied locally, 5 MB max)",
+            onClick = { fontPicker.launch(arrayOf("font/*", "application/*", "*/*")) }
+        )
+
+        if (fontInfo != null) {
+            SettingsClickable(
+                title = "Reset to System Font",
+                description = "Delete the custom font file",
+                onClick = { viewModel.clearCustomFont() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun BackupRestoreSection(viewModel: LauncherViewModel) {
+    val backupState by viewModel.importExportState.collectAsState()
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) viewModel.exportSettings(uri)
+        else viewModel.resetImportExportState()
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) viewModel.importSettings(uri)
+        else viewModel.resetImportExportState()
+    }
+
+    SettingsSection(title = "Backup & Restore") {
+        SettingsClickable(
+            title = "Export Settings",
+            description = "Save setup to a file (layout, hidden, renames)",
+            onClick = {
+                viewModel.resetImportExportState()
+                exportLauncher.launch("dizzify-backup.json")
+            }
+        )
+
+        SettingsClickable(
+            title = "Import Settings",
+            description = "Restore setup from a backup file",
+            onClick = {
+                viewModel.resetImportExportState()
+                importLauncher.launch(arrayOf("application/json"))
+            }
+        )
+
+        when (val s = backupState) {
+            ImportExportState.Idle -> Unit
+            ImportExportState.Loading -> {
+                SettingsInfo(title = "Status", value = "Working…")
+            }
+            ImportExportState.ExportSuccess -> {
+                SettingsInfo(title = "Status", value = "Backup saved")
+            }
+            is ImportExportState.ImportSuccess -> {
+                val summary = buildString {
+                    append("Applied ${s.appliedCount}, skipped ${s.skippedCount}")
+                    if (s.errors.isNotEmpty()) append(", ${s.errors.size} errors")
+                }
+                SettingsInfo(title = "Status", value = summary)
+                s.errors.take(3).forEach { (key, msg) ->
+                    SettingsInfo(title = key, value = msg)
+                }
+            }
+            is ImportExportState.Error -> {
+                SettingsInfo(title = "Error", value = s.message)
             }
         }
     }

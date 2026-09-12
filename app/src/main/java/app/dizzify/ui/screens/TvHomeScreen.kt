@@ -22,6 +22,7 @@ import app.dizzify.ui.theme.*
 fun HomeScreen(
     viewModel: LauncherViewModel,
     onNavigateToApps: () -> Unit,
+    onNavigateToWidgetPicker: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val homeApps by viewModel.homeApps.collectAsState()
@@ -87,6 +88,13 @@ fun HomeScreen(
                     bottom = LauncherSpacing.xl
                 )
             )
+
+            HomeGridSection(
+                viewModel = viewModel,
+                onNavigateToWidgetPicker = onNavigateToWidgetPicker
+            )
+
+            Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
 
             if (homeApps.isNotEmpty()) {
                 AppRow(
@@ -188,6 +196,8 @@ fun HomeScreen(
                 launchMode = AppLaunchMode.of(launcherState.appLaunchModes[app.getKey()]),
                 onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
                 onRename = { viewModel.renameApp(app, it) },
+                onToggleHome = { viewModel.toggleHomeApp(app) },
+                isOnHome = homeApps.any { it.getKey() == app.getKey() },
             )
         }
     }

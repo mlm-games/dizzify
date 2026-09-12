@@ -173,7 +173,7 @@ class LauncherViewModel(
         state.map { it.favoriteApps }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    private val homeLayout: StateFlow<HomeLayout> =
+    val homeLayout: StateFlow<HomeLayout> =
         state.map { it.homeLayout }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeLayout())
 

@@ -193,8 +193,6 @@ fun LauncherShell(
                             }
 
                             entry<LauncherKey.Home> {
-                                val widgetHost: LauncherWidgetHost = koinInject()
-
                                 HomeScreen(
                                     viewModel = viewModel,
                                     onNavigateToApps = {
@@ -202,10 +200,9 @@ fun LauncherShell(
                                         LauncherKey.Apps
                                     )
                                     },
-//                                    widgetHost = widgetHost,
-//                                    onNavigateToWidgetPicker = {
-//                                        backStack.add(LauncherKey.WidgetPicker)
-//                                    }
+                                    onNavigateToWidgetPicker = {
+                                        backStack.add(LauncherKey.WidgetPicker)
+                                    }
                                 )
                             }
 

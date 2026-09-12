@@ -41,7 +41,12 @@ fun WidgetCard(
     width: Dp = 320.dp,
     height: Dp = 180.dp,
     isEditMode: Boolean = false,
-    focusRequester: FocusRequester = remember { FocusRequester() }
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    onOptions: (() -> Unit)? = null,
+    moveMode: Boolean = false,
+    onMove: (dx: Int, dy: Int) -> Unit = { _, _ -> },
+    onMoveConfirm: () -> Unit = {},
+    onMoveCancel: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -62,10 +67,16 @@ fun WidgetCard(
     )
 
     val borderAlpha by animateFloatAsState(
-        targetValue = if (isFocused && isEditMode) 1f else if (isFocused) 0.5f else 0f,
+        targetValue = if (isFocused && (isEditMode || moveMode)) 1f else if (isFocused) 0.5f else 0f,
         animationSpec = tween(LauncherAnimation.FastDuration),
         label = "widget_border"
     )
+
+    val borderColor = when {
+        moveMode -> LauncherColors.AccentTeal
+        isEditMode -> LauncherColors.AccentOrange
+        else -> Color.White
+    }
 
     Box(
         modifier = modifier
@@ -81,8 +92,7 @@ fun WidgetCard(
                 if (borderAlpha > 0f) {
                     Modifier.border(
                         width = 2.dp,
-                        color = if (isEditMode) LauncherColors.AccentOrange.copy(alpha = borderAlpha)
-                        else Color.White.copy(alpha = borderAlpha),
+                        color = borderColor.copy(alpha = borderAlpha),
                         shape = RoundedCornerShape(16.dp)
                     )
                 } else Modifier
@@ -90,9 +100,23 @@ fun WidgetCard(
             .focusRequester(focusRequester)
             .onFocusChanged { isFocused = it.isFocused }
             .onKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown && isEditMode) {
+                if (event.type == KeyEventType.KeyDown && moveMode) {
                     when (event.key) {
-                        Key.Menu, Key.Delete -> {
+                        Key.DirectionUp -> { onMove(0, -1); true }
+                        Key.DirectionDown -> { onMove(0, 1); true }
+                        Key.DirectionLeft -> { onMove(-1, 0); true }
+                        Key.DirectionRight -> { onMove(1, 0); true }
+                        Key.DirectionCenter, Key.Enter -> { onMoveConfirm(); true }
+                        Key.Back -> { onMoveCancel(); true }
+                        else -> false
+                    }
+                } else if (event.type == KeyEventType.KeyDown && isEditMode) {
+                    when (event.key) {
+                        Key.Menu -> {
+                            if (onOptions != null) { onOptions(); true }
+                            else { onRemove(); true }
+                        }
+                        Key.Delete -> {
                             onRemove()
                             true
                         }
@@ -126,8 +150,8 @@ fun WidgetCard(
             )
         }
 
-        // Edit mode overlay
-        if (isEditMode && isFocused) {
+        // Edit mode overlay (hidden while moving — arrows belong to move mode)
+        if (isEditMode && !moveMode && isFocused) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
