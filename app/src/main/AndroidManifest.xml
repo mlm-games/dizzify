@@ -58,6 +58,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="app.dizzify.ConfirmPinShortcutActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@style/Theme.Material3.Dark.NoActionBar">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
 <!--        <receiver-->
 <!--            android:name=".listener.DeviceAdmin"-->
 <!--            android:exported="false"-->

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
+import app.dizzify.helper.openSearch
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
 import androidx.compose.foundation.clickable as mainClickable
@@ -40,6 +41,7 @@ fun AppsScreen(
     val apps by viewModel.appsFiltered.collectAsState()
     val hiddenApps by viewModel.hiddenApps.collectAsState()
     val launcherState by viewModel.state.collectAsState()
+    val settings by viewModel.settings.collectAsState()
     val ui by viewModel.ui.collectAsState()
 
     val context = LocalContext.current
@@ -49,6 +51,18 @@ fun AppsScreen(
 
     val searchFocusRequester = remember { FocusRequester() }
     val gridState = rememberLazyGridState()
+
+    // Auto-open the sole match (ported from CCLauncher autoOpenFilteredApp).
+    // consumedQuery guards against relaunching when returning from the app.
+    var consumedQuery by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(apps, ui.query, settings.autoOpenFilteredApp) {
+        if (settings.autoOpenFilteredApp &&
+            ui.query.isNotBlank() && apps.size == 1 && consumedQuery != ui.query
+        ) {
+            consumedQuery = ui.query
+            viewModel.launch(apps.first())
+        }
+    }
 
     Box(
         modifier = modifier
@@ -62,6 +76,7 @@ fun AppsScreen(
             AppsHeader(
                 query = ui.query,
                 onQueryChange = viewModel::setQuery,
+                onSearch = { apps.firstOrNull()?.let { viewModel.launch(it) } },
                 viewMode = viewMode,
                 onViewModeChange = { viewMode = it },
                 appCount = apps.size,
@@ -78,6 +93,8 @@ fun AppsScreen(
             if (apps.isEmpty() && ui.query.isNotEmpty()) {
                 EmptySearchResult(
                     query = ui.query,
+                    showWebSearch = settings.showWebSearchOption,
+                    onWebSearch = { openSearch(context, ui.query) },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(LauncherSpacing.screenPadding)
@@ -154,6 +171,7 @@ fun AppsScreen(
 private fun AppsHeader(
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
     viewMode: AppsViewMode,
     onViewModeChange: (AppsViewMode) -> Unit,
     appCount: Int,
@@ -205,7 +223,7 @@ private fun AppsHeader(
         LauncherSearchBar(
             query = query,
             onQueryChange = onQueryChange,
-            onSearch = { },
+            onSearch = onSearch,
             focusRequester = searchFocusRequester,
             modifier = Modifier.fillMaxWidth()
         )
@@ -239,6 +257,8 @@ private fun ViewModeButton(
 @Composable
 private fun EmptySearchResult(
     query: String,
+    showWebSearch: Boolean,
+    onWebSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -264,6 +284,13 @@ private fun EmptySearchResult(
             style = MaterialTheme.typography.bodyLarge,
             color = LauncherColors.TextSecondary
         )
+
+        if (showWebSearch) {
+            Spacer(modifier = Modifier.height(LauncherSpacing.lg))
+            Button(onClick = onWebSearch) {
+                Text("Search the web")
+            }
+        }
     }
 }
 

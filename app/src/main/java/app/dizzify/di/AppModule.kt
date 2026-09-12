@@ -6,11 +6,14 @@ import app.dizzify.helper.IconCache
 import app.dizzify.helper.PermissionManager
 import app.dizzify.helper.PrivateSpaceHelper
 import app.dizzify.helper.iconpack.IconPackManager
+import app.dizzify.settings.LauncherBackupHelper
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherSettingsSchema
 import app.dizzify.settings.LauncherStateSchema
 import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import io.github.mlmgames.settings.core.SettingsRepository
 import io.github.mlmgames.settings.core.datastore.createSettingsDataStore
 import kotlinx.coroutines.CoroutineScope
@@ -38,22 +41,34 @@ val appModule = module {
     single { PermissionManager(androidApplication()) }
 
 
-    single {
+    single(named("settingsStore")) {
         createSettingsDataStore(
             context = androidContext(),
             name = "launcher_settings"
         )
     }
 
-    single {
+    single(named("stateStore")) {
         createSettingsDataStore(
             context = androidContext(),
             name = "launcher_state"
         )
     }
 
-    single(named("settings")) { SettingsRepository(get(), LauncherSettingsSchema) }
-    single(named("state")) { SettingsRepository(get(), LauncherStateSchema) }
+    single(named("settings")) {
+        SettingsRepository(get<DataStore<Preferences>>(named("settingsStore")), LauncherSettingsSchema)
+    }
+    single(named("state")) {
+        SettingsRepository(get<DataStore<Preferences>>(named("stateStore")), LauncherStateSchema)
+    }
+
+    single {
+        LauncherBackupHelper(
+            context = androidContext(),
+            settingsStore = get(named("settingsStore")),
+            stateStore = get(named("stateStore"))
+        )
+    }
 
 
     single {
@@ -72,7 +87,10 @@ val appModule = module {
             app = androidApplication(),
             settingsRepo = get(named("settings")),
             stateRepo = get(named("state")),
-            appRepository = get()
+            appRepository = get(),
+            snackbarManager = get(),
+            widgetHost = get(),
+            backupHelper = get()
         )
     }
 }

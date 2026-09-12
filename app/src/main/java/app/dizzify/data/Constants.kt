@@ -4,6 +4,8 @@ object Constants {
     const val FLAG_LAUNCH_APP = 100
     const val FLAG_HIDDEN_APPS = 101
 
+    const val ACTION_REFRESH_APPS = "app.dizzify.ACTION_REFRESH_APPS"
+
     const val FLAG_SET_SWIPE_LEFT_APP = 17
     const val FLAG_SET_SWIPE_RIGHT_APP = 18
     const val FLAG_SET_SWIPE_UP_APP = 19

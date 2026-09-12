@@ -54,6 +54,28 @@ import kotlin.math.sqrt
 
 private const val TAG = "LauncherUtils"
 
+
+fun openSearch(context: Context, query: String = "") {
+    try {
+        val intent = Intent(Intent.ACTION_WEB_SEARCH).apply {
+            putExtra(SearchManager.QUERY, query)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No web search handler, trying browser", e)
+        runCatching {
+            val browser = Intent(
+                Intent.ACTION_VIEW,
+                "${Constants.URL_DUCK_SEARCH}${query.trim()}".toUri()
+            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+            context.startActivity(browser)
+        }.onFailure { e2 ->
+            Log.w(TAG, "No browser handler either", e2)
+        }
+    }
+}
+
 fun getLauncherVisibleProfiles(
     userManager: UserManager,
     launcherApps: LauncherApps

@@ -19,6 +19,15 @@ suspend fun SettingsRepository<LauncherState>.setCustomName(appKey: String, newN
     }
 }
 
+suspend fun SettingsRepository<LauncherState>.removeCustomNames(appKeys: Set<String>) {
+    if (appKeys.isEmpty()) return
+    update { cur ->
+        val map = cur.renamedApps.toMutableMap()
+        appKeys.forEach { map.remove(it) }
+        cur.copy(renamedApps = map)
+    }
+}
+
 suspend fun SettingsRepository<LauncherState>.markLaunched(appKey: String, now: Long = System.currentTimeMillis()) {
     update { cur ->
         val m = cur.recentAppHistory.toMutableMap()

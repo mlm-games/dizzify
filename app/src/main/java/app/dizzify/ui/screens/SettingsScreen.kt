@@ -303,6 +303,35 @@ private fun SettingsCategoryContent(
                             isChecked = settings.showAppIcons,
                             onCheckedChange = { viewModel.updateShowAppIcons(it) }
                         )
+
+                        SettingsToggle(
+                            title = "Show App Names",
+                            description = "Show labels under app icons",
+                            isChecked = settings.showAppNames,
+                            onCheckedChange = { viewModel.updateShowAppNames(it) }
+                        )
+
+                        SettingsDropdown(
+                            title = "Text Size",
+                            description = "Scale text across the launcher",
+                            currentValue = when {
+                                settings.textSizeScale <= 0.9f -> "Small"
+                                settings.textSizeScale >= 1.25f -> "Extra Large"
+                                settings.textSizeScale > 1.05f -> "Large"
+                                else -> "Normal"
+                            },
+                            options = listOf("Small", "Normal", "Large", "Extra Large"),
+                            onOptionSelected = { selected ->
+                                viewModel.updateTextSizeScale(
+                                    when (selected) {
+                                        "Small" -> 0.85f
+                                        "Large" -> 1.15f
+                                        "Extra Large" -> 1.3f
+                                        else -> 1.0f
+                                    }
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -314,6 +343,26 @@ private fun SettingsCategoryContent(
                             title = "Edit Favorites",
                             description = "Long-press apps to add to favorites",
                             onClick = { /* Navigate to home and show hint */ }
+                        )
+
+                        SettingsDropdown(
+                            title = "Home Grid Rows",
+                            description = "Vertical density of the home grid",
+                            currentValue = settings.homeScreenRows.toString(),
+                            options = (4..12).map { it.toString() },
+                            onOptionSelected = { selected ->
+                                selected.toIntOrNull()?.let { viewModel.updateHomeScreenRows(it) }
+                            }
+                        )
+
+                        SettingsDropdown(
+                            title = "Home Grid Columns",
+                            description = "Horizontal density of the home grid",
+                            currentValue = settings.homeScreenColumns.toString(),
+                            options = (2..8).map { it.toString() },
+                            onOptionSelected = { selected ->
+                                selected.toIntOrNull()?.let { viewModel.updateHomeScreenColumns(it) }
+                            }
                         )
                     }
                 }
@@ -360,13 +409,15 @@ private fun SettingsCategoryContent(
                                 SearchType.Contains -> "Contains"
                                 SearchType.Fuzzy -> "Fuzzy"
                                 SearchType.StartsWith -> "Starts With"
+                                SearchType.Exact -> "Exact"
                             },
-                            options = listOf("Contains", "Fuzzy", "Starts With"),
+                            options = listOf("Contains", "Fuzzy", "Starts With", "Exact"),
                             onOptionSelected = { selected ->
                                 val type = when (selected) {
                                     "Contains" -> SearchType.Contains
                                     "Fuzzy" -> SearchType.Fuzzy
                                     "Starts With" -> SearchType.StartsWith
+                                    "Exact" -> SearchType.Exact
                                     else -> SearchType.Contains
                                 }
                                 viewModel.updateSearchType(type)
@@ -385,6 +436,20 @@ private fun SettingsCategoryContent(
                             description = "Include hidden apps in search results",
                             isChecked = settings.showHiddenAppsOnSearch,
                             onCheckedChange = { viewModel.updateShowHiddenAppsOnSearch(it) }
+                        )
+
+                        SettingsToggle(
+                            title = "Auto-Open Single Result",
+                            description = "Launch immediately when search has one match",
+                            isChecked = settings.autoOpenFilteredApp,
+                            onCheckedChange = { viewModel.updateAutoOpenFilteredApp(it) }
+                        )
+
+                        SettingsToggle(
+                            title = "Web Search Option",
+                            description = "Offer web search when nothing matches",
+                            isChecked = settings.showWebSearchOption,
+                            onCheckedChange = { viewModel.updateShowWebSearchOption(it) }
                         )
                     }
                 }
@@ -405,6 +470,23 @@ private fun SettingsCategoryContent(
                             description = "Open TV UI when app supports it (VLC, Dolphin)",
                             isChecked = settings.preferTvLaunch,
                             onCheckedChange = { viewModel.updatePreferTvLaunch(it) }
+                        )
+
+                        SettingsToggle(
+                            title = "Return to Home",
+                            description = "Go back to Home after opening an app",
+                            isChecked = settings.returnToHomeAfterApp,
+                            onCheckedChange = { viewModel.updateReturnToHomeAfterApp(it) }
+                        )
+
+                        SettingsDropdown(
+                            title = "Default Screen",
+                            description = "Where the launcher starts and Home returns",
+                            currentValue = if (settings.defaultScreen == 1) "Apps" else "Home",
+                            options = listOf("Home", "Apps"),
+                            onOptionSelected = { selected ->
+                                viewModel.updateDefaultScreen(if (selected == "Apps") 1 else 0)
+                            }
                         )
                     }
                 }

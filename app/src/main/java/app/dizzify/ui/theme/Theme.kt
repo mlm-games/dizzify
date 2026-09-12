@@ -1,15 +1,21 @@
 package app.dizzify.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.dizzify.settings.ThemeMode
+import java.io.File
 
 object LauncherColors {
     // Dark theme (primary for TV)
@@ -155,25 +161,34 @@ data class LauncherDimens(
 )
 
 @Composable
-fun scaledTypography(scaleFactor: Float): Typography {
+fun scaledTypography(
+    scaleFactor: Float,
+    fontWeight: FontWeight? = null,
+    fontFamily: FontFamily? = null
+): Typography {
+    fun TextStyle.apply() = copy(
+        fontSize = fontSize * scaleFactor,
+        fontFamily = fontFamily ?: this.fontFamily,
+        fontWeight = fontWeight ?: this.fontWeight
+    )
     val defaultTypo = defaultTypography()
 
     return Typography(
-        displayLarge = defaultTypo.displayLarge.copy(fontSize = defaultTypo.displayLarge.fontSize * scaleFactor),
-        displayMedium = defaultTypo.displayMedium.copy(fontSize = defaultTypo.displayMedium.fontSize * scaleFactor),
-        displaySmall = defaultTypo.displaySmall.copy(fontSize = defaultTypo.displaySmall.fontSize * scaleFactor),
-        headlineLarge = defaultTypo.headlineLarge.copy(fontSize = defaultTypo.headlineLarge.fontSize * scaleFactor),
-        headlineMedium = defaultTypo.headlineMedium.copy(fontSize = defaultTypo.headlineMedium.fontSize * scaleFactor),
-        headlineSmall = defaultTypo.headlineSmall.copy(fontSize = defaultTypo.headlineSmall.fontSize * scaleFactor),
-        titleLarge = defaultTypo.titleLarge.copy(fontSize = defaultTypo.titleLarge.fontSize * scaleFactor),
-        titleMedium = defaultTypo.titleMedium.copy(fontSize = defaultTypo.titleMedium.fontSize * scaleFactor),
-        titleSmall = defaultTypo.titleSmall.copy(fontSize = defaultTypo.titleSmall.fontSize * scaleFactor),
-        bodyLarge = defaultTypo.bodyLarge.copy(fontSize = defaultTypo.bodyLarge.fontSize * scaleFactor),
-        bodyMedium = defaultTypo.bodyMedium.copy(fontSize = defaultTypo.bodyMedium.fontSize * scaleFactor),
-        bodySmall = defaultTypo.bodySmall.copy(fontSize = defaultTypo.bodySmall.fontSize * scaleFactor),
-        labelLarge = defaultTypo.labelLarge.copy(fontSize = defaultTypo.labelLarge.fontSize * scaleFactor),
-        labelMedium = defaultTypo.labelMedium.copy(fontSize = defaultTypo.labelMedium.fontSize * scaleFactor),
-        labelSmall = defaultTypo.labelSmall.copy(fontSize = defaultTypo.labelSmall.fontSize * scaleFactor)
+        displayLarge = defaultTypo.displayLarge.apply(),
+        displayMedium = defaultTypo.displayMedium.apply(),
+        displaySmall = defaultTypo.displaySmall.apply(),
+        headlineLarge = defaultTypo.headlineLarge.apply(),
+        headlineMedium = defaultTypo.headlineMedium.apply(),
+        headlineSmall = defaultTypo.headlineSmall.apply(),
+        titleLarge = defaultTypo.titleLarge.apply(),
+        titleMedium = defaultTypo.titleMedium.apply(),
+        titleSmall = defaultTypo.titleSmall.apply(),
+        bodyLarge = defaultTypo.bodyLarge.apply(),
+        bodyMedium = defaultTypo.bodyMedium.apply(),
+        bodySmall = defaultTypo.bodySmall.apply(),
+        labelLarge = defaultTypo.labelLarge.apply(),
+        labelMedium = defaultTypo.labelMedium.apply(),
+        labelSmall = defaultTypo.labelSmall.apply()
     )
 }
 
@@ -201,16 +216,65 @@ private val DarkColorScheme = darkColorScheme(
     onError = Color.White
 )
 
+private val LightColorScheme = lightColorScheme(
+    primary = LauncherColors.AccentBlue,
+    onPrimary = Color.White,
+    primaryContainer = LauncherColors.AccentBlue.copy(alpha = 0.15f),
+    onPrimaryContainer = Color(0xFF0B57D0),
+    secondary = LauncherColors.AccentPurple,
+    onSecondary = Color.White,
+    background = Color(0xFFF6F6F6),
+    onBackground = Color(0xFF111111),
+    surface = Color.White,
+    onSurface = Color(0xFF111111),
+    surfaceVariant = Color(0xFFE4E4E4),
+    onSurfaceVariant = Color(0xFF444444),
+    error = LauncherColors.Error,
+    onError = Color.White
+)
+
+fun fontWeightOf(setting: Int): FontWeight? = when (setting) {
+    0 -> FontWeight.Thin
+    1 -> FontWeight.Light
+    3 -> FontWeight.Medium
+    4 -> FontWeight.Bold
+    5 -> FontWeight.Black
+    else -> null
+}
+
 @Composable
 fun LauncherTheme(
+    theme: ThemeMode = ThemeMode.System,
+    textSizeScale: Float = 1f,
+    fontWeight: Int = 2,
+    customFontPath: String = "",
+    useSystemFont: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val dark = when (theme) {
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+        else -> isSystemInDarkTheme()
+    }
+    // Custom TTF from the font picker (ported from CCLauncher Theme.kt).
+    val customFamily = remember(customFontPath, useSystemFont) {
+        if (!useSystemFont && customFontPath.isNotEmpty()) {
+            runCatching {
+                val file = File(customFontPath)
+                if (file.exists()) FontFamily(Font(file)) else null
+            }.getOrNull()
+        } else null
+    }
     CompositionLocalProvider(
         LocalLauncherDimens provides LauncherDimens()
     ) {
         MaterialTheme(
-            colorScheme = DarkColorScheme,
-            typography = defaultTypography(),
+            colorScheme = if (dark) DarkColorScheme else LightColorScheme,
+            typography = scaledTypography(
+                scaleFactor = textSizeScale.coerceIn(0.5f, 2f),
+                fontWeight = fontWeightOf(fontWeight),
+                fontFamily = customFamily
+            ),
             content = content
         )
     }

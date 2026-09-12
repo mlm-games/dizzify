@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import app.dizzify.data.Constants
 
 /**
  * Receives broadcasts related to Private Space state changes
@@ -22,7 +23,7 @@ class PrivateSpaceReceiver : BroadcastReceiver() {
 
                 // Notify the launcher to refresh app list — scoped to our package so
                 // no other app can trigger reload loops.
-                val refreshIntent = Intent("app.dizzify.ACTION_REFRESH_APPS")
+                val refreshIntent = Intent(Constants.ACTION_REFRESH_APPS)
                     .setPackage(context.packageName)
                 context.sendBroadcast(refreshIntent)
             }
@@ -32,7 +33,7 @@ class PrivateSpaceReceiver : BroadcastReceiver() {
                 Toast.makeText(context, "Private Space locked", Toast.LENGTH_LONG).show()
 
                 // Notify the launcher to refresh app list — scoped to our package.
-                val refreshIntent = Intent("app.dizzify.ACTION_REFRESH_APPS")
+                val refreshIntent = Intent(Constants.ACTION_REFRESH_APPS)
                     .setPackage(context.packageName)
                 context.sendBroadcast(refreshIntent)
             }

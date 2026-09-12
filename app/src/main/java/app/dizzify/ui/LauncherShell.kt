@@ -1,8 +1,11 @@
 package app.dizzify.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -10,8 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.entryProvider
@@ -33,6 +40,7 @@ import app.dizzify.ui.components.SidebarDestinations
 import app.dizzify.ui.components.snackbar.LauncherSnackbarHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
 import app.dizzify.ui.screens.WidgetPickerScreen
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import app.dizzify.MainActivity
@@ -43,11 +51,67 @@ import app.dizzify.MainActivity
 fun LauncherShell(
     viewModel: LauncherViewModel
 ) {
-    LauncherTheme {
-        val backStack = rememberLauncherBackStack()
+    val settings by viewModel.settings.collectAsState()
+    LauncherTheme(
+        theme = settings.theme,
+        textSizeScale = settings.textSizeScale,
+        fontWeight = settings.fontWeight,
+        customFontPath = settings.customFontPath,
+        useSystemFont = settings.useSystemFont
+    ) {
+        val backStack = rememberLauncherBackStack(
+            if (settings.defaultScreen == 1) LauncherKey.Apps else LauncherKey.Home
+        )
 
         val snackbarHostState = remember { SnackbarHostState() }
         val snackbarManager: SnackbarManager = koinInject()
+        val widgetHost: LauncherWidgetHost = koinInject()
+        val context = LocalContext.current
+
+        // Bind-permission round-trip for widgets (ported from CCLauncher navigation).
+        val bindLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            viewModel.handleActivityResult(
+                MainActivity.REQUEST_CONFIGURE_WIDGET,
+                result.resultCode,
+                result.data
+            )
+        }
+
+        LaunchedEffect(viewModel) {
+            viewModel.events.collectLatest { event ->
+                when (event) {
+                    is LauncherEvent.LaunchWidgetBindIntent -> {
+                        runCatching { bindLauncher.launch(event.intent) }
+                            .onFailure { e ->
+                                Log.e("LauncherShell", "Failed to launch widget bind", e)
+                                snackbarManager.show("Failed to request widget permission.")
+                            }
+                    }
+                    is LauncherEvent.ConfigureWidget -> {
+                        val activity = context as? Activity
+                        if (activity != null) {
+                            runCatching {
+                                widgetHost.startWidgetConfiguration(
+                                    activity,
+                                    event.widgetId,
+                                    MainActivity.REQUEST_CONFIGURE_WIDGET
+                                )
+                            }.onFailure { e ->
+                                Log.e("LauncherShell", "Failed to start widget configuration", e)
+                                snackbarManager.show("Failed to open widget settings.")
+                            }
+                        }
+                    }
+                    LauncherEvent.NavigateHome -> {
+                        val home: LauncherKey =
+                            if (settings.defaultScreen == 1) LauncherKey.Apps else LauncherKey.Home
+                        backStack.apply { clear(); add(home) }
+                    }
+                }
+            }
+        }
 
         val current = backStack.last()
 
@@ -114,33 +178,12 @@ fun LauncherShell(
                         ),
                         entryProvider = entryProvider {
                             entry<LauncherKey.WidgetPicker> {
-                                val widgetHost: LauncherWidgetHost = koinInject()
-                                val context = androidx.compose.ui.platform.LocalContext.current
-
                                 WidgetPickerScreen(
                                     onWidgetSelected = { providerInfo ->
-                                        val widgetId = widgetHost.allocateWidgetId()
-                                        if (widgetHost.bindWidget(widgetId, providerInfo)) {
-                                            viewModel.addWidget(widgetId, providerInfo)
-
-                                            if (widgetHost.needsConfiguration(widgetId)) {
-                                                // Host-mediated configure (works with non-exported
-                                                // configure activities); falls back to a log.
-                                                val activity = context as? android.app.Activity
-                                                val started = activity != null &&
-                                                    widgetHost.startWidgetConfiguration(
-                                                        activity,
-                                                        widgetId,
-                                                        MainActivity.REQUEST_CONFIGURE_WIDGET
-                                                    )
-                                                if (!started) {
-                                                    Log.w(
-                                                        "LauncherShell",
-                                                        "Could not start widget configuration for $widgetId"
-                                                    )
-                                                }
-                                            }
-                                        }
+                                        // Full allocate→bind→configure/add flow with pending
+                                        // state and bind-permission fallback (was inline
+                                        // allocate+bind with no fallback).
+                                        viewModel.startWidgetConfiguration(providerInfo)
                                         backStack.removeAt(backStack.lastIndex)
                                     },
                                     onDismiss = {
@@ -228,5 +271,5 @@ sealed interface LauncherKey : NavKey {
 }
 
 @Composable
-fun rememberLauncherBackStack(): NavBackStack<LauncherKey> =
-    remember { NavBackStack(LauncherKey.Home) }
+fun rememberLauncherBackStack(initial: LauncherKey = LauncherKey.Home): NavBackStack<LauncherKey> =
+    remember { NavBackStack(initial) }

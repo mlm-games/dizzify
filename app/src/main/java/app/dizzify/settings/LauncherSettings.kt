@@ -27,9 +27,9 @@ enum class ThemeMode { System, Light, Dark }
 enum class SortOrder { AZ, ZA, Recent }
 
 @Serializable
-enum class SearchType { Contains, Fuzzy, StartsWith }
+enum class SearchType { Contains, Fuzzy, StartsWith, Exact }
 
-@SchemaVersion(version = 2)
+@SchemaVersion(version = 3)
 @Serializable
 data class LauncherSettings(
 //    @Setting(
@@ -74,7 +74,7 @@ data class LauncherSettings(
         category = Search::class,
         type = Dropdown::class,
         key = "search_type",
-        options = ["Contains", "Fuzzy", "Starts With"]
+        options = ["Contains", "Fuzzy", "Starts With", "Exact"]
     )
     val searchType: SearchType = SearchType.Contains,
 
@@ -145,4 +145,94 @@ data class LauncherSettings(
 
     @Persisted(key = "settings_lock_pin")
     val settingsLockPin: String = "",
+
+    @Persisted(key = "show_app_names")
+    val showAppNames: Boolean = false,
+
+    @Persisted(key = "auto_open_filtered_app")
+    val autoOpenFilteredApp: Boolean = false,
+
+    @Persisted(key = "return_to_home_after_app")
+    val returnToHomeAfterApp: Boolean = false,
+
+    @Persisted(key = "default_screen")
+    val defaultScreen: Int = 0,
+
+    @Persisted(key = "show_web_search_option")
+    val showWebSearchOption: Boolean = true,
+
+    @Persisted(key = "text_size_scale")
+    val textSizeScale: Float = 1.0f,
+
+    @Persisted(key = "animation_speed")
+    val animationSpeed: Float = 1.0f,
+
+    @Persisted(key = "font_weight")
+    val fontWeight: Int = 2,
+
+    @Persisted(key = "use_system_font")
+    val useSystemFont: Boolean = true,
+
+    @Persisted(key = "custom_font_path")
+    val customFontPath: String = "",
+
+    @Persisted(key = "item_spacing")
+    val itemSpacing: Int = 1,
+
+    @Persisted(key = "search_results_use_home_font")
+    val searchResultsUseHomeFont: Boolean = false,
+
+    @Persisted(key = "search_results_font_size")
+    val searchResultsFontSize: Float = 1.0f,
+
+    @Persisted(key = "icon_corner_radius")
+    val iconCornerRadius: Int = 0,
+
+    @Persisted(key = "text_color")
+    val textColor: Int = 0,
+
+    @Persisted(key = "use_custom_text_color")
+    val useCustomTextColor: Boolean = false,
+
+    @Persisted(key = "show_home_screen_icons")
+    val showHomeScreenIcons: Boolean = false,
+
+    @Persisted(key = "app_label_alignment")
+    val appLabelAlignment: Int = 0,
+
+    @Persisted(key = "search_results_alignment")
+    val searchResultsAlignment: Int = 0,
+
+    @Persisted(key = "scale_home_apps")
+    val scaleHomeApps: Boolean = true,
+
+    @Persisted(key = "home_screen_rows")
+    val homeScreenRows: Int = 8,
+
+    @Persisted(key = "home_screen_columns")
+    val homeScreenColumns: Int = 4,
+
+    @Persisted(key = "search_bar_position")
+    val searchBarPosition: Int = 0,
+
+    @Persisted(key = "reverse_search_results")
+    val reverseSearchResults: Boolean = false,
+
+    @Persisted(key = "first_open")
+    val firstOpen: Boolean = true,
+
+    @Persisted(key = "first_open_time")
+    val firstOpenTime: Long = 0L,
+
+    @Persisted(key = "first_settings_open")
+    val firstSettingsOpen: Boolean = true,
+
+    @Persisted(key = "first_hide")
+    val firstHide: Boolean = true,
+
+    @Persisted(key = "show_hint_counter")
+    val showHintCounter: Int = 1,
+
+    @Persisted(key = "accessibility_consent")
+    val accessibilityConsent: Boolean = false,
 )
