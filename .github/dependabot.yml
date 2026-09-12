@@ -3,11 +3,13 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    open-pull-requests-limit: 10
+    target-branch: "kotlin"
     groups:
-      gradle:
-        patterns:
-          - "*"
+      gradle-dependencies:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
     labels:
       - "dependencies"
       - "gradle"
@@ -16,10 +18,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     groups:
       github-actions:
-        patterns:
-          - "*"
+        patterns: ["*"]
     labels:
       - "dependencies"
       - "github-actions"

@@ -17,5 +17,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "TvLauncher"
+rootProject.name = "Dizzify"
 include(":app")
