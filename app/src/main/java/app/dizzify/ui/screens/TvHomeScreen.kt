@@ -24,6 +24,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val homeApps by viewModel.homeApps.collectAsState()
+    val favoriteApps by viewModel.favoriteApps.collectAsState()
     val recentApps by viewModel.recentApps.collectAsState()
     val allApps by viewModel.apps.collectAsState()
     val hiddenApps by viewModel.hiddenApps.collectAsState()
@@ -177,8 +178,8 @@ fun HomeScreen(
                 },
                 onOpen = { viewModel.launch(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) },
-                onToggleFavorite = { /* TODO: Implement favorites */ },
-                isFavorite = homeApps.any { it.getKey() == app.getKey() },
+                onToggleFavorite = { viewModel.toggleFavorite(app) },
+                isFavorite = favoriteApps.contains(app.getKey()),
                 isHidden = hiddenApps.any { it.getKey() == app.getKey() }
             )
         }
