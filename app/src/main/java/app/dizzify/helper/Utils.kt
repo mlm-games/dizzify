@@ -5,12 +5,14 @@ package app.dizzify.helper
 import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.app.WallpaperManager
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Point
@@ -20,7 +22,6 @@ import android.os.UserHandle
 import android.os.UserManager
 import android.provider.AlarmClock
 import android.provider.CalendarContract
-import android.provider.Settings
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
@@ -43,23 +44,41 @@ import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
 import app.dizzify.settings.SortOrder
 import io.github.mlmgames.settings.core.SettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import java.text.Collator
+import java.util.Locale
 import kotlin.math.pow
 import kotlin.math.sqrt
+
+private const val TAG = "LauncherUtils"
+
+fun getLauncherVisibleProfiles(
+    userManager: UserManager,
+    launcherApps: LauncherApps
+): List<UserHandle> {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        launcherApps.profiles
+    } else {
+        userManager.userProfiles
+    }
+}
 
 suspend fun getAppsList(
     context: Context,
     settingsRepo: SettingsRepository<LauncherSettings>,
     stateRepo: SettingsRepository<LauncherState>,
+    iconCache: IconCache,
     includeRegularApps: Boolean = true,
     includeHiddenApps: Boolean = false,
     filterTvApps: Boolean = true // When true, only show TV apps
-): MutableList<AppModel> {
+): MutableList<AppModel> = withContext(Dispatchers.IO) {
 
     val appList: MutableList<AppModel> = mutableListOf()
 
     try {
+        val appContext = context.applicationContext
         val settings = settingsRepo.flow.first()
         val state = stateRepo.flow.first()
 
@@ -71,19 +90,31 @@ suspend fun getAppsList(
         val selectedIconPack = settings.iconPack
         val showSystemApps = try { settings.showSystemApps } catch (_: Exception) { true }
 
-        val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
-        val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
-        val packageManager = context.packageManager
+        val userManager = appContext.getSystemService(Context.USER_SERVICE) as UserManager
+        val launcherApps = appContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val packageManager = appContext.packageManager
         val collator = Collator.getInstance()
+        val myUser = android.os.Process.myUserHandle()
 
-        val iconCache = IconCache(context)
+        val profiles = getLauncherVisibleProfiles(userManager, launcherApps)
 
-        for (profile in userManager.userProfiles) {
-            val activitiesByPackage = launcherApps.getActivityList(null, profile)
+        for (profile in profiles) {
+            // Skip locked private-space profiles
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                val userType = runCatching { launcherApps.getLauncherUserInfo(profile)?.userType }.getOrNull()
+                if (userType == UserManager.USER_TYPE_PROFILE_PRIVATE &&
+                    userManager.isQuietModeEnabled(profile)
+                ) {
+                    continue
+                }
+            }
+
+            val activitiesByPackage = runCatching { launcherApps.getActivityList(null, profile) }
+                .getOrNull().orEmpty()
                 .groupBy { it.applicationInfo.packageName }
 
             for ((pkg, activities) in activitiesByPackage) {
-                if (pkg == context.packageName) continue
+                if (pkg == appContext.packageName) continue
 
                 if (!showSystemApps && AppLaunchResolver.isSystemApp(packageManager, pkg)) continue
 
@@ -121,13 +152,13 @@ suspend fun getAppsList(
                 val appKey = AppKey.of(pkg, userString)
 
                 val defaultLabel = displayActivity.label.toString() +
-                        if (profile != android.os.Process.myUserHandle()) " (Clone)" else ""
+                        if (profile != myUser) " (Clone)" else ""
 
                 val shownLabel = renamedApps[appKey] ?: defaultLabel
 
                 val appIcon = if (includeIcons) {
                     // Try to get TV banner first
-                    val banner = getTvBanner(context, pkg)
+                    val banner = getTvBanner(appContext, pkg)
                     if (banner != null) {
                         BitmapUtils.drawableToBitmap(banner)?.asImageBitmap()
                     } else {
@@ -140,7 +171,7 @@ suspend fun getAppsList(
                     }
                 } else null
 
-                val hasBanner = hasTvBanner(context, pkg)
+                val hasBanner = hasTvBanner(appContext, pkg)
 
                 val model = AppModel(
                     appLabel = shownLabel,
@@ -170,57 +201,74 @@ suspend fun getAppsList(
             SortOrder.Recent -> {
                 appList.sortWith(
                     compareByDescending<AppModel> { it.lastLaunchTime }
-                        .thenBy { it.appLabel.lowercase() }
+                        .thenBy { it.appLabel.lowercase(Locale.ROOT) }
                 )
             }
             SortOrder.ZA -> {
-                appList.sortByDescending { it.appLabel.lowercase() }
+                appList.sortByDescending { it.appLabel.lowercase(Locale.ROOT) }
             }
             else -> {
-                appList.sortBy { it.appLabel.lowercase() }
+                appList.sortBy { it.appLabel.lowercase(Locale.ROOT) }
             }
         }
 
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.e(TAG, "getAppsList failed", e)
     }
 
-    return appList
+    return@withContext appList
 }
 
 fun getTvBanner(context: Context, packageName: String): Drawable? {
     return try {
-        val pm = context.packageManager
-        val appInfo = pm.getApplicationInfo(packageName, 0)
+        val pm = context.applicationContext.packageManager
+        val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getApplicationInfo(packageName, 0)
+        }
         if (appInfo.banner != 0) {
             pm.getDrawable(packageName, appInfo.banner, appInfo)
         } else {
             null
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 }
 
 fun hasTvBanner(context: Context, packageName: String): Boolean {
     return try {
-        val pm = context.packageManager
-        val appInfo = pm.getApplicationInfo(packageName, 0)
+        val pm = context.applicationContext.packageManager
+        val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getApplicationInfo(packageName, 0)
+        }
         appInfo.banner != 0
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }
 
 fun isPackageInstalled(context: Context, packageName: String, userString: String): Boolean {
-    val launcher = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
-    val activityInfo = launcher.getActivityList(packageName, getUserHandleFromString(context, userString))
-    return activityInfo.isNotEmpty()
+    return try {
+        val launcher = context.applicationContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val activityInfo = launcher.getActivityList(packageName, getUserHandleFromString(context, userString))
+        activityInfo.isNotEmpty()
+    } catch (e: Exception) {
+        Log.w(TAG, "isPackageInstalled failed for $packageName", e)
+        false
+    }
 }
 
 fun getUserHandleFromString(context: Context, userHandleString: String): UserHandle {
-    val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
-    for (userHandle in userManager.userProfiles) {
+    val appContext = context.applicationContext
+    val userManager = appContext.getSystemService(Context.USER_SERVICE) as UserManager
+    val launcherApps = appContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+    for (userHandle in getLauncherVisibleProfiles(userManager, launcherApps)) {
         if (userHandle.toString() == userHandleString) {
             return userHandle
         }
@@ -244,11 +292,12 @@ fun setPlainWallpaper(context: Context, color: Int) {
     try {
         val bitmap = createBitmap(1000, 2000)
         bitmap.eraseColor(context.getColor(color))
-        val manager = WallpaperManager.getInstance(context)
+        val manager = WallpaperManager.getInstance(context.applicationContext)
         manager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_SYSTEM)
         manager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_LOCK)
+        bitmap.recycle()
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.e(TAG, "setPlainWallpaper failed", e)
     }
 }
 
@@ -265,16 +314,19 @@ fun getChangedAppTheme(context: Context, currentAppTheme: Int): Int {
 }
 
 fun openAppInfo(context: Context, userHandle: UserHandle, packageName: String) {
-    val launcher = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+    // Leanback-first (TV): prefer TV settings entry, fall back to mobile + generic.
+    val launcher = context.applicationContext.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
     val component = AppLaunchResolver.leanbackComponent(context.packageManager, packageName)
         ?: AppLaunchResolver.mobileComponent(context.packageManager, packageName)
-        ?: launcher.getActivityList(packageName, userHandle).firstOrNull()?.componentName
+        ?: runCatching { launcher.getActivityList(packageName, userHandle).firstOrNull()?.componentName }.getOrNull()
 
     if (component != null) {
         try {
             launcher.startAppDetailsActivity(component, userHandle, null, null)
             return
-        } catch (_: Exception) { }
+        } catch (e: Exception) {
+            Log.e(TAG, "openAppInfo failed", e)
+        }
     }
     context.showToast(context.getString(R.string.unable_to_open_app))
 }
@@ -299,43 +351,46 @@ fun getScreenDimensions(context: Context): Pair<Int, Int> {
 
 
 fun openSearch(context: Context) {
-    val intent = Intent(Intent.ACTION_WEB_SEARCH)
-    intent.putExtra(SearchManager.QUERY, "")
-    context.startActivity(intent)
+    try {
+        val intent = Intent(Intent.ACTION_WEB_SEARCH).apply {
+            putExtra(SearchManager.QUERY, "")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No web search handler", e)
+        context.showToast(R.string.unable_to_open_app)
+    }
 }
 
 @SuppressLint("WrongConstant")
 fun expandNotificationDrawer(context: Context) {
+    // expandNotificationsPanel() is hidden API — invoke it on the real
+    // StatusBarManager service instance. No "statusbar" string lookup, and no
+    // misleading fallback to notification-listener settings (removed).
     try {
-        //  (Android 12+)
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//            val statusBarManager = context.getSystemService(Context.STATUS_BAR_SERVICE) as StatusBarManager
-//            statusBarManager.expandNotificationsPanel()
-//            return
-//        }
-
-        // Fall back -> reflection for older versions
-        val statusBarService = context.getSystemService("statusbar")
-        val statusBarManager = Class.forName("android.app.StatusBarManager")
-        val method = statusBarManager.getMethod("expandNotificationsPanel")
-        method.invoke(statusBarService)
-    } catch (_: Exception) {
-        // If all else fails, try to use the notification intent
-        try {
-            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-            context.startActivity(intent)
-        } catch (e2: Exception) {
-            e2.printStackTrace()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val statusBarManager =
+                context.applicationContext.getSystemService(Context.STATUS_BAR_SERVICE)
+            val method = statusBarManager.javaClass.getMethod("expandNotificationsPanel")
+            method.invoke(statusBarManager)
+            return
         }
+    } catch (e: Exception) {
+        Log.w(TAG, "expandNotificationsPanel failed", e)
     }
+    Log.i(TAG, "expandNotificationDrawer not supported pre-R without accessibility service")
 }
 
 fun openAlarmApp(context: Context) {
     try {
-        val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
+        val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         context.startActivity(intent)
-    } catch (e: Exception) {
-        Log.d("TAG", e.toString())
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No alarm app found", e)
+        context.showToast(R.string.unable_to_open_app)
     }
 }
 
@@ -345,47 +400,39 @@ fun openCalendar(context: Context) {
             .buildUpon()
             .appendPath("time")
             .build()
-        context.startActivity(Intent(Intent.ACTION_VIEW, calendarUri))
-    } catch (e: Exception) {
-        e.printStackTrace()
-        try {
-            val intent = Intent(Intent.ACTION_MAIN).setClassName(
-                context,
-                "app.dizzify.helper.FakeHomeActivity"
-            )
-            intent.addCategory(Intent.CATEGORY_APP_CALENDAR)
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        context.startActivity(Intent(Intent.ACTION_VIEW, calendarUri).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No calendar app found", e)
+        context.showToast(R.string.unable_to_open_app)
     }
 }
 
 fun isTablet(context: Context): Boolean {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    return try {
+        val windowManager = context.applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val metrics = context.resources.displayMetrics
 
-        val bounds = windowManager.currentWindowMetrics.bounds
-        val widthPixels = bounds.width()
-        val heightPixels = bounds.height()
+        val (widthPixels, heightPixels) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = windowManager.currentWindowMetrics.bounds
+            bounds.width() to bounds.height()
+        } else {
+            @Suppress("DEPRECATION")
+            val dm = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getMetrics(dm)
+            dm.widthPixels to dm.heightPixels
+        }
 
         val widthInches = widthPixels / metrics.xdpi
         val heightInches = heightPixels / metrics.ydpi
         val diagonalInches = sqrt(widthInches.toDouble().pow(2.0) + heightInches.toDouble().pow(2.0))
 
-        return diagonalInches >= 7.0
-    } else {
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val metrics = DisplayMetrics()
-        @Suppress("DEPRECATION")
-        windowManager.defaultDisplay.getMetrics(metrics)
-
-        val widthInches = metrics.widthPixels / metrics.xdpi
-        val heightInches = metrics.heightPixels / metrics.ydpi
-        val diagonalInches = sqrt(widthInches.toDouble().pow(2.0) + heightInches.toDouble().pow(2.0))
-
-        return diagonalInches >= 7.0
+        diagonalInches >= 7.0
+    } catch (e: Exception) {
+        Log.w(TAG, "isTablet check failed", e)
+        false
     }
 }
 
@@ -396,35 +443,58 @@ fun Context.isDarkThemeOn(): Boolean {
 }
 
 fun Context.copyToClipboard(text: String) {
+    if (text.isBlank()) return
     val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clipData = ClipData.newPlainText(getString(R.string.app_name), text)
     clipboardManager.setPrimaryClip(clipData)
-    showToast("")
 }
 
 fun Context.openUrl(url: String) {
-    if (url.isEmpty()) return
-    val intent = Intent(Intent.ACTION_VIEW)
-    intent.data = url.toUri()
-    startActivity(intent)
+    if (url.isBlank()) return
+    try {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No browser for $url", e)
+        showToast(R.string.unable_to_open_app)
+    }
 }
 
 fun Context.isSystemApp(packageName: String): Boolean {
     if (packageName.isBlank()) return true
     return try {
-        val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
+        val applicationInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getApplicationInfo(
+                packageName,
+                PackageManager.ApplicationInfoFlags.of(0)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getApplicationInfo(packageName, 0)
+        }
         ((applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
                 || (applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0))
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "isSystemApp failed for $packageName", e)
         false
     }
 }
 
 fun Context.uninstall(packageName: String) {
-    val intent = Intent(Intent.ACTION_DELETE)
-    intent.data = "package:$packageName".toUri()
-    startActivity(intent)
+    if (packageName.isBlank()) return
+    try {
+        val intent = Intent(Intent.ACTION_DELETE, "package:$packageName".toUri()).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No uninstall handler", e)
+        showToast(R.string.unable_to_open_app)
+    }
 }
 
 @ColorInt
@@ -447,27 +517,43 @@ fun View.animateAlpha(alpha: Float = 1.0f) {
 }
 
 fun Context.shareApp() {
-    val message = getString(R.string.are_you_using_your_phone_or_is_your_phone_using_you) +
-            "\n" + Constants.URL_DIZZIFY_GITHUB
-    val sendIntent: Intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, message)
-        type = "text/plain"
-    }
+    try {
+        val message = getString(R.string.are_you_using_your_phone_or_is_your_phone_using_you) +
+                "\n" + Constants.URL_DIZZIFY_GITHUB
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, message)
+            type = "text/plain"
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
 
-    val shareIntent = Intent.createChooser(sendIntent, null)
-    startActivity(shareIntent)
+        val shareIntent = Intent.createChooser(sendIntent, null).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(shareIntent)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No share handler", e)
+    }
 }
 
 fun Context.starApp() {
-    val intent = Intent(
-        Intent.ACTION_VIEW,
-        Constants.URL_DIZZIFY_GITHUB.toUri()
-    )
-    var flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_MULTIPLE_TASK
-    flags = flags or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-    intent.addFlags(flags)
-    startActivity(intent)
+    try {
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            Constants.URL_DIZZIFY_GITHUB.toUri()
+        ).apply {
+            addFlags(
+                Intent.FLAG_ACTIVITY_NO_HISTORY or
+                    Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                    Intent.FLAG_ACTIVITY_NEW_DOCUMENT or
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            )
+        }
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No browser for star link", e)
+        showToast(R.string.unable_to_open_app)
+    }
 }
 
 fun AppModel.resolveUser(context: Context): UserHandle =

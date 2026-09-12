@@ -47,7 +47,7 @@ class PermissionManager(private val context: Context) {
     }
 
     /**
-     * Check if Dizzify is the default launcher
+     * Check if CCLauncher is the default launcher
      */
     fun isDefaultLauncher(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -57,7 +57,15 @@ class PermissionManager(private val context: Context) {
             val intent = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_HOME)
             }
-            val resolveInfo = context.packageManager.resolveActivity(intent, 0)
+            val resolveInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.resolveActivity(
+                    intent,
+                    android.content.pm.PackageManager.ResolveInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.resolveActivity(intent, 0)
+            }
             resolveInfo?.activityInfo?.packageName == context.packageName
         }
     }

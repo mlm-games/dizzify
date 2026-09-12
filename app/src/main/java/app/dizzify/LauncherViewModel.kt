@@ -6,9 +6,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
+import app.dizzify.data.AppShortcut
 import app.dizzify.data.HomeItem
 import app.dizzify.data.HomeLayout
 import app.dizzify.data.repository.AppRepository
+import app.dizzify.helper.PermissionManager
 import app.dizzify.helper.SearchAliasUtils
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
@@ -18,11 +20,16 @@ import app.dizzify.settings.ThemeMode
 import app.dizzify.settings.markLaunched
 import app.dizzify.settings.setAppLaunchMode
 import app.dizzify.settings.setCustomName
+import app.dizzify.settings.setSettingsLock
+import app.dizzify.settings.setSettingsLockPin
+import app.dizzify.settings.validateSettingsPin
 import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import co.touchlab.kermit.Logger
+import java.util.Locale
 
 data class LauncherUiState(
     val query: String = "",
@@ -227,8 +234,8 @@ class LauncherViewModel(
     }
 
     private fun fuzzyMatch(text: String, pattern: String): Boolean {
-        val t = text.lowercase()
-        val p = pattern.lowercase()
+        val t = text.lowercase(Locale.ROOT)
+        val p = pattern.lowercase(Locale.ROOT)
         var ti = 0
         var pi = 0
         while (ti < t.length && pi < p.length) {
@@ -236,6 +243,115 @@ class LauncherViewModel(
             ti++
         }
         return pi == p.length
+    }
+
+    // ---- Pinned shortcuts (ported from CCLauncher backend) ----
+
+    fun getAppShortcuts(app: AppModel, onResult: (List<AppShortcut>) -> Unit) {
+        viewModelScope.launch {
+            val shortcuts = runCatching { appRepository.getAppShortcuts(app) }.getOrDefault(emptyList())
+            onResult(shortcuts)
+        }
+    }
+
+    fun launchShortcut(app: AppModel, shortcutId: String) {
+        viewModelScope.launch {
+            runCatching {
+                appRepository.launchApp(
+                    app.copy(
+                        isSystemShortcut = true,
+                        systemShortcutId = shortcutId,
+                        systemShortcutPackage = app.appPackage
+                    )
+                )
+            }.onSuccess {
+                runCatching { stateRepo.markLaunched(app.getKey()) }
+            }.onFailure { e ->
+                Logger.e(e) { "Failed to open shortcut $shortcutId" }
+            }
+        }
+    }
+
+    fun pinShortcut(app: AppModel, shortcutId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
+                    as android.content.pm.LauncherApps
+                if (!launcherApps.hasShortcutHostPermission()) {
+                    Logger.w { "Cannot pin shortcut: not default launcher" }
+                    return@launch
+                }
+                val query = android.content.pm.LauncherApps.ShortcutQuery()
+                    .setPackage(app.appPackage)
+                    .setQueryFlags(android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED)
+                val pinnedIds = launcherApps.getShortcuts(query, app.user)
+                    .orEmpty().mapNotNull { it.id }.toMutableSet()
+                pinnedIds.add(shortcutId)
+                launcherApps.pinShortcuts(app.appPackage, pinnedIds.toList(), app.user)
+            }.onSuccess {
+                runCatching {
+                    appRepository.loadApps(forceEmit = true)
+                }
+            }.onFailure { e ->
+                Logger.e(e) { "Failed to pin shortcut $shortcutId" }
+            }
+        }
+    }
+
+    fun deletePinnedShortcut(app: AppModel) {
+        if (!app.isSystemShortcut) return
+        viewModelScope.launch {
+            runCatching {
+                appRepository.deletePinnedShortcut(
+                    packageName = app.systemShortcutPackage!!,
+                    shortcutId = app.systemShortcutId!!,
+                    user = app.user
+                )
+            }.onSuccess {
+                runCatching { appRepository.loadApps(forceEmit = true) }
+            }.onFailure { e ->
+                Logger.e(e) { "Failed to delete shortcut" }
+            }
+        }
+    }
+
+    fun updateShowPinnedShortcuts(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showPinnedShortcuts = show) }
+        }
+    }
+
+    // ---- Settings lock (PIN hashed, never plaintext) ----
+
+    suspend fun validatePin(pin: String): Boolean = withContext(Dispatchers.Default) {
+        settingsRepo.validateSettingsPin(pin)
+    }
+
+    fun setPin(pin: String) {
+        viewModelScope.launch {
+            settingsRepo.setSettingsLockPin(pin)
+        }
+    }
+
+    fun toggleLockSettings(locked: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.setSettingsLock(locked)
+            if (!locked) {
+                settingsRepo.setSettingsLockPin("")
+            }
+        }
+    }
+
+    /** Double-tap lock: permission-gated, never startService() from background. */
+    fun lockScreen() {
+        viewModelScope.launch {
+            val pm = PermissionManager(context)
+            if (!pm.hasAccessibilityPermission()) {
+                Logger.w { "Lock requested but accessibility service not enabled" }
+                return@launch
+            }
+            Logger.i { "Lock requested; accessibility enabled, awaiting bound service action" }
+        }
     }
 
     fun updateTheme(mode: ThemeMode) {

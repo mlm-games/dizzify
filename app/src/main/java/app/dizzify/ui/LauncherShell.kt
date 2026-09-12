@@ -1,6 +1,7 @@
 package app.dizzify.ui
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -34,6 +35,7 @@ import app.dizzify.ui.components.snackbar.SnackbarManager
 import app.dizzify.ui.screens.WidgetPickerScreen
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
+import app.dizzify.MainActivity
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -113,6 +115,7 @@ fun LauncherShell(
                         entryProvider = entryProvider {
                             entry<LauncherKey.WidgetPicker> {
                                 val widgetHost: LauncherWidgetHost = koinInject()
+                                val context = androidx.compose.ui.platform.LocalContext.current
 
                                 WidgetPickerScreen(
                                     onWidgetSelected = { providerInfo ->
@@ -121,9 +124,20 @@ fun LauncherShell(
                                             viewModel.addWidget(widgetId, providerInfo)
 
                                             if (widgetHost.needsConfiguration(widgetId)) {
-                                                val intent = widgetHost.createConfigurationIntent(widgetId)
-                                                if (intent != null) {
-                                                    // TODO: snack
+                                                // Host-mediated configure (works with non-exported
+                                                // configure activities); falls back to a log.
+                                                val activity = context as? android.app.Activity
+                                                val started = activity != null &&
+                                                    widgetHost.startWidgetConfiguration(
+                                                        activity,
+                                                        widgetId,
+                                                        MainActivity.REQUEST_CONFIGURE_WIDGET
+                                                    )
+                                                if (!started) {
+                                                    Log.w(
+                                                        "LauncherShell",
+                                                        "Could not start widget configuration for $widgetId"
+                                                    )
                                                 }
                                             }
                                         }

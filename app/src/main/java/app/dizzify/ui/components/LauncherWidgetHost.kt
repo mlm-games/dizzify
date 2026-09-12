@@ -94,6 +94,60 @@ class LauncherWidgetHost(
         return info.configure != null
     }
 
+    /**
+     * Starts the configuration activity via the system-mediated AppWidgetHost path.
+     * DO NOT use a direct Intent — that fails with SecurityException for any widget
+     * whose configure activity is not exported.
+     */
+    fun startWidgetConfiguration(
+        activity: android.app.Activity,
+        widgetId: Int,
+        requestCode: Int
+    ): Boolean {
+        return try {
+            val providerInfo = appWidgetManager.getAppWidgetInfo(widgetId)
+            if (providerInfo?.configure == null) {
+                Log.w(TAG, "Widget $widgetId has no configure activity")
+                return false
+            }
+            val options = if (android.os.Build.VERSION.SDK_INT >= 34) {
+                try {
+                    android.app.ActivityOptions.makeBasic()
+                        .setPendingIntentBackgroundActivityStartMode(
+                            android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                        )
+                        .toBundle()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to create ActivityOptions for API 34+", e)
+                    null
+                }
+            } else {
+                null
+            }
+            appWidgetHost.startAppWidgetConfigureActivityForResult(
+                activity,
+                widgetId,
+                0,
+                requestCode,
+                options
+            )
+            true
+        } catch (e: android.content.ActivityNotFoundException) {
+            Log.e(TAG, "Configure activity not found for widget $widgetId", e)
+            false
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException starting widget configuration", e)
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start widget configuration for widget $widgetId", e)
+            false
+        }
+    }
+
+    @Deprecated(
+        "Direct configure Intents fail for non-exported activities. Use startWidgetConfiguration().",
+        ReplaceWith("startWidgetConfiguration(activity, widgetId, requestCode)")
+    )
     fun createConfigurationIntent(widgetId: Int): Intent? {
         val info = appWidgetManager.getAppWidgetInfo(widgetId) ?: return null
         if (info.configure == null) return null

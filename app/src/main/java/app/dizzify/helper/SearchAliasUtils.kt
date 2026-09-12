@@ -1,7 +1,8 @@
 package app.dizzify.helper
 
-import android.os.Build
+import android.icu.text.Transliterator
 import java.text.Normalizer
+import java.util.Locale
 
 /**
  * Utilities for building and matching search aliases (transliteration and keyboard layout swap).
@@ -29,6 +30,17 @@ object SearchAliasUtils {
     private val enToRu = en.zip(ru).toMap() + en.map { it.uppercaseChar() }.zip(ru.map { it.uppercaseChar() }).toMap()
     private val ruToEn = ru.zip(en).toMap() + ru.map { it.uppercaseChar() }.zip(en.map { it.uppercaseChar() }).toMap()
 
+    private val NON_ASCII_REGEX = "[^\\p{ASCII}]".toRegex()
+
+    // Cached ICU transliterators — creating via reflection per-app/per-query was a hot-path cost.
+    // minSdk 24 ships android.icu, so use it directly.
+    private val anyLatinTransliterator: Transliterator? by lazy {
+        runCatching { Transliterator.getInstance("Any-Latin") }.getOrNull()
+    }
+    private val latinCyrillicTransliterator: Transliterator? by lazy {
+        runCatching { Transliterator.getInstance("Latin-Cyrillic") }.getOrNull()
+    }
+
     fun swapKeyboardLayout(text: String, ruToEnDirection: Boolean): String {
         val map = if (ruToEnDirection) ruToEn else enToRu
         val sb = StringBuilder(text.length)
@@ -42,33 +54,23 @@ object SearchAliasUtils {
         for (c in norm) {
             if (Character.getType(c) != Character.NON_SPACING_MARK.toInt()) sb.append(c)
         }
-        return sb.toString().replace("[^\\p{ASCII}]".toRegex(), "")
+        return sb.toString().replace(NON_ASCII_REGEX, "")
     }
 
-    private fun transliterate(id: String, text: String): String {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            return try {
-                val cls = Class.forName("android.icu.text.Transliterator")
-                val getInstance = cls.getMethod("getInstance", String::class.java)
-                val transform = cls.getMethod("transliterate", String::class.java)
-                val inst = getInstance.invoke(null, id)
-                transform.invoke(inst, text) as String
-            } catch (_: Throwable) {
-                text
-            }
-        }
-        return text
+    private fun transliterate(transliterator: Transliterator?, text: String): String {
+        if (transliterator == null) return text
+        return runCatching { transliterator.transliterate(text) }.getOrDefault(text)
     }
 
     fun anyToLatin(text: String): String {
         // Any script -> Latin -> ASCII-ish
-        val toLatin = transliterate("Any-Latin", text)
+        val toLatin = transliterate(anyLatinTransliterator, text)
         return asciiFold(toLatin)
     }
 
-    fun latinToCyrillic(text: String): String = transliterate("Latin-Cyrillic", text)
+    fun latinToCyrillic(text: String): String = transliterate(latinCyrillicTransliterator, text)
 
-    fun normalize(s: String): String = s.lowercase().trim()
+    fun normalize(s: String): String = s.lowercase(Locale.ROOT).trim()
 
     /**
      * Build a set of aliases for an app label and optional package name.

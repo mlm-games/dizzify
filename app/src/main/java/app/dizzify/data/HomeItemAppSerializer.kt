@@ -22,6 +22,9 @@ object HomeItemAppSerializer : KSerializer<HomeItem.App> {
         element<String>("activityClassName")
         element<String>("userString")
         element<Boolean>("isHidden")
+        element<Boolean>("isSystemShortcut")
+        element<String>("systemShortcutId")
+        element<String>("systemShortcutPackage")
     }
 
     override fun serialize(encoder: Encoder, value: HomeItem.App) {
@@ -36,6 +39,9 @@ object HomeItemAppSerializer : KSerializer<HomeItem.App> {
             encodeStringElement(descriptor, 7, value.appModel.activityClassName.orEmpty())
             encodeStringElement(descriptor, 8, value.appModel.userString)
             encodeBooleanElement(descriptor, 9, value.appModel.isHidden)
+            encodeBooleanElement(descriptor, 10, value.appModel.isSystemShortcut)
+            encodeStringElement(descriptor, 11, value.appModel.systemShortcutId.orEmpty())
+            encodeStringElement(descriptor, 12, value.appModel.systemShortcutPackage.orEmpty())
         }
     }
 
@@ -50,6 +56,9 @@ object HomeItemAppSerializer : KSerializer<HomeItem.App> {
         var activityClassNameRaw = ""
         var userString = ""
         var isHidden = false
+        var isSystemShortcut = false
+        var systemShortcutId = ""
+        var systemShortcutPackage = ""
 
         decoder.decodeStructure(descriptor) {
             while (true) {
@@ -64,22 +73,29 @@ object HomeItemAppSerializer : KSerializer<HomeItem.App> {
                     7 -> activityClassNameRaw = decodeStringElement(descriptor, index)
                     8 -> userString = decodeStringElement(descriptor, index)
                     9 -> isHidden = decodeBooleanElement(descriptor, index)
+                    10 -> isSystemShortcut = decodeBooleanElement(descriptor, index)
+                    11 -> systemShortcutId = decodeStringElement(descriptor, index)
+                    12 -> systemShortcutPackage = decodeStringElement(descriptor, index)
                     CompositeDecoder.DECODE_DONE -> break
-                    else -> error("Unexpected index: $index")
+                    // Tolerant: ignore unknown future fields instead of crashing.
+                    else -> decodeStringElement(descriptor, index)
                 }
             }
         }
 
         val activityClassName = activityClassNameRaw
             .trim()
-            .takeIf { it.isNotBlank() }
+            .takeIf { it.isNotBlank() && !it.equals("null", ignoreCase = true) }
 
         val appModel = AppModel(
             appLabel = appLabel,
             appPackage = appPackage,
             activityClassName = activityClassName,
             isHidden = isHidden,
-            userString = userString
+            userString = userString,
+            isSystemShortcut = isSystemShortcut,
+            systemShortcutId = systemShortcutId.takeIf { it.isNotEmpty() },
+            systemShortcutPackage = systemShortcutPackage.takeIf { it.isNotEmpty() }
         )
 
         return HomeItem.App(

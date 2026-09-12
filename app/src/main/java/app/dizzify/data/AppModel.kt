@@ -27,6 +27,9 @@ data class AppModel(
     val hasBanner: Boolean = false,
     val leanbackActivityClassName: String? = null,
     val mobileActivityClassName: String? = null,
+    val isSystemShortcut: Boolean = false,
+    val systemShortcutId: String? = null,
+    val systemShortcutPackage: String? = null,
 ) : Comparable<AppModel> {
     val supportsLeanback: Boolean get() = !leanbackActivityClassName.isNullOrBlank()
     val supportsMobile: Boolean get() = !mobileActivityClassName.isNullOrBlank()
@@ -36,13 +39,20 @@ data class AppModel(
         else -> appLabel.compareTo(other.appLabel, ignoreCase = true)
     }
 
-    fun getKey(): String = AppKey.of(appPackage, userString)
+    fun getKey(): String = if (isSystemShortcut) {
+        AppKey.shortcutKey(systemShortcutPackage, systemShortcutId, userString)
+    } else {
+        AppKey.of(appPackage, userString)
+    }
 }
 
 
 object AppKey {
     fun of(packageName: String, userString: String): String =
         "${packageName.trim()}/${userString.trim()}"
+
+    fun shortcutKey(packageName: String?, shortcutId: String?, userString: String): String =
+        "shortcut:${packageName.orEmpty().trim()}/${shortcutId.orEmpty().trim()}/${userString.trim()}"
 }
 
 /** How a specific app should be launched when it supports both TV and mobile entries. */

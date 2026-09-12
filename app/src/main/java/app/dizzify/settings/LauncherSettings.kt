@@ -1,6 +1,7 @@
 package app.dizzify.settings
 
 import io.github.mlmgames.settings.core.annotations.CategoryDefinition
+import io.github.mlmgames.settings.core.annotations.Persisted
 import io.github.mlmgames.settings.core.annotations.SchemaVersion
 import io.github.mlmgames.settings.core.annotations.Setting
 import io.github.mlmgames.settings.core.types.Dropdown
@@ -128,4 +129,20 @@ data class LauncherSettings(
         key = "show_system_apps"
     )
     val showSystemApps: Boolean = true,
+
+    @Setting(
+        title = "Show Pinned Shortcuts",
+        description = "Display pinned app shortcuts in the app list",
+        category = Apps::class,
+        type = Toggle::class,
+        key = "show_pinned_shortcuts"
+    )
+    val showPinnedShortcuts: Boolean = false,
+
+    // Settings lock (PIN stored only as salted SHA-256 hash, see SettingsLock).
+    @Persisted(key = "lock_settings")
+    val lockSettings: Boolean = false,
+
+    @Persisted(key = "settings_lock_pin")
+    val settingsLockPin: String = "",
 )
