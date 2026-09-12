@@ -6,7 +6,7 @@ import io.github.mlmgames.settings.core.annotations.SchemaVersion
 import io.github.mlmgames.settings.core.annotations.Serialized
 import kotlinx.serialization.Serializable
 
-@SchemaVersion(version = 1)
+@SchemaVersion(version = 2)
 @Serializable
 data class LauncherState(
     @Persisted(key = "hidden_apps")
@@ -24,4 +24,7 @@ data class LauncherState(
 
     @Persisted(key = "favorite_apps")
     val favoriteApps: Set<String> = emptySet(),
+
+    @Persisted(key = "app_launch_modes")
+    val appLaunchModes: Map<String, String> = emptyMap(),
 )

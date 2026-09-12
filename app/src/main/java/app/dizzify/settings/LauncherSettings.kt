@@ -28,7 +28,7 @@ enum class SortOrder { AZ, ZA, Recent }
 @Serializable
 enum class SearchType { Contains, Fuzzy, StartsWith }
 
-@SchemaVersion(version = 1)
+@SchemaVersion(version = 2)
 @Serializable
 data class LauncherSettings(
 //    @Setting(
@@ -110,4 +110,22 @@ data class LauncherSettings(
         key = "show_non_tv_apps"
     )
     val showNonTvApps: Boolean = false,
+
+    @Setting(
+        title = "Prefer TV (Leanback) Launch",
+        description = "Open TV UI when app supports it (e.g. VLC, Dolphin)",
+        category = Tv::class,
+        type = Toggle::class,
+        key = "prefer_tv_launch"
+    )
+    val preferTvLaunch: Boolean = true,
+
+    @Setting(
+        title = "Show System Apps",
+        description = "Include pre-installed system apps in the list",
+        category = Apps::class,
+        type = Toggle::class,
+        key = "show_system_apps"
+    )
+    val showSystemApps: Boolean = true,
 )

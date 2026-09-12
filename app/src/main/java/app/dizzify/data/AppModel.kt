@@ -24,8 +24,13 @@ data class AppModel(
     val userString: String = user.toString(),
     @Transient
     val lastLaunchTime: Long = 0,
-    val hasBanner: Boolean = false
+    val hasBanner: Boolean = false,
+    val leanbackActivityClassName: String? = null,
+    val mobileActivityClassName: String? = null,
 ) : Comparable<AppModel> {
+    val supportsLeanback: Boolean get() = !leanbackActivityClassName.isNullOrBlank()
+    val supportsMobile: Boolean get() = !mobileActivityClassName.isNullOrBlank()
+    val supportsBoth: Boolean get() = supportsLeanback && supportsMobile
     override fun compareTo(other: AppModel): Int = when {
         key != null && other.key != null -> key.compareTo(other.key)
         else -> appLabel.compareTo(other.appLabel, ignoreCase = true)
@@ -38,4 +43,14 @@ data class AppModel(
 object AppKey {
     fun of(packageName: String, userString: String): String =
         "${packageName.trim()}/${userString.trim()}"
+}
+
+/** How a specific app should be launched when it supports both TV and mobile entries. */
+enum class AppLaunchMode {
+    AUTO, TV, MOBILE;
+
+    companion object {
+        fun of(raw: String?): AppLaunchMode =
+            runCatching { valueOf(raw ?: "AUTO") }.getOrDefault(AUTO)
+    }
 }

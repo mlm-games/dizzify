@@ -31,7 +31,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
+import app.dizzify.helper.AppLaunchResolver
 import app.dizzify.helper.getUserHandleFromString
 import app.dizzify.helper.openAppInfo
 import app.dizzify.helper.uninstall
@@ -80,11 +82,18 @@ fun AppOptionsSheet(
     onToggleFavorite: () -> Unit = {},
     isFavorite: Boolean = false,
     isHidden: Boolean = false,
-    context: AppOptionContext = AppOptionContext.FromApps(isHidden)
+    context: AppOptionContext = AppOptionContext.FromApps(isHidden),
+    onOpenTv: (() -> Unit)? = null,
+    onOpenMobile: (() -> Unit)? = null,
+    launchMode: AppLaunchMode = AppLaunchMode.AUTO,
+    onLaunchModeChange: ((AppLaunchMode) -> Unit)? = null,
+    onRename: ((String?) -> Unit)? = null,
 ) {
     val androidContext = LocalContext.current
+    var showRename by remember { mutableStateOf(false) }
+    var renameText by remember(app) { mutableStateOf(app.appLabel) }
 
-    val options = remember(app, isFavorite, isHidden, context) {
+    val options = remember(app, isFavorite, isHidden, context, launchMode) {
         buildList {
             add(AppOption(
                 id = "open",
@@ -93,6 +102,46 @@ fun AppOptionsSheet(
                 iconTint = LauncherColors.AccentBlue,
                 action = onOpen
             ))
+
+            if (app.supportsBoth) {
+                if (onOpenTv != null) {
+                    add(AppOption(
+                        id = "open_tv",
+                        label = "Open TV version",
+                        icon = Icons.Filled.Tv,
+                        iconTint = LauncherColors.AccentTeal,
+                        action = onOpenTv
+                    ))
+                }
+                if (onOpenMobile != null) {
+                    add(AppOption(
+                        id = "open_mobile",
+                        label = "Open phone version",
+                        icon = Icons.Filled.Smartphone,
+                        iconTint = LauncherColors.AccentPurple,
+                        action = onOpenMobile
+                    ))
+                }
+                if (onLaunchModeChange != null) {
+                    val next = when (launchMode) {
+                        AppLaunchMode.AUTO -> AppLaunchMode.TV
+                        AppLaunchMode.TV -> AppLaunchMode.MOBILE
+                        AppLaunchMode.MOBILE -> AppLaunchMode.AUTO
+                    }
+                    val label = when (launchMode) {
+                        AppLaunchMode.TV -> "Default: TV version"
+                        AppLaunchMode.MOBILE -> "Default: Phone version"
+                        AppLaunchMode.AUTO -> "Default: Auto"
+                    }
+                    add(AppOption(
+                        id = "launch_mode",
+                        label = "$label (tap to change)",
+                        icon = Icons.Outlined.Tune,
+                        iconTint = LauncherColors.TextSecondary,
+                        action = { onLaunchModeChange(next) }
+                    ))
+                }
+            }
 
             when (context) {
                 is AppOptionContext.FromHome -> {
@@ -144,6 +193,27 @@ fun AppOptionsSheet(
                     val user = getUserHandleFromString(androidContext, app.userString)
                     openAppInfo(androidContext, user, app.appPackage)
                 }
+            ))
+
+            if (onRename != null) {
+                add(AppOption(
+                    id = "rename",
+                    label = "Rename",
+                    icon = Icons.Outlined.Edit,
+                    iconTint = LauncherColors.TextSecondary,
+                    action = {
+                        renameText = app.appLabel
+                        showRename = true
+                    }
+                ))
+            }
+
+            add(AppOption(
+                id = "store",
+                label = "Open in Play Store",
+                icon = Icons.Outlined.Shop,
+                iconTint = LauncherColors.TextSecondary,
+                action = { AppLaunchResolver.openInPlayStore(androidContext, app.appPackage) }
             ))
 
             when (context) {
@@ -206,6 +276,49 @@ fun AppOptionsSheet(
                     options = options,
                     onDismiss = onDismiss
                 )
+            }
+        }
+    }
+
+    if (showRename && onRename != null) {
+        Dialog(onDismissRequest = { showRename = false }) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = LauncherColors.DarkSurface,
+                modifier = Modifier.width(400.dp)
+            ) {
+                Column(modifier = Modifier.padding(LauncherSpacing.lg)) {
+                    Text(
+                        text = "Rename app",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(LauncherSpacing.sm))
+                    OutlinedTextField(
+                        value = renameText,
+                        onValueChange = { renameText = it },
+                        singleLine = true,
+                        placeholder = { Text(app.appPackage) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(LauncherSpacing.md))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = {
+                            showRename = false
+                            onDismiss()
+                        }) { Text("Cancel") }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(onClick = {
+                            val trimmed = renameText.trim()
+                            onRename(trimmed.ifEmpty { null })
+                            showRename = false
+                            onDismiss()
+                        }) { Text("Save") }
+                    }
+                }
             }
         }
     }

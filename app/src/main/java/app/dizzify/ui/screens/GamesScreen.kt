@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
 import app.dizzify.ui.components.*
@@ -23,6 +24,7 @@ fun GamesScreen(
 ) {
     val allApps by viewModel.apps.collectAsState()
     val hiddenApps by viewModel.hiddenApps.collectAsState()
+    val launcherState by viewModel.state.collectAsState()
     
     val games = remember(allApps) {
         allApps.filter { app ->
@@ -115,7 +117,12 @@ fun GamesScreen(
                 },
                 onOpen = { viewModel.launch(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) },
-                isHidden = hiddenApps.any { it.getKey() == app.getKey() }
+                isHidden = hiddenApps.any { it.getKey() == app.getKey() },
+                onOpenTv = if (app.supportsBoth) ({ viewModel.launchInTvMode(app) }) else null,
+                onOpenMobile = if (app.supportsBoth) ({ viewModel.launchInMobileMode(app) }) else null,
+                launchMode = AppLaunchMode.of(launcherState.appLaunchModes[app.getKey()]),
+                onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
+                onRename = { viewModel.renameApp(app, it) },
             )
         }
     }

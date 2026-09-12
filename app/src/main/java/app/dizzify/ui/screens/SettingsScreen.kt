@@ -341,6 +341,13 @@ private fun SettingsCategoryContent(
                                 viewModel.updateSortOrder(order)
                             }
                         )
+
+                        SettingsToggle(
+                            title = "Show System Apps",
+                            description = "Include pre-installed system apps",
+                            isChecked = settings.showSystemApps,
+                            onCheckedChange = { viewModel.updateShowSystemApps(it) }
+                        )
                     }
                 }
 
@@ -391,6 +398,13 @@ private fun SettingsCategoryContent(
                             description = "Show apps without Leanback support",
                             isChecked = settings.showNonTvApps,
                             onCheckedChange = { viewModel.updateShowNonTvApps(it) }
+                        )
+
+                        SettingsToggle(
+                            title = "Prefer TV Launch",
+                            description = "Open TV UI when app supports it (VLC, Dolphin)",
+                            isChecked = settings.preferTvLaunch,
+                            onCheckedChange = { viewModel.updatePreferTvLaunch(it) }
                         )
                     }
                 }

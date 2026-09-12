@@ -69,6 +69,7 @@ suspend fun getAppsList(
 
         val includeIcons = settings.showAppIcons
         val selectedIconPack = settings.iconPack
+        val showSystemApps = try { settings.showSystemApps } catch (_: Exception) { true }
 
         val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
         val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -77,54 +78,49 @@ suspend fun getAppsList(
 
         val iconCache = IconCache(context)
 
-        val tvPackages = if (filterTvApps) {
-            val tvIntent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-            }
-            packageManager.queryIntentActivities(tvIntent, 0)
-                .map { it.activityInfo.packageName }
-                .toSet()
-        } else {
-            emptySet()
-        }
-
         for (profile in userManager.userProfiles) {
-            val tvActivities = if (filterTvApps) {
-                val tvIntent = Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                }
-                launcherApps.getActivityList(null, profile)
-                    .filter { activity ->
-                        val pkgTvIntent = Intent(Intent.ACTION_MAIN).apply {
-                            addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                            `package` = activity.applicationInfo.packageName
-                        }
-                        packageManager.queryIntentActivities(pkgTvIntent, 0).any {
-                            it.activityInfo.name == activity.componentName.className
-                        }
-                    }
-                    .associateBy { it.applicationInfo.packageName }
-            } else {
-                emptyMap()
-            }
+            val activitiesByPackage = launcherApps.getActivityList(null, profile)
+                .groupBy { it.applicationInfo.packageName }
 
-            for (activity in launcherApps.getActivityList(null, profile)) {
-                val pkg = activity.applicationInfo.packageName
-
+            for ((pkg, activities) in activitiesByPackage) {
                 if (pkg == context.packageName) continue
 
-                if (filterTvApps) {
-                    val tvActivity = tvActivities[pkg] ?: continue
-                    // Use TV activity instead if different
-                    if (tvActivity.componentName.className != activity.componentName.className) {
-                        continue
-                    }
+                if (!showSystemApps && AppLaunchResolver.isSystemApp(packageManager, pkg)) continue
+
+                val leanbackComponent = AppLaunchResolver.leanbackComponent(packageManager, pkg)
+                val mobileComponent = AppLaunchResolver.mobileComponent(packageManager, pkg)
+                val leanbackClasses = AppLaunchResolver.leanbackClassNames(packageManager, pkg)
+
+                val groupClasses = activities.map { it.componentName.className }.toSet()
+
+                val resolvedLeanbackClass: String? = when {
+                    leanbackComponent != null &&
+                        (groupClasses.contains(leanbackComponent.className) || leanbackClasses.contains(leanbackComponent.className)) ->
+                        leanbackComponent.className
+                    else -> activities.firstOrNull { leanbackClasses.contains(it.componentName.className) }
+                        ?.componentName?.className
                 }
+
+                val resolvedMobileClass: String? = when {
+                    mobileComponent != null && groupClasses.contains(mobileComponent.className) &&
+                        mobileComponent.className != resolvedLeanbackClass ->
+                        mobileComponent.className
+                    else -> activities.firstOrNull { it.componentName.className != resolvedLeanbackClass }
+                        ?.componentName?.className
+                        ?: activities.firstOrNull()?.componentName?.className
+                }
+
+                val hasLeanback = resolvedLeanbackClass != null
+                if (filterTvApps && !hasLeanback) continue
+
+                val displayClass = resolvedLeanbackClass ?: resolvedMobileClass ?: continue
+                val displayActivity = activities.firstOrNull { it.componentName.className == displayClass }
+                    ?: activities.first()
 
                 val userString = profile.toString()
                 val appKey = AppKey.of(pkg, userString)
 
-                val defaultLabel = activity.label.toString() +
+                val defaultLabel = displayActivity.label.toString() +
                         if (profile != android.os.Process.myUserHandle()) " (Clone)" else ""
 
                 val shownLabel = renamedApps[appKey] ?: defaultLabel
@@ -137,7 +133,7 @@ suspend fun getAppsList(
                     } else {
                         iconCache.getIcon(
                             packageName = pkg,
-                            className = activity.componentName.className,
+                            className = displayClass,
                             user = profile,
                             iconPackName = selectedIconPack
                         )
@@ -148,16 +144,18 @@ suspend fun getAppsList(
 
                 val model = AppModel(
                     appLabel = shownLabel,
-                    key = collator.getCollationKey(activity.label.toString()),
+                    key = collator.getCollationKey(displayActivity.label.toString()),
                     appPackage = pkg,
-                    activityClassName = activity.componentName.className,
-                    isNew = (System.currentTimeMillis() - activity.firstInstallTime) < AnimationConstants.ONE_HOUR_IN_MILLIS,
+                    activityClassName = displayClass,
+                    isNew = (System.currentTimeMillis() - displayActivity.firstInstallTime) < AnimationConstants.ONE_HOUR_IN_MILLIS,
                     user = profile,
                     appIcon = appIcon,
                     isHidden = hiddenApps.contains(appKey),
                     userString = userString,
                     lastLaunchTime = recentHistory[appKey] ?: 0L,
-                    hasBanner = hasBanner
+                    hasBanner = hasBanner,
+                    leanbackActivityClassName = resolvedLeanbackClass,
+                    mobileActivityClassName = resolvedMobileClass?.takeIf { it != resolvedLeanbackClass },
                 )
 
                 val isHidden = hiddenApps.contains(appKey)
@@ -268,11 +266,17 @@ fun getChangedAppTheme(context: Context, currentAppTheme: Int): Int {
 
 fun openAppInfo(context: Context, userHandle: UserHandle, packageName: String) {
     val launcher = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
-    val intent: Intent? = context.packageManager.getLaunchIntentForPackage(packageName)
+    val component = AppLaunchResolver.leanbackComponent(context.packageManager, packageName)
+        ?: AppLaunchResolver.mobileComponent(context.packageManager, packageName)
+        ?: launcher.getActivityList(packageName, userHandle).firstOrNull()?.componentName
 
-    intent?.let {
-        launcher.startAppDetailsActivity(intent.component, userHandle, null, null)
-    } ?: context.showToast(context.getString(R.string.unable_to_open_app))
+    if (component != null) {
+        try {
+            launcher.startAppDetailsActivity(component, userHandle, null, null)
+            return
+        } catch (_: Exception) { }
+    }
+    context.showToast(context.getString(R.string.unable_to_open_app))
 }
 
 fun getScreenDimensions(context: Context): Pair<Int, Int> {

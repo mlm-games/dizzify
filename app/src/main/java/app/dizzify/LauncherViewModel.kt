@@ -4,6 +4,7 @@ import android.app.Application
 import android.appwidget.AppWidgetProviderInfo
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.data.HomeItem
 import app.dizzify.data.HomeLayout
@@ -15,6 +16,8 @@ import app.dizzify.settings.SearchType
 import app.dizzify.settings.SortOrder
 import app.dizzify.settings.ThemeMode
 import app.dizzify.settings.markLaunched
+import app.dizzify.settings.setAppLaunchMode
+import app.dizzify.settings.setCustomName
 import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -170,14 +173,21 @@ class LauncherViewModel(
                 .toList()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun launch(app: AppModel) {
+    fun launch(app: AppModel, forceMode: AppLaunchMode = AppLaunchMode.AUTO) {
         viewModelScope.launch {
-            runCatching { appRepository.launchApp(app) }
+            runCatching { appRepository.launchApp(app, forceMode) }
                 .onSuccess {
                     runCatching { stateRepo.markLaunched(app.getKey()) }
                 }
+                .onFailure { e ->
+                    Logger.e(e) { "Failed to launch ${app.appLabel}" }
+                }
         }
     }
+
+    fun launchInTvMode(app: AppModel) = launch(app, AppLaunchMode.TV)
+
+    fun launchInMobileMode(app: AppModel) = launch(app, AppLaunchMode.MOBILE)
 
     fun toggleHidden(app: AppModel) {
         viewModelScope.launch {
@@ -267,6 +277,42 @@ class LauncherViewModel(
     fun updateShowNonTvApps(show: Boolean) {
         viewModelScope.launch {
             settingsRepo.update { it.copy(showNonTvApps = show) }
+        }
+    }
+
+    fun updatePreferTvLaunch(prefer: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(preferTvLaunch = prefer) }
+        }
+    }
+
+    fun updateShowSystemApps(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(showSystemApps = show) }
+        }
+    }
+
+    fun renameApp(app: AppModel, newName: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { stateRepo.setCustomName(app.getKey(), newName) }
+                .onSuccess {
+                    runCatching {
+                        appRepository.loadApps()
+                        appRepository.loadHiddenApps()
+                    }
+                }
+                .onFailure { e ->
+                    Logger.e(e) { "Failed to rename ${app.appLabel}" }
+                }
+        }
+    }
+
+    fun setAppLaunchMode(app: AppModel, mode: AppLaunchMode) {
+        viewModelScope.launch {
+            runCatching { stateRepo.setAppLaunchMode(app.getKey(), mode.name) }
+                .onFailure { e ->
+                    Logger.e(e) { "Failed to set launch mode for ${app.appLabel}" }
+                }
         }
     }
 

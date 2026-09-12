@@ -291,6 +291,21 @@ fun AppCard(
 }
 
 @Composable
+private fun TvBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .background(LauncherColors.AccentTeal.copy(alpha = 0.9f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = "TV",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
 private fun StandardCardContent(
     app: AppModel,
     isFocused: Boolean,
@@ -320,6 +335,12 @@ private fun StandardCardContent(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .offset(x = 8.dp, y = (-8).dp)
+                )
+            }
+
+            if (app.supportsLeanback) {
+                TvBadge(
+                    modifier = Modifier.align(Alignment.TopStart)
                 )
             }
         }

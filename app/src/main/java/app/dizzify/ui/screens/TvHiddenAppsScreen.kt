@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
 import app.dizzify.ui.components.*
@@ -22,6 +23,7 @@ fun HiddenAppsScreen(
     modifier: Modifier = Modifier
 ) {
     val hiddenApps by viewModel.hiddenApps.collectAsState()
+    val launcherState by viewModel.state.collectAsState()
 
     var selectedApp by remember { mutableStateOf<AppModel?>(null) }
     var showOptions by remember { mutableStateOf(false) }
@@ -106,7 +108,12 @@ fun HiddenAppsScreen(
                 },
                 onOpen = { viewModel.launch(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) },
-                isHidden = true
+                isHidden = true,
+                onOpenTv = if (app.supportsBoth) ({ viewModel.launchInTvMode(app) }) else null,
+                onOpenMobile = if (app.supportsBoth) ({ viewModel.launchInMobileMode(app) }) else null,
+                launchMode = AppLaunchMode.of(launcherState.appLaunchModes[app.getKey()]),
+                onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
+                onRename = { viewModel.renameApp(app, it) },
             )
         }
     }

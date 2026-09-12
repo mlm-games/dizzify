@@ -19,6 +19,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
 import app.dizzify.ui.components.*
@@ -38,6 +39,7 @@ fun AppsScreen(
 ) {
     val apps by viewModel.appsFiltered.collectAsState()
     val hiddenApps by viewModel.hiddenApps.collectAsState()
+    val launcherState by viewModel.state.collectAsState()
     val ui by viewModel.ui.collectAsState()
 
     val context = LocalContext.current
@@ -137,7 +139,12 @@ fun AppsScreen(
                 },
                 onOpen = { viewModel.launch(app) },
                 onToggleHidden = { viewModel.toggleHidden(app) },
-                isHidden = hiddenApps.any { it.getKey() == app.getKey() }
+                isHidden = hiddenApps.any { it.getKey() == app.getKey() },
+                onOpenTv = if (app.supportsBoth) ({ viewModel.launchInTvMode(app) }) else null,
+                onOpenMobile = if (app.supportsBoth) ({ viewModel.launchInMobileMode(app) }) else null,
+                launchMode = AppLaunchMode.of(launcherState.appLaunchModes[app.getKey()]),
+                onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
+                onRename = { viewModel.renameApp(app, it) },
             )
         }
     }

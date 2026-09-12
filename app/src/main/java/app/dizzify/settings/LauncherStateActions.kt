@@ -1,5 +1,6 @@
 package app.dizzify.settings
 
+import app.dizzify.data.AppLaunchMode
 import io.github.mlmgames.settings.core.SettingsRepository
 
 suspend fun SettingsRepository<LauncherState>.toggleHidden(appKey: String) {
@@ -34,4 +35,16 @@ suspend fun SettingsRepository<LauncherState>.markLaunched(appKey: String, now: 
 
 suspend fun SettingsRepository<LauncherState>.setHomeLayout(layout: app.dizzify.data.HomeLayout) {
     update { it.copy(homeLayout = layout) }
+}
+
+suspend fun SettingsRepository<LauncherState>.setAppLaunchMode(appKey: String, mode: String?) {
+    update { cur ->
+        val map = cur.appLaunchModes.toMutableMap()
+        if (mode.isNullOrBlank() || mode == AppLaunchMode.AUTO.name) {
+            map.remove(appKey)
+        } else {
+            map[appKey] = mode
+        }
+        cur.copy(appLaunchModes = map)
+    }
 }

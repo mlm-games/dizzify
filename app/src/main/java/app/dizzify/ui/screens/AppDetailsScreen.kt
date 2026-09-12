@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dizzify.LauncherViewModel
+import app.dizzify.helper.AppLaunchResolver
 import app.dizzify.ui.theme.LauncherColors
 import app.dizzify.ui.theme.LauncherSpacing
 import co.touchlab.kermit.Logger
@@ -32,7 +33,7 @@ fun AppDetailsScreen(
 ) {
     val context = LocalContext.current
     val appsAll by viewModel.appsAll.collectAsState()
-    
+
     val app = remember(appKey, appsAll) {
         appsAll.find { it.getKey() == appKey }
     }
@@ -89,7 +90,7 @@ fun AppDetailsScreen(
                         modifier = Modifier.size(64.dp)
                     )
                 }
-                
+
                 Column {
                     Text(
                         text = app.appLabel,
@@ -120,11 +121,19 @@ fun AppDetailsScreen(
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
-                    
+
                     InfoRow("Package Name", app.appPackage)
                     InfoRow("Activity", app.activityClassName ?: "N/A")
                     InfoRow("User", app.userString)
                     InfoRow("Hidden", if (app.isHidden) "Yes" else "No")
+                    InfoRow("TV (Leanback)", if (app.supportsLeanback) "Supported" else "Not supported")
+                    InfoRow("Phone UI", if (app.supportsMobile) "Supported" else "Not supported")
+                    if (app.supportsLeanback) {
+                        InfoRow("TV Activity", app.leanbackActivityClassName ?: "N/A")
+                    }
+                    if (app.supportsMobile) {
+                        InfoRow("Phone Activity", app.mobileActivityClassName ?: "N/A")
+                    }
                 }
             }
 
@@ -144,6 +153,43 @@ fun AppDetailsScreen(
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
+
+                    // Default + explicit TV/mobile when both exist
+                    Button(
+                        onClick = { viewModel.launch(app) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = LauncherColors.AccentTeal
+                        )
+                    ) {
+                        Text("Launch App")
+                    }
+
+                    if (app.supportsBoth) {
+                        OutlinedButton(
+                            onClick = { viewModel.launchInTvMode(app) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Launch TV Version")
+                        }
+                        OutlinedButton(
+                            onClick = { viewModel.launchInMobileMode(app) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Launch Phone Version")
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            AppLaunchResolver.openInPlayStore(
+                                context, app.appPackage
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Open in Play Store")
+                    }
 
                     // App Info Button
                     Button(

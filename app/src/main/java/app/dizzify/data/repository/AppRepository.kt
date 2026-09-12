@@ -1,15 +1,17 @@
 package app.dizzify.data.repository
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.os.Build
+import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
+import app.dizzify.helper.AppLaunchResolver
+import app.dizzify.helper.LaunchResult
 import app.dizzify.helper.PrivateSpaceHelper
 import app.dizzify.helper.getAppsList
-import app.dizzify.helper.resolveUser
+import app.dizzify.helper.launchAppPreferringLeanback
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
 import app.dizzify.settings.toggleHidden
@@ -39,10 +41,16 @@ class AppRepository(
     val hiddenApps: StateFlow<List<AppModel>> = _hiddenApps.asStateFlow()
 
     init {
-        // Reload apps when icon pack, icon visibility, or TV app setting changes
         coroutineScope.launch {
             settingsRepo.flow
-                .map { Triple(it.iconPack, it.showAppIcons, it.showNonTvApps) }
+                .map {
+                    listOf(
+                        it.iconPack,
+                        it.showAppIcons.toString(),
+                        it.showNonTvApps.toString(),
+                        try { it.showSystemApps.toString() } catch (_: Exception) { "true" },
+                    )
+                }
                 .distinctUntilChanged()
                 .drop(1)
                 .collect {
@@ -146,19 +154,24 @@ class AppRepository(
         loadHiddenApps()
     }
 
-    suspend fun launchApp(appModel: AppModel) = withContext(Dispatchers.Main) {
-        try {
-            val cls = appModel.activityClassName?.takeIf { it.isNotBlank() }
-                ?: throw AppLaunchException("Missing activityClassName for ${appModel.appLabel}")
+    suspend fun launchApp(
+        appModel: AppModel,
+        forceMode: AppLaunchMode = AppLaunchMode.AUTO,
+    ) = withContext(Dispatchers.Main) {
+        val settings = try { settingsRepo.flow.first() } catch (_: Exception) { null }
+        val preferTv = try { settings?.preferTvLaunch } catch (_: Exception) { true } ?: true
 
-            val component = ComponentName(appModel.appPackage, cls)
-            val user = appModel.resolveUser(context)
+        val storedOverride = try {
+            AppLaunchMode.of(stateRepo.flow.first().appLaunchModes[appModel.getKey()])
+        } catch (_: Exception) {
+            AppLaunchMode.AUTO
+        }
+        val effectiveForce = if (forceMode != AppLaunchMode.AUTO) forceMode else storedOverride
 
-            launcherApps.startMainActivity(component, user, null, null)
-        } catch (e: SecurityException) {
-            throw AppLaunchException("Security error launching ${appModel.appLabel}", e)
-        } catch (e: Exception) {
-            throw AppLaunchException("Failed to launch ${appModel.appLabel}", e)
+        when (val result = launchAppPreferringLeanback(context, appModel, preferTv, effectiveForce)) {
+            is LaunchResult.Success -> Unit
+            is LaunchResult.Failure ->
+                throw AppLaunchException(result.message, result.cause)
         }
     }
 
