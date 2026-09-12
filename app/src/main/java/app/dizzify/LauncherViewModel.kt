@@ -410,7 +410,15 @@ class LauncherViewModel(
 
     fun renameApp(app: AppModel, newName: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { stateRepo.setCustomName(app.getKey(), newName) }
+            val trimmed = newName?.trim()
+            val defaultLabel = runCatching { appRepository.getDefaultAppLabel(app) }.getOrNull()
+            val effectiveName =
+                if (trimmed.isNullOrBlank() || (defaultLabel != null && trimmed == defaultLabel)) {
+                    null
+                } else {
+                    trimmed
+                }
+            runCatching { stateRepo.setCustomName(app.getKey(), effectiveName) }
                 .onSuccess {
                     runCatching {
                         appRepository.loadApps()
