@@ -41,8 +41,13 @@ fun AppDetailsScreen(
     BackHandler { onBack() }
 
     if (app == null) {
-        // App not found, go back
-        LaunchedEffect(Unit) {
+        if (appsAll.isEmpty()) {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = LauncherColors.AccentTeal)
+            }
+            return
+        }
+        LaunchedEffect(appKey) {
             Logger.w { "App with key $appKey not found" }
             onBack()
         }

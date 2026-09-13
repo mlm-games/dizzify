@@ -69,6 +69,7 @@ class AppRepository(
                         it.showNonTvApps.toString(),
                         try { it.showSystemApps.toString() } catch (_: Exception) { "true" },
                         it.showPinnedShortcuts.toString(),
+                        it.sortOrder.toString(),
                     )
                 }
                 .distinctUntilChanged()

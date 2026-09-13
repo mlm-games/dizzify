@@ -89,11 +89,8 @@ fun SettingsScreen(
     val isSettingPin by viewModel.isSettingPin.collectAsState()
     val locked by viewModel.effectiveLockState.collectAsState()
     var pinError by remember { mutableStateOf<String?>(null) }
+    var pinErrorNonce by remember { mutableIntStateOf(0) }
     LaunchedEffect(showLockDialog) { if (!showLockDialog) pinError = null }
-
-    DisposableEffect(Unit) {
-        onDispose { viewModel.resetUnlockState() }
-    }
 
     val categories = listOf(
         SettingsCategory.Appearance,
@@ -155,6 +152,7 @@ fun SettingsScreen(
             PinLockDialog(
                 isSettingPin = isSettingPin,
                 validateError = pinError,
+                validateNonce = pinErrorNonce,
                 onDismiss = { viewModel.setShowLockDialog(false) },
                 onConfirm = { pin ->
                     if (isSettingPin) {
@@ -166,6 +164,7 @@ fun SettingsScreen(
                         scope.launch {
                             if (!viewModel.validatePin(pin)) {
                                 pinError = "Wrong PIN, try again"
+                                pinErrorNonce += 1
                             }
                         }
                     }

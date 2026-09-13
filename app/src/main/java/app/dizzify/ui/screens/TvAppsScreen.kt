@@ -19,6 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
@@ -67,6 +73,10 @@ fun AppsScreen(
 
     var consumedQuery by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(apps, ui.query, settings.autoOpenFilteredApp) {
+        if (ui.query.isBlank()) {
+            consumedQuery = null
+            return@LaunchedEffect
+        }
         if (settings.autoOpenFilteredApp &&
             ui.query.isNotBlank() && apps.size == 1 && consumedQuery != ui.query
         ) {
@@ -87,7 +97,7 @@ fun AppsScreen(
             AppsHeader(
                 query = ui.query,
                 onQueryChange = viewModel::setQuery,
-                onSearch = { apps.firstOrNull()?.let { viewModel.launch(it) } },
+                onSearch = { if (ui.query.isNotBlank()) apps.firstOrNull()?.let { viewModel.launch(it) } },
                 viewMode = viewMode,
                 onViewModeChange = { viewMode = it },
                 appCount = apps.size,
@@ -334,22 +344,33 @@ private fun AlphabetJumpIndicator(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         alphabet.forEach { letter ->
+            val jumpToLetter = {
+                val index = apps.indexOfFirst {
+                    it.appLabel.firstOrNull()?.uppercaseChar() == letter
+                }
+                if (index >= 0) {
+                    coroutineScope.launch {
+                        gridState.animateScrollToItem(index)
+                    }
+                }
+                Unit
+            }
             Text(
                 text = letter.toString(),
                 style = MaterialTheme.typography.labelSmall,
                 color = LauncherColors.TextSecondary,
                 modifier = Modifier
                     .padding(vertical = 2.dp)
-                    .clickableNoRipple {
-                        val index = apps.indexOfFirst {
-                            it.appLabel.firstOrNull()?.uppercaseChar() == letter
-                        }
-                        if (index >= 0) {
-                            coroutineScope.launch {
-                                gridState.animateScrollToItem(index)
-                            }
-                        }
+                    .focusable()
+                    .onKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown &&
+                            (event.key == Key.DirectionCenter || event.key == Key.Enter)
+                        ) {
+                            jumpToLetter()
+                            true
+                        } else false
                     }
+                    .clickableNoRipple { jumpToLetter() }
             )
         }
     }

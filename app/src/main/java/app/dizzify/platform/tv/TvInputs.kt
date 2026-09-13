@@ -8,6 +8,7 @@ import android.media.tv.TvInputManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import co.touchlab.kermit.Logger
+import java.util.Locale
 
 data class TvInputEntry(
     val inputId: String,
@@ -30,9 +31,9 @@ object TvInputs {
             ContextCompat.getSystemService(context, TvInputManager::class.java) ?: return emptyList()
         return runCatching {
             manager.tvInputList
-                .map { it.toEntry(context) }
+                .mapNotNull { runCatching { it.toEntry(context) }.getOrNull() }
                 .filter { includeNonPassthrough || it.isPassthrough }
-                .sortedWith(compareBy({ !it.isPassthrough }, { it.label.lowercase() }))
+                .sortedWith(compareBy({ !it.isPassthrough }, { it.label.lowercase(Locale.ROOT) }))
         }.onFailure { e -> Logger.e(e) { "TvInputs.list failed" } }.getOrDefault(emptyList())
     }
 
@@ -55,10 +56,20 @@ object TvInputs {
         }.getOrNull() ?: runCatching { loadLabel(context)?.toString() }.getOrNull()
             ?: inputIdFallback()
 
-        val switchUri = Intent(
-            Intent.ACTION_VIEW,
-            TvContract.buildChannelUriForPassthroughInput(id),
-        ).toUri(0)
+        val switchUri: String = (if (isPassthroughInput) {
+            runCatching {
+                Intent(
+                    Intent.ACTION_VIEW,
+                    TvContract.buildChannelUriForPassthroughInput(id),
+                ).toUri(0)
+            }.getOrNull()
+        } else null)
+            ?: runCatching {
+                Intent(
+                    Intent.ACTION_VIEW,
+                    android.net.Uri.parse("content://android.media.tv/passthrough/${id.substringAfterLast('/')}")
+                ).toUri(0)
+            }.getOrNull().orEmpty()
 
         return TvInputEntry(
             inputId = id,

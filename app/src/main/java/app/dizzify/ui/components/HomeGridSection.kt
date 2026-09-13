@@ -176,7 +176,8 @@ fun HomeGridSection(
                                                     gridApp = item
                                                     showGridAppOptions = true
                                                 },
-                                                style = CardStyle.STANDARD
+                                                style = CardStyle.STANDARD,
+                                                focusRequester = requesterFor(item.id)
                                             )
                                         }
                                     }

@@ -53,7 +53,9 @@ object SearchAliasUtils {
 
     private fun transliterate(transliterator: Transliterator?, text: String): String {
         if (transliterator == null) return text
-        return runCatching { transliterator.transliterate(text) }.getOrDefault(text)
+        return synchronized(transliterator) {
+            runCatching { transliterator.transliterate(text) }.getOrDefault(text)
+        }
     }
 
     fun anyToLatin(text: String): String {

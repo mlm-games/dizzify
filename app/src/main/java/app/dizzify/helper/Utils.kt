@@ -63,9 +63,10 @@ fun openSearch(context: Context, query: String = "") {
     } catch (e: ActivityNotFoundException) {
         Log.w(TAG, "No web search handler, trying browser", e)
         runCatching {
+            val encoded = android.net.Uri.encode(query.trim())
             val browser = Intent(
                 Intent.ACTION_VIEW,
-                "${Constants.URL_DUCK_SEARCH}${query.trim()}".toUri()
+                "${Constants.URL_DUCK_SEARCH}${encoded}".toUri()
             ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
             context.startActivity(browser)
         }.onFailure { e2 ->

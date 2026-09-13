@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.androidx.compose.koinViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
@@ -105,8 +104,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val vm: LauncherViewModel = koinViewModel()
-            LauncherShell(viewModel = vm)
+            LauncherShell(viewModel = launcherViewModel)
         }
 
         lifecycleScope.launch {

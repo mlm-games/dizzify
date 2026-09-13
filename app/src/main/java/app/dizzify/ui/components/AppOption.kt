@@ -322,14 +322,12 @@ fun AppOptionsSheet(
                     ) {
                         TextButton(onClick = {
                             showRename = false
-                            onDismiss()
                         }) { Text("Cancel") }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(onClick = {
                             val trimmed = renameText.trim()
                             onRename(trimmed.ifEmpty { null })
                             showRename = false
-                            onDismiss()
                         }) { Text("Save") }
                     }
                 }
@@ -344,11 +342,10 @@ private fun AppOptionsContent(
     options: List<AppOption>,
     onDismiss: () -> Unit
 ) {
-    val focusRequesters = remember { options.map { FocusRequester() } }
+    val focusRequesters = remember(options) { options.map { FocusRequester() } }
     val view = LocalView.current
 
-    // Request focus after a short delay to avoid consuming the key event that opened the dialog
-    LaunchedEffect(Unit) {
+    LaunchedEffect(options) {
         delay(100)
         focusRequesters.firstOrNull()?.requestFocus()
     }
@@ -409,7 +406,7 @@ private fun AppOptionsContent(
             options.forEachIndexed { index, option ->
                 OptionItem(
                     option = option,
-                    focusRequester = focusRequesters[index],
+                    focusRequester = focusRequesters.getOrNull(index) ?: remember { FocusRequester() },
                     onAction = {
                         view.performHapticFeedback(buttonPressFeedbackConstant())
                         option.action()

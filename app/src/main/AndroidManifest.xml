@@ -85,7 +85,7 @@
 
         <receiver
             android:name="app.dizzify.helper.PrivateSpaceReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.PROFILE_AVAILABLE" />
                 <action android:name="android.intent.action.PROFILE_UNAVAILABLE" />

@@ -80,7 +80,7 @@ fun LauncherShell(
             )
         }
 
-        LaunchedEffect(viewModel) {
+        LaunchedEffect(viewModel, settings.defaultScreen) {
             viewModel.events.collectLatest { event ->
                 when (event) {
                     is LauncherEvent.LaunchWidgetBindIntent -> {
@@ -270,4 +270,4 @@ sealed interface LauncherKey : NavKey {
 
 @Composable
 fun rememberLauncherBackStack(initial: LauncherKey = LauncherKey.Home): NavBackStack<LauncherKey> =
-    remember { NavBackStack(initial) }
+    remember(initial) { NavBackStack(initial) }

@@ -118,7 +118,7 @@ fun <T> HomeContentRow(
                             if (isFocused) {
                                 focusRestorer.saveFocus(index)
                                 coroutineScope.launch {
-                                    val target = (index * cardWidthPx - cardWidthPx).toInt()
+                                    val target = (index * cardWidthPx).toInt()
                                         .coerceAtLeast(0)
                                     scrollState.animateScrollTo(
                                         target,

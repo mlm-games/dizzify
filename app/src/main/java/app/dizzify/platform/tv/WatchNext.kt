@@ -117,6 +117,7 @@ object WatchNext {
         val uri = contentUri() ?: return null
         val observer = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) = onChange()
+            override fun onChange(selfChange: Boolean, uri: Uri?) = onChange()
         }
         return runCatching {
             contentResolver.registerContentObserver(uri, /* notifyForDescendants = */ true, observer)

@@ -29,15 +29,15 @@ fun PinLockDialog(
     isSettingPin: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
-    validateError: String? = null
+    validateError: String? = null,
+    validateNonce: Int = 0
 ) {
-    var pin by remember { mutableStateOf("") }
-    var confirmPin by remember { mutableStateOf("") }
-    var phase by remember { mutableIntStateOf(0) } // set mode: 0 = enter, 1 = confirm
+    var pin by remember(isSettingPin) { mutableStateOf("") }
+    var confirmPin by remember(isSettingPin) { mutableStateOf("") }
+    var phase by remember(isSettingPin) { mutableIntStateOf(0) } // set mode: 0 = enter, 1 = confirm
     var localError by remember { mutableStateOf("") }
 
-    // Failed unlock attempt from the caller: show the error and clear entry.
-    LaunchedEffect(validateError) {
+    LaunchedEffect(validateError, validateNonce) {
         if (validateError != null) {
             localError = validateError
             pin = ""
@@ -164,7 +164,10 @@ fun PinLockDialog(
                 Spacer(modifier = Modifier.height(LauncherSpacing.lg))
 
                 val firstDigitFocus = remember { FocusRequester() }
-                LaunchedEffect(Unit) { firstDigitFocus.requestFocus() }
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(100)
+                    runCatching { firstDigitFocus.requestFocus() }
+                }
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     listOf("123", "456", "789").forEachIndexed { row, digits ->

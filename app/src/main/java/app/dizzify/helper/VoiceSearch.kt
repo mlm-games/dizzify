@@ -21,9 +21,19 @@ object VoiceSearch {
 
     fun isAvailable(context: Context): Boolean =
         runCatching {
-            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).resolveActivity(
-                context.packageManager,
-            ) != null
+            val pm = context.packageManager
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                pm.queryIntentActivities(
+                    intent,
+                    android.content.pm.PackageManager.ResolveInfoFlags.of(
+                        android.content.pm.PackageManager.MATCH_DEFAULT_ONLY.toLong()
+                    )
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                pm.queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+            }.isNotEmpty()
         }.onFailure { e -> Logger.e(e) { "VoiceSearch availability check failed" } }
             .getOrDefault(false)
 
@@ -31,7 +41,12 @@ object VoiceSearch {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+            )
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE,
+                java.util.Locale.getDefault().toLanguageTag()
             )
             if (!prompt.isNullOrBlank()) putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
         }

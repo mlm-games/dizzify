@@ -327,7 +327,7 @@ class LauncherViewModel(
                     SearchType.StartsWith ->
                         queryVariants.any { v -> labelNorm.startsWith(v) }
                     SearchType.Fuzzy ->
-                        fuzzyMatch(labelNorm, query)
+                        queryVariants.any { v -> fuzzyMatch(labelNorm, v) }
                     SearchType.Exact ->
                         queryVariants.any { v -> labelNorm == v }
                     else ->
@@ -341,9 +341,13 @@ class LauncherViewModel(
                         queryVariants.any { v -> aliases.any { it.startsWith(v) } }
                     SearchType.Exact ->
                         queryVariants.any { v -> aliases.any { it == v } }
+                    SearchType.Fuzzy ->
+                        queryVariants.any { v -> aliases.any { fuzzyMatch(it, v) } }
                     else ->
                         queryVariants.any { v -> aliases.any { it.contains(v) } }
                 }
+            }.let { results ->
+                if (settings.reverseSearchResults) results.reversed() else results
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -352,7 +356,7 @@ class LauncherViewModel(
             val byKey = allApps.associateBy { it.getKey() }
             layout.items.mapNotNull { item ->
                 when (item) {
-                    is HomeItem.App -> byKey[item.id] ?: item.appModel
+                    is HomeItem.App -> byKey[item.id]
                     else -> null
                 }
             }
@@ -608,7 +612,7 @@ class LauncherViewModel(
         viewModelScope.launch {
             val clamped = rows.coerceIn(4, 12)
             settingsRepo.update { it.copy(homeScreenRows = clamped) }
-            clampLayoutToGrid()
+            clampLayoutToGrid(clamped, settingsRepo.flow.first().homeScreenColumns)
         }
     }
 
@@ -616,33 +620,35 @@ class LauncherViewModel(
         viewModelScope.launch {
             val clamped = columns.coerceIn(2, 8)
             settingsRepo.update { it.copy(homeScreenColumns = clamped) }
-            clampLayoutToGrid()
+            clampLayoutToGrid(settingsRepo.flow.first().homeScreenRows, clamped)
         }
     }
 
-    private suspend fun clampLayoutToGrid() {
+    private suspend fun clampLayoutToGrid(rows: Int? = null, columns: Int? = null) {
         val s = settingsRepo.flow.first()
+        val targetRows = rows ?: s.homeScreenRows
+        val targetCols = columns ?: s.homeScreenColumns
         stateRepo.update { state ->
             val layout = state.homeLayout
             val fixed = layout.items.map { item ->
-                val rowSpan = item.rowSpan.coerceAtMost(layout.rows.coerceAtLeast(1))
-                val colSpan = item.columnSpan.coerceAtMost(layout.columns.coerceAtLeast(1))
+                val rowSpan = item.rowSpan.coerceAtMost(targetRows.coerceAtLeast(1))
+                val colSpan = item.columnSpan.coerceAtMost(targetCols.coerceAtLeast(1))
                 when (item) {
                     is HomeItem.App -> item.copy(
-                        row = item.row.coerceIn(0, (s.homeScreenRows - rowSpan).coerceAtLeast(0)),
-                        column = item.column.coerceIn(0, (s.homeScreenColumns - colSpan).coerceAtLeast(0)),
+                        row = item.row.coerceIn(0, (targetRows - rowSpan).coerceAtLeast(0)),
+                        column = item.column.coerceIn(0, (targetCols - colSpan).coerceAtLeast(0)),
                         rowSpan = rowSpan,
                         columnSpan = colSpan
                     )
                     is HomeItem.Widget -> item.copy(
-                        row = item.row.coerceIn(0, (s.homeScreenRows - rowSpan).coerceAtLeast(0)),
-                        column = item.column.coerceIn(0, (s.homeScreenColumns - colSpan).coerceAtLeast(0)),
+                        row = item.row.coerceIn(0, (targetRows - rowSpan).coerceAtLeast(0)),
+                        column = item.column.coerceIn(0, (targetCols - colSpan).coerceAtLeast(0)),
                         rowSpan = rowSpan,
                         columnSpan = colSpan
                     )
                 }
             }
-            state.copy(homeLayout = layout.copy(items = fixed))
+            state.copy(homeLayout = layout.copy(rows = targetRows, columns = targetCols, items = fixed))
         }
     }
 
