@@ -40,6 +40,7 @@ import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
 import app.dizzify.settings.LabelAlignment
 import app.dizzify.settings.DefaultScreen
+import app.dizzify.settings.NonTvApps
 import app.dizzify.settings.ItemSpacing
 import app.dizzify.settings.SearchAliasesMode
 import app.dizzify.settings.SearchBarPosition
@@ -856,7 +857,7 @@ class LauncherViewModel(
         }
     }
 
-    fun updateShowNonTvApps(show: Boolean) {
+    fun updateShowNonTvApps(show: NonTvApps) {
         viewModelScope.launch {
             settingsRepo.update { it.copy(showNonTvApps = show) }
         }

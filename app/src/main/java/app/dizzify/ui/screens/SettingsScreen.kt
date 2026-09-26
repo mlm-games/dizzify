@@ -35,6 +35,7 @@ import app.dizzify.data.Constants
 import app.dizzify.helper.openUrl
 import app.dizzify.settings.ImportExportState
 import app.dizzify.settings.DefaultScreen
+import app.dizzify.settings.NonTvApps
 import app.dizzify.settings.SearchType
 import app.dizzify.settings.SortOrder
 import app.dizzify.settings.TextWeight
@@ -549,11 +550,24 @@ private fun SettingsCategoryContent(
             is SettingsCategory.Behavior -> {
                 item {
                     SettingsSection(title = "TV Options") {
-                        SettingsToggle(
-                            title = "Show Non-TV Apps",
-                            description = "Show apps without Leanback support",
-                            isChecked = settings.showNonTvApps,
-                            onCheckedChange = { viewModel.updateShowNonTvApps(it) }
+                        SettingsDropdown(
+                            title = "Non-TV Apps",
+                            description = "Auto shows every app off-TV, TV only on leanback",
+                            currentValue = when (settings.showNonTvApps) {
+                                NonTvApps.All -> "All apps"
+                                NonTvApps.TvOnly -> "TV only"
+                                NonTvApps.Auto -> "Auto"
+                            },
+                            options = listOf("Auto", "TV only", "All apps"),
+                            onOptionSelected = { selected ->
+                                viewModel.updateShowNonTvApps(
+                                    when (selected) {
+                                        "All apps" -> NonTvApps.All
+                                        "TV only" -> NonTvApps.TvOnly
+                                        else -> NonTvApps.Auto
+                                    }
+                                )
+                            }
                         )
 
                         SettingsToggle(

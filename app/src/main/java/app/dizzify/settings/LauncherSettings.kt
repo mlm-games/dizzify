@@ -47,6 +47,9 @@ enum class SearchBarPosition { Top, Bottom }
 @Serializable
 enum class DefaultScreen { Home, Apps }
 
+@Serializable
+enum class NonTvApps { Auto, TvOnly, All }
+
 @SchemaVersion(version = 5)
 @Serializable
 data class LauncherSettings(
@@ -122,13 +125,14 @@ data class LauncherSettings(
     val showHiddenAppsOnSearch: Boolean = false,
 
     @Setting(
-        title = "Show Non-TV Apps",
-        description = "Apps without LEANBACK entry",
+        title = "Non-TV Apps",
+        description = "Auto shows every app off-TV, TV-only on leanback",
         category = Tv::class,
-        type = Toggle::class,
-        key = "show_non_tv_apps"
+        type = Dropdown::class,
+        key = "show_non_tv_apps",
+        options = ["Auto", "TV only", "All apps"]
     )
-    val showNonTvApps: Boolean = false,
+    val showNonTvApps: NonTvApps = NonTvApps.Auto,
 
     @Setting(
         title = "Prefer TV (Leanback) Launch",

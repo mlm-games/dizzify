@@ -20,8 +20,10 @@ import app.dizzify.helper.PrivateSpaceHelper
 import app.dizzify.helper.getAppsList
 import app.dizzify.helper.getLauncherVisibleProfiles
 import app.dizzify.helper.launchAppPreferringLeanback
+import app.dizzify.platform.Device
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
+import app.dizzify.settings.NonTvApps
 import app.dizzify.settings.toggleHidden
 import io.github.mlmgames.settings.core.SettingsRepository
 import kotlinx.coroutines.CancellationException
@@ -67,7 +69,7 @@ class AppRepository(
                     listOf(
                         it.iconPack,
                         it.showAppIcons.toString(),
-                        it.showNonTvApps.toString(),
+                        it.showNonTvApps.name,
                         try { it.showSystemApps.toString() } catch (_: Exception) { "true" },
                         it.showPinnedShortcuts.toString(),
                         it.sortOrder.toString(),
@@ -145,7 +147,7 @@ class AppRepository(
         loadMutex.withLock {
             try {
                 val settings = settingsRepo.flow.first()
-                val showNonTvApps = settings.showNonTvApps
+                val filterTvApps = shouldFilterTvApps(settings.showNonTvApps)
 
                 val combined = getAppsList(
                     context = appContext,
@@ -154,7 +156,7 @@ class AppRepository(
                     iconCache = iconCache,
                     includeRegularApps = true,
                     includeHiddenApps = true,
-                    filterTvApps = !showNonTvApps
+                    filterTvApps = filterTvApps
                 )
 
                 val visibleMobileApps = combined.filter { !it.isHidden }
@@ -217,11 +219,17 @@ class AppRepository(
                 iconCache = iconCache,
                 includeRegularApps = false,
                 includeHiddenApps = true,
-                filterTvApps = !settings.showNonTvApps
+                filterTvApps = shouldFilterTvApps(settings.showNonTvApps)
             )
         } catch (e: Exception) {
             Log.e(TAG, "loadHiddenApps failed", e)
         }
+    }
+
+    private fun shouldFilterTvApps(setting: NonTvApps): Boolean = when (setting) {
+        NonTvApps.All -> false
+        NonTvApps.TvOnly -> true
+        NonTvApps.Auto -> !Device.isTv(appContext)
     }
 
     suspend fun toggleAppHidden(app: AppModel) = withContext(Dispatchers.IO) {
