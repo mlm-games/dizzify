@@ -36,7 +36,7 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:banner="@drawable/ic_banner_foreground"
+        android:banner="@mipmap/ic_banner"
         android:theme="@style/Theme.Material3.Dark.NoActionBar"
         android:enableOnBackInvokedCallback="true"
         tools:ignore="UnusedAttribute">
@@ -47,6 +47,7 @@
             android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"
+            android:stateNotNeeded="true"
             android:taskAffinity=""
             android:windowSoftInputMode="stateAlwaysHidden"
             android:resumeWhilePausing="true">

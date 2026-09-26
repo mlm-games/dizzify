@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.dizzify.ui.theme.*
+import app.dizzify.ui.components.tvPointerClick
 
 private const val MAX_PIN_LENGTH = 6
 
@@ -244,7 +245,8 @@ private fun PinKey(
                     true
                 } else false
             }
-            .focusable(),
+            .focusable()
+            .tvPointerClick(onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(

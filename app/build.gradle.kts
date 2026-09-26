@@ -121,17 +121,13 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
-    implementation(libs.recyclerview)
 
     // Android lifecycle
     implementation(libs.lifecycle.viewmodel.ktx)
 
-    // Work Manager
-    implementation(libs.work.runtime.ktx)
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.gson)
     implementation(libs.androidx.material.icons.extended)
 
 
@@ -163,7 +159,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.constraintlayout.compose.android)
 
-    implementation(libs.androidbrowserhelper)
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.kermit)
 

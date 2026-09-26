@@ -60,7 +60,6 @@ import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
 import io.github.mlmgames.settings.core.SettingsRepository
 import io.github.mlmgames.settings.core.backup.ImportResult as BackupImportResult
-import io.github.mlmgames.settings.core.backup.ValidationResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -77,8 +76,6 @@ data class LauncherUiState(
     val query: String = "",
     val isLoading: Boolean = true
 )
-
-private const val MAX_VALIDATE_BYTES = 2 * 1024 * 1024L
 
 class LauncherViewModel(
     app: Application,
@@ -105,7 +102,8 @@ class LauncherViewModel(
 
     private data class PendingWidgetInfo(
         val appWidgetId: Int,
-        val providerInfo: AppWidgetProviderInfo
+        val providerInfo: AppWidgetProviderInfo,
+        val isNewWidget: Boolean
     )
 
     private var pendingWidgetInfo: PendingWidgetInfo? = null
@@ -245,7 +243,7 @@ class LauncherViewModel(
                 _watchNext.value = WatchNext.query(context)
             }
         }
-        watchNextObserver = WatchNext.observe(context.contentResolver, mainHandler) {
+        watchNextObserver = WatchNext.observe(context, context.contentResolver, mainHandler) {
             refreshWatchNext()
         }
         viewModelScope.launch {
@@ -484,6 +482,10 @@ class LauncherViewModel(
     }
 
     fun pinShortcut(app: AppModel, shortcutId: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1) {
+            Logger.w { "Shortcut pinning requires API 25" }
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
@@ -510,12 +512,14 @@ class LauncherViewModel(
     }
 
     fun deletePinnedShortcut(app: AppModel) {
-        if (!app.isSystemShortcut) return
+        val shortcutPackage = app.systemShortcutPackage
+        val shortcutId = app.systemShortcutId
+        if (!app.isSystemShortcut || shortcutPackage.isNullOrBlank() || shortcutId.isNullOrBlank()) return
         viewModelScope.launch {
             runCatching {
                 appRepository.deletePinnedShortcut(
-                    packageName = app.systemShortcutPackage!!,
-                    shortcutId = app.systemShortcutId!!,
+                    packageName = shortcutPackage,
+                    shortcutId = shortcutId,
                     user = app.user
                 )
             }.onSuccess {
@@ -653,7 +657,7 @@ class LauncherViewModel(
     }
 
     suspend fun willGridChangeAffectItems(rows: Int, columns: Int): Boolean {
-        val layout = state.value.homeLayout
+        val layout = stateRepo.flow.first().homeLayout
         return layout.items.any { item ->
             item.row + item.rowSpan > rows || item.column + item.columnSpan > columns
         }
@@ -792,28 +796,6 @@ class LauncherViewModel(
                 )
                 is BackupImportResult.Error -> ImportExportState.Error(result.message)
             }
-        }
-    }
-
-    fun validateBackup(uri: Uri): ValidationResult? {
-        return try {
-            var total = 0L
-            val sb = StringBuilder()
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                val reader = input.bufferedReader()
-                val buf = CharArray(8 * 1024)
-                while (true) {
-                    val n = reader.read(buf)
-                    if (n <= 0) break
-                    total += n * 2L
-                    if (total > MAX_VALIDATE_BYTES) return null
-                    sb.append(buf, 0, n)
-                }
-            } ?: return null
-            backupHelper.validateSettingsBackup(sb.toString())
-        } catch (e: Exception) {
-            Logger.w(e) { "validateBackup failed" }
-            null
         }
     }
 
@@ -1039,28 +1021,38 @@ class LauncherViewModel(
                 val existingApp = currentLayout.items.filterIsInstance<HomeItem.App>()
                     .find { it.id == appKey }
 
-                val newItems = if (existingApp != null) {
-                    currentLayout.items.filter { it.id != appKey }
-                } else {
-                    val nextColumn = currentLayout.items
-                        .filterIsInstance<HomeItem.App>()
-                        .maxOfOrNull { it.column + it.columnSpan } ?: 0
-
-                    currentLayout.items + HomeItem.App(
-                        appModel = app,
-                        row = 0,
-                        column = nextColumn
+                if (existingApp != null) {
+                    return@update state.copy(
+                        homeLayout = currentLayout.copy(
+                            items = currentLayout.items.filter { it.id != appKey }
+                        )
                     )
                 }
 
-                state.copy(homeLayout = currentLayout.copy(items = newItems))
+                // Widgets occupy grid cells too, so placement has to consider every item rather
+                // than only other apps, otherwise a new tile can land on top of a widget.
+                val next = findNextAvailableGridPosition(currentLayout, 1, 1)
+                if (next == null) {
+                    snackbarManager.show("No space available on the home grid.")
+                    return@update state
+                }
+
+                state.copy(
+                    homeLayout = currentLayout.copy(
+                        items = currentLayout.items + HomeItem.App(
+                            appModel = app,
+                            row = next.first,
+                            column = next.second
+                        )
+                    )
+                )
             }
         }
     }
 
     fun updateWidgetPosition(appWidgetId: Int, row: Int, column: Int) {
         viewModelScope.launch {
-            val currentLayout = state.value.homeLayout
+            val currentLayout = stateRepo.flow.first().homeLayout
             val target = currentLayout.items.filterIsInstance<HomeItem.Widget>()
                 .find { it.appWidgetId == appWidgetId } ?: return@launch
             if (!validateAndReport(
@@ -1082,7 +1074,7 @@ class LauncherViewModel(
 
     fun updateWidgetSize(appWidgetId: Int, rowSpan: Int, columnSpan: Int) {
         viewModelScope.launch {
-            val currentLayout = state.value.homeLayout
+            val currentLayout = stateRepo.flow.first().homeLayout
             val target = currentLayout.items.filterIsInstance<HomeItem.Widget>()
                 .find { it.appWidgetId == appWidgetId } ?: return@launch
             if (!validateAndReport(
@@ -1117,13 +1109,13 @@ class LauncherViewModel(
                 val bindSuccess = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, componentName)
                 if (bindSuccess) {
                     if (providerInfo.configure != null) {
-                        pendingWidgetInfo = PendingWidgetInfo(appWidgetId, providerInfo)
+                        pendingWidgetInfo = PendingWidgetInfo(appWidgetId, providerInfo, isNewWidget = true)
                         emitEvent(LauncherEvent.ConfigureWidget(appWidgetId))
                     } else {
                         addWidgetToLayout(appWidgetId, providerInfo)
                     }
                 } else {
-                    pendingWidgetInfo = PendingWidgetInfo(appWidgetId, providerInfo)
+                    pendingWidgetInfo = PendingWidgetInfo(appWidgetId, providerInfo, isNewWidget = true)
                     val bindIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, componentName)
@@ -1139,25 +1131,31 @@ class LauncherViewModel(
 
     fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode != WidgetConstants.REQUEST_CONFIGURE_WIDGET) return
-        val widgetId = pendingWidgetInfo?.appWidgetId
+        val pending = pendingWidgetInfo
+        val widgetId = pending?.appWidgetId
             ?: data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
             ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            pendingWidgetInfo = null
-            return
-        }
+        pendingWidgetInfo = null
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+
         if (resultCode == android.app.Activity.RESULT_OK) {
-            pendingWidgetInfo?.let { info ->
-                if (info.appWidgetId == widgetId) addWidgetToLayout(info.appWidgetId, info.providerInfo)
+            // Reconfiguring an existing widget must not add a second copy to the home layout,
+            // and must survive the host view being rebuilt.
+            if (pending != null && pending.isNewWidget && pending.appWidgetId == widgetId) {
+                addWidgetToLayout(pending.appWidgetId, pending.providerInfo)
             }
+            widgetHost.refreshWidget(widgetId)
         } else {
             Logger.w { "Widget configuration cancelled for ID $widgetId" }
-            viewModelScope.launch(Dispatchers.IO) {
-                runCatching { widgetHost.deleteWidgetId(widgetId) }
+            // Only release the host id for a widget we were still adding; cancelling a
+            // reconfigure would otherwise destroy a widget already placed on the grid.
+            if (pending?.isNewWidget == true && pending.appWidgetId == widgetId) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    runCatching { widgetHost.deleteWidgetId(widgetId) }
+                }
+                snackbarManager.show("Widget configuration cancelled.")
             }
-            snackbarManager.show("Widget configuration cancelled.")
         }
-        pendingWidgetInfo = null
     }
 
     fun requestWidgetReconfigure(widgetItem: HomeItem.Widget) {
@@ -1166,7 +1164,7 @@ class LauncherViewModel(
             snackbarManager.show("This widget has no settings screen.")
             return
         }
-        pendingWidgetInfo = PendingWidgetInfo(widgetItem.appWidgetId, info)
+        pendingWidgetInfo = PendingWidgetInfo(widgetItem.appWidgetId, info, isNewWidget = false)
         emitEvent(LauncherEvent.ConfigureWidget(widgetItem.appWidgetId))
     }
 
@@ -1175,7 +1173,7 @@ class LauncherViewModel(
             try {
                 val density = context.resources.displayMetrics.density
                 val (screenWidthPx, screenHeightPx) = getScreenDimensions(context)
-                val currentLayout = state.value.homeLayout
+                val currentLayout = stateRepo.flow.first().homeLayout
                 val cellWidthDp = (screenWidthPx / density) / currentLayout.columns
                 val cellHeightDp = (screenHeightPx / density) / currentLayout.rows
 
@@ -1221,7 +1219,7 @@ class LauncherViewModel(
 
     fun moveApp(appItem: HomeItem.App, newRow: Int, newColumn: Int) {
         viewModelScope.launch {
-            val currentLayout = state.value.homeLayout
+            val currentLayout = stateRepo.flow.first().homeLayout
             if (!validateAndReport(
                     currentLayout, appItem.id, newRow, newColumn,
                     appItem.rowSpan, appItem.columnSpan, "move app"
@@ -1239,7 +1237,7 @@ class LauncherViewModel(
 
     fun moveWidget(widgetItem: HomeItem.Widget, newRow: Int, newColumn: Int) {
         viewModelScope.launch {
-            val currentLayout = state.value.homeLayout
+            val currentLayout = stateRepo.flow.first().homeLayout
             if (!validateAndReport(
                     currentLayout, widgetItem.id, newRow, newColumn,
                     widgetItem.rowSpan, widgetItem.columnSpan, "move widget"
@@ -1257,7 +1255,7 @@ class LauncherViewModel(
 
     fun resizeApp(appItem: HomeItem.App, newRowSpan: Int, newColumnSpan: Int) {
         viewModelScope.launch {
-            val currentLayout = state.value.homeLayout
+            val currentLayout = stateRepo.flow.first().homeLayout
             if (!validateAndReport(
                     currentLayout, appItem.id, appItem.row, appItem.column,
                     newRowSpan, newColumnSpan, "resize app"
@@ -1275,7 +1273,7 @@ class LauncherViewModel(
 
     fun resizeWidget(widgetItem: HomeItem.Widget, newRowSpan: Int, newColumnSpan: Int) {
         viewModelScope.launch {
-            val currentLayout = state.value.homeLayout
+            val currentLayout = stateRepo.flow.first().homeLayout
             if (!validateAndReport(
                     currentLayout, widgetItem.id, widgetItem.row, widgetItem.column,
                     newRowSpan, newColumnSpan, "resize widget"

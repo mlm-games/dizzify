@@ -24,6 +24,7 @@ import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
 import app.dizzify.settings.toggleHidden
 import io.github.mlmgames.settings.core.SettingsRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -189,6 +190,8 @@ class AppRepository(
                 if (forceEmit || !sameAppList(_hiddenApps.value, hiddenOnly)) {
                     _hiddenApps.value = hiddenOnly
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "loadApps failed", e)
             }
@@ -363,8 +366,18 @@ class AppRepository(
                 .setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED)
                 .setPackage(packageName)
             val pinned = launcherApps.getShortcuts(query, user).orEmpty()
-            val remainingIds = pinned.mapNotNull { it.id }.filter { it != shortcutId }
-            launcherApps.pinShortcuts(packageName, remainingIds, user)
+            val pinnedIds = pinned.mapNotNull { it.id }
+            // An empty read is indistinguishable from "nothing pinned"; unpinning with an
+            // empty list would silently drop every pin for this package, so bail out instead.
+            if (pinnedIds.isEmpty()) {
+                Log.w(TAG, "No pinned shortcuts reported for $packageName; skipping delete")
+                return@withContext
+            }
+            if (shortcutId !in pinnedIds) {
+                Log.w(TAG, "Shortcut $shortcutId was not pinned for $packageName; nothing to delete")
+                return@withContext
+            }
+            launcherApps.pinShortcuts(packageName, pinnedIds - shortcutId, user)
             Log.d(TAG, "Deleted pinned shortcut: $shortcutId from $packageName")
         } catch (e: Exception) {
             Log.e(TAG, "deletePinnedShortcut failed", e)

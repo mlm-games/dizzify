@@ -35,7 +35,9 @@ import app.dizzify.helper.openSearch
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
 import androidx.compose.foundation.clickable as mainClickable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class AppsViewMode {
     GRID,
@@ -55,14 +57,17 @@ fun AppsScreen(
     val ui by viewModel.ui.collectAsState()
 
     val context = LocalContext.current
-    var selectedApp by remember { mutableStateOf<AppModel?>(null) }
-    var showOptions by remember { mutableStateOf(false) }
+    val appOptions = rememberAppOptionsState()
     var viewMode by remember { mutableStateOf(AppsViewMode.LIST) }
 
     val searchFocusRequester = remember { FocusRequester() }
     val gridState = rememberLazyGridState()
 
-    val voiceAvailable = remember { viewModel.isVoiceSearchAvailable() }
+    // isVoiceSearchAvailable() runs a PackageManager query, so keep it off the composition pass.
+    var voiceAvailable by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        voiceAvailable = withContext(Dispatchers.IO) { viewModel.isVoiceSearchAvailable() }
+    }
     val voiceLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -146,8 +151,7 @@ fun AppsScreen(
                                 app = app,
                                 onClick = { viewModel.launch(app) },
                                 onLongClick = {
-                                    selectedApp = app
-                                    showOptions = true
+                                    appOptions.open(app)
                                 },
                                 style = if (viewMode == AppsViewMode.GRID)
                                     CardStyle.STANDARD
@@ -170,26 +174,19 @@ fun AppsScreen(
         )
 
         // App options sheet
-        selectedApp?.let { app ->
-            AppOptionsSheet(
-                app = app,
-                isVisible = showOptions,
-                onDismiss = {
-                    showOptions = false
-                    selectedApp = null
-                },
-                onOpen = { viewModel.launch(app) },
-                onToggleHidden = { viewModel.toggleHidden(app) },
-                isHidden = hiddenApps.any { it.getKey() == app.getKey() },
-                onOpenTv = if (app.supportsBoth) ({ viewModel.launchInTvMode(app) }) else null,
-                onOpenMobile = if (app.supportsBoth) ({ viewModel.launchInMobileMode(app) }) else null,
-                launchMode = launcherState.appLaunchModes[app.getKey()] ?: AppLaunchMode.AUTO,
-                onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
-                onRename = { viewModel.renameApp(app, it) },
-                onToggleHome = { viewModel.toggleHomeApp(app) },
-                isOnHome = homeApps.any { it.getKey() == app.getKey() },
-            )
-        }
+        AppOptionsHost(
+            state = appOptions,
+            onOpen = { viewModel.launch(it) },
+            onToggleHidden = { viewModel.toggleHidden(it) },
+            isHidden = { app -> hiddenApps.any { it.getKey() == app.getKey() } },
+            onOpenTv = { app -> viewModel.launchInTvMode(app) },
+            onOpenMobile = { app -> viewModel.launchInMobileMode(app) },
+            launchModeFor = { app -> launcherState.appLaunchModes[app.getKey()] ?: AppLaunchMode.AUTO },
+            onLaunchModeChange = { app, mode -> viewModel.setAppLaunchMode(app, mode) },
+            onRename = { app, n -> viewModel.renameApp(app, n) },
+            onToggleHome = { app -> viewModel.toggleHomeApp(app) },
+            isOnHome = { app -> homeApps.any { it.getKey() == app.getKey() } },
+        )
     }
 }
 
@@ -362,6 +359,7 @@ private fun AlphabetJumpIndicator(
                 modifier = Modifier
                     .padding(vertical = 2.dp)
                     .focusable()
+                    .tvPointerClick(onClick = { jumpToLetter() }, requestFocusOnPress = false)
                     .onKeyEvent { event ->
                         if (event.type == KeyEventType.KeyDown &&
                             (event.key == Key.DirectionCenter || event.key == Key.Enter)

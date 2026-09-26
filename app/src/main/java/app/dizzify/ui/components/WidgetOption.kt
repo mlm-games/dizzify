@@ -296,6 +296,7 @@ private fun WidgetOptionItem(
                 } else false
             }
             .focusable()
+            .tvPointerClick(onClick = onAction)
             .padding(LauncherSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -468,6 +469,7 @@ private fun SizeSelector(
                 } else false
             }
             .focusable()
+            .tvPointerClick(onClick = { if (value < range.last) onValueChange(value + 1) })
             .padding(LauncherSpacing.md),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

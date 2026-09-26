@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 fun <T> HomeContentRow(
     title: String,
     items: List<T>,
-    keyOf: (T) -> Any,
+    keyOf: (T) -> String,
     onItemClick: (T) -> Unit,
     modifier: Modifier = Modifier,
     countSuffix: String? = null,
@@ -112,11 +112,11 @@ fun <T> HomeContentRow(
                     itemCard(
                         item,
                         focused,
-                        focusRestorer.getFocusRequester(index),
+                        focusRestorer.getFocusRequester(keyOf(item)),
                         { isFocused ->
                             focused = isFocused
                             if (isFocused) {
-                                focusRestorer.saveFocus(index)
+                                focusRestorer.saveFocus(keyOf(item))
                                 coroutineScope.launch {
                                     val target = (index * cardWidthPx).toInt()
                                         .coerceAtLeast(0)

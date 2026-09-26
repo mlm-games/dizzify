@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import app.dizzify.helper.BitmapUtils
 import app.dizzify.ui.components.buttonPressFeedbackConstant
 import app.dizzify.ui.theme.*
+import app.dizzify.ui.components.tvPointerClick
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -152,6 +153,7 @@ private fun WidgetPickerHeader(
                     } else false
                 }
                 .focusable()
+                .tvPointerClick(onDismiss)
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -286,6 +288,12 @@ private fun WidgetInfoItem(
                 } else false
             }
             .focusable()
+            .tvPointerClick(
+                onClick = {
+                    view.performHapticFeedback(buttonPressFeedbackConstant())
+                    onClick()
+                }
+            )
             .padding(LauncherSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -1,6 +1,7 @@
 package app.dizzify.platform.tv
 
 import android.content.ContentResolver
+import android.content.pm.PackageManager
 import android.content.Context
 import android.content.Intent
 import android.database.ContentObserver
@@ -30,6 +31,14 @@ object WatchNext {
 
     fun isSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 
+    /**
+     * The `android.media.tv` provider only exists on devices with the Leanback feature. On a
+     * phone or tablet every query and observer registration throws SecurityException, so gate on
+     * the feature and not just the API level.
+     */
+    fun isSupported(context: Context): Boolean =
+        isSupported() && context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+
     fun contentUri(): Uri? =
         if (isSupported()) TvContract.WatchNextPrograms.CONTENT_URI else null
 
@@ -54,6 +63,7 @@ object WatchNext {
     ) else emptyArray()
 
     fun query(context: Context, limit: Int = 20): List<WatchNextItem> {
+        if (!isSupported(context)) return emptyList()
         val uri = contentUri() ?: return emptyList()
         if (PROJECTION.isEmpty()) return emptyList()
         return runCatching {
@@ -110,10 +120,12 @@ object WatchNext {
     }
 
     fun observe(
+        context: Context,
         contentResolver: ContentResolver,
         handler: Handler,
         onChange: () -> Unit,
     ): ContentObserver? {
+        if (!isSupported(context)) return null
         val uri = contentUri() ?: return null
         val observer = object : ContentObserver(handler) {
             override fun onChange(selfChange: Boolean) = onChange()

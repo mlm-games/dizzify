@@ -17,7 +17,8 @@ class IconPackManager(context: Context) {
     private val appContext = context.applicationContext
     private val packageManager = appContext.packageManager
 
-    // Byte-sized LRU (~8MB).
+    // Byte-sized LRU (~8MB). getBitmapFromPack runs on Dispatchers.IO from several
+    // coroutines, and LruCache is not thread-safe, so every access is guarded.
     private val iconPackCache = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount.coerceAtLeast(1)
     }
@@ -118,7 +119,7 @@ class IconPackManager(context: Context) {
         if (iconPackName == "default") return@withContext null
 
         val cacheKey = "$iconPackName|$componentName"
-        iconPackCache[cacheKey]?.let { return@withContext it }
+        synchronized(iconPackCache) { iconPackCache[cacheKey] }?.let { return@withContext it }
 
         val iconPack = iconPackMappings[iconPackName] ?: loadIconPack(iconPackName) ?: return@withContext null
         val iconName = iconPack.componentMap[componentName] ?: return@withContext null
@@ -139,7 +140,7 @@ class IconPackManager(context: Context) {
         }.getOrNull() ?: return@withContext null
         val bmp = drawableToBitmap(drawable) ?: return@withContext null
 
-        iconPackCache.put(cacheKey, bmp)
+        synchronized(iconPackCache) { iconPackCache.put(cacheKey, bmp) }
         bmp
     }
 
@@ -199,7 +200,7 @@ class IconPackManager(context: Context) {
     }
 
     fun clearCache() {
-        iconPackCache.evictAll()
+        synchronized(iconPackCache) { iconPackCache.evictAll() }
         iconPackMappings.clear()
     }
 }

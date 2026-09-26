@@ -42,7 +42,6 @@ fun HomeGridSection(
     var optionsWidget by remember { mutableStateOf<HomeItem.Widget?>(null) }
     var showOptions by remember { mutableStateOf(false) }
     var gridApp by remember { mutableStateOf<HomeItem.App?>(null) }
-    var showGridAppOptions by remember { mutableStateOf(false) }
 
     val focusRequesters = remember { mutableStateMapOf<String, FocusRequester>() }
     fun requesterFor(id: String) = focusRequesters.getOrPut(id) { FocusRequester() }
@@ -172,10 +171,7 @@ fun HomeGridSection(
                                             AppCard(
                                                 app = live,
                                                 onClick = { viewModel.launch(live) },
-                                                onLongClick = {
-                                                    gridApp = item
-                                                    showGridAppOptions = true
-                                                },
+                                                onLongClick = { gridApp = item },
                                                 style = CardStyle.STANDARD,
                                                 focusRequester = requesterFor(item.id)
                                             )
@@ -234,22 +230,22 @@ fun HomeGridSection(
         )
     }
 
-    gridApp?.let { item ->
-        val live: AppModel = liveByKey[item.id] ?: item.appModel
-        AppOptionsSheet(
-            app = live,
-            isVisible = showGridAppOptions,
-            onDismiss = {
-                showGridAppOptions = false
-                gridApp = null
-            },
-            onOpen = { viewModel.launch(live) },
-            onToggleHidden = { viewModel.toggleHidden(live) },
-            isHidden = live.isHidden,
-            onToggleHome = { viewModel.toggleHomeApp(live) },
-            isOnHome = true
-        )
+    val gridAppOptions = rememberAppOptionsState()
+    val gridAppId = gridApp?.id
+    LaunchedEffect(gridAppId) {
+        val item = gridApp ?: return@LaunchedEffect
+        gridAppOptions.open(liveByKey[item.id] ?: item.appModel)
+        gridApp = null
     }
+
+    AppOptionsHost(
+        state = gridAppOptions,
+        onOpen = { viewModel.launch(it) },
+        onToggleHidden = { viewModel.toggleHidden(it) },
+        isHidden = { it.isHidden },
+        onToggleHome = { viewModel.toggleHomeApp(it) },
+        isOnHome = { true }
+    )
 }
 
 /** Absolute-position grid: children carry their HomeItem as layoutId. */

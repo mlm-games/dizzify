@@ -17,6 +17,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +46,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -118,18 +121,25 @@ val SidebarDestinations: List<SidebarDestination> = listOf(
 fun LauncherSidebar(
     currentDestination: SidebarDestination,
     onDestinationSelected: (SidebarDestination) -> Unit,
-    modifier: Modifier = Modifier,
-    isExpanded: Boolean = false,
-    onExpandedChange: (Boolean) -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     val focusRequesters = remember {
-        SidebarDestinations.associateBy({ it.route }, { FocusRequester() })
+        SidebarDestinations.associate { it.route to FocusRequester() }
     }
 
     var anyItemFocused by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
 
+    // Focus hops between items emit blur-then-focus in the same pass; debounce so the
+    // expand/collapse animation is not restarted on every hop. Focus leaving the sidebar
+    // entirely collapses it again.
     LaunchedEffect(anyItemFocused) {
-        onExpandedChange(anyItemFocused)
+        if (!anyItemFocused) {
+            delay(200)
+            if (!anyItemFocused) isExpanded = false
+        } else {
+            isExpanded = true
+        }
     }
 
     val sidebarWidth by animateDpAsState(
@@ -161,28 +171,25 @@ fun LauncherSidebar(
         ) {
             SidebarClock(isExpanded = isExpanded)
 
-            Spacer(modifier = Modifier.height(LauncherSpacing.xxl))
+            Spacer(modifier = Modifier.height(LauncherSpacing.sm))
 
-            Column(
+            LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(LauncherSpacing.sm)
             ) {
-                SidebarDestinations.forEach { destination ->
-                    val fr = focusRequesters[destination.route] ?: FocusRequester()
+                items(
+                    count = SidebarDestinations.size,
+                    key = { SidebarDestinations[it].route }
+                ) { index ->
+                    val destination = SidebarDestinations[index]
                     SidebarItem(
                         destination = destination,
                         isSelected = currentDestination == destination,
                         isExpanded = isExpanded,
                         onClick = { onDestinationSelected(destination) },
-                        focusRequester = fr,
+                        focusRequester = focusRequesters.getValue(destination.route),
                         onFocusedChanged = { focused ->
-                            anyItemFocused = focused || anyItemFocused
-                            if (!focused) {
-//                                LaunchedEffect(Unit) {
-//                                    delay(80)
-                                    anyItemFocused = false
-//                                }
-                            }
+                            if (focused) anyItemFocused = true
                         }
                     )
                 }
@@ -210,13 +217,22 @@ private fun SidebarClock(isExpanded: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = LauncherSpacing.md),
+            .padding(horizontal = if (isExpanded) LauncherSpacing.md else LauncherSpacing.xs),
         horizontalAlignment = if (isExpanded) Alignment.Start else Alignment.CenterHorizontally
     ) {
         Text(
             text = timeFormat.format(Date(currentTime)),
-            style = if (isExpanded) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge,
-            color = Color.White
+            // The collapsed rail is only 80dp wide, so the time needs a smaller style there;
+            // headlineLarge either wrapped to two lines or clipped mid-glyph.
+            style = if (isExpanded) {
+                MaterialTheme.typography.displayMedium
+            } else {
+                MaterialTheme.typography.titleMedium
+            },
+            color = Color.White,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Visible
         )
 
         AnimatedVisibility(
@@ -235,15 +251,13 @@ private fun SidebarClock(isExpanded: Boolean) {
 
 @Composable
 private fun SidebarItem(
-    destination: SidebarDestination?,
+    destination: SidebarDestination,
     isSelected: Boolean,
     isExpanded: Boolean,
     onClick: () -> Unit,
     focusRequester: FocusRequester,
     onFocusedChanged: (Boolean) -> Unit,
 ) {
-    if (destination == null) return
-
     var isFocused by remember { mutableStateOf(false) }
 
     val backgroundColor by animateColorAsState(
@@ -298,13 +312,17 @@ private fun SidebarItem(
                 } else false
             }
             .focusable()
-            .padding(LauncherSpacing.md),
+            .tvPointerClick(onClick)
+            .padding(
+                horizontal = LauncherSpacing.sm,
+                vertical = if (isExpanded) LauncherSpacing.sm else 2.dp
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = if (isSelected || isFocused) destination.iconSelected else destination.iconUnselected,
             contentDescription = destination.label,
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(if (isExpanded) 28.dp else 20.dp),
             tint = iconColor
         )
 

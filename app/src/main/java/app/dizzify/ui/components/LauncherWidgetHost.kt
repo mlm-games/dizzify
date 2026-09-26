@@ -15,7 +15,7 @@ class LauncherWidgetHost(
     private val appWidgetManager = AppWidgetManager.getInstance(context)
     val appWidgetHost = AppWidgetHost(context, APPWIDGET_HOST_ID)
 
-    private val hostViews = mutableMapOf<Int, AppWidgetHostView>()
+    private val hostViews = java.util.concurrent.ConcurrentHashMap<Int, AppWidgetHostView>()
 
     fun startListening() {
         try {
@@ -38,12 +38,11 @@ class LauncherWidgetHost(
     }
 
     fun deleteWidgetId(widgetId: Int) {
-        hostViews.remove(widgetId)?.let { view ->
-            try {
-                appWidgetHost.deleteAppWidgetId(widgetId)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error deleting widget $widgetId", e)
-            }
+        hostViews.remove(widgetId)
+        try {
+            appWidgetHost.deleteAppWidgetId(widgetId)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting widget $widgetId", e)
         }
     }
 
@@ -76,6 +75,22 @@ class LauncherWidgetHost(
     }
 
     fun getHostView(widgetId: Int): AppWidgetHostView? = hostViews[widgetId]
+
+    /**
+     * Re-reads the provider info and re-applies it to an existing host view so a
+     * reconfigured widget shows its new settings without being re-added to the layout.
+     */
+    fun refreshWidget(widgetId: Int) {
+        val view = hostViews[widgetId] ?: return
+        val info = try {
+            appWidgetManager.getAppWidgetInfo(widgetId)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error refreshing widget $widgetId", e)
+            null
+        } ?: return
+        runCatching { view.setAppWidget(widgetId, info) }
+            .onFailure { Log.e(TAG, "Error re-applying widget $widgetId", it) }
+    }
 
     fun bindWidget(widgetId: Int, providerInfo: AppWidgetProviderInfo): Boolean {
         return try {

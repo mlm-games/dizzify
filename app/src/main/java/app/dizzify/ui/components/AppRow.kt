@@ -143,7 +143,7 @@ fun AppRow(
             horizontalArrangement = Arrangement.spacedBy(LauncherSpacing.cardGap)
         ) {
             apps.forEachIndexed { index, app ->
-                val itemFocusRequester = focusRestorer.getFocusRequester(index)
+                val itemFocusRequester = focusRestorer.getFocusRequester(app.getKey())
                 
                 key(app.getKey()) {
                     StaggeredAnimatedVisibility(
@@ -158,11 +158,10 @@ fun AppRow(
                             focusRequester = itemFocusRequester,
                             modifier = Modifier.onFocusChanged { state ->
                                 if (state.isFocused) {
-                                    focusRestorer.saveFocus(index)
+                                    focusRestorer.saveFocus(app.getKey())
                                     // Smooth scroll to focused item
                                     coroutineScope.launch {
-                                        val targetScroll = (index * cardWidth - cardWidth).toInt()
-                                            .coerceAtLeast(0)
+                                        val targetScroll = ((index - 1) * cardWidth).toInt().coerceAtLeast(0)
                                         scrollState.animateScrollTo(
                                             targetScroll,
                                             animationSpec = tween(LauncherAnimation.NormalDuration)

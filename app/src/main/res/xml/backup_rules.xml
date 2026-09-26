@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- DataStore Preferences live in files/datastore/, not in the database domain. -->
 <full-backup-content>
     <!-- Exclude launcher settings/state (contains settings-lock PIN hash + home layout).
          Users can export/import explicitly via Settings instead. -->
-    <exclude domain="file" path="datastore/launcher_settings.preferences_pb" />
-    <exclude domain="file" path="datastore/launcher_state.preferences_pb" />
     <exclude domain="file" path="datastore/" />
-    <exclude domain="database" path="datastore/" />
+    <!-- Custom font and wallpaper photos are user media, not launcher data; do not
+         copy them to cloud backup or device-to-device transfer. -->
+    <exclude domain="file" path="custom_font.ttf" />
+    <exclude domain="file" path="wallpaper/" />
 </full-backup-content>

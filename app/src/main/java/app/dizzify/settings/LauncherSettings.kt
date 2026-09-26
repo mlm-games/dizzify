@@ -50,13 +50,13 @@ enum class DefaultScreen { Home, Apps }
 @SchemaVersion(version = 5)
 @Serializable
 data class LauncherSettings(
-//    @Setting(
-//        title = "Theme",
-//        category = General::class,
-//        type = Dropdown::class,
-//        key = "theme",
-//        options = ["System", "Light", "Dark"]
-//    )
+    @Setting(
+        title = "Theme",
+        category = General::class,
+        type = Dropdown::class,
+        key = "theme",
+        options = ["System", "Light", "Dark"]
+    )
     val theme: ThemeMode = ThemeMode.System,
 
     @Setting(

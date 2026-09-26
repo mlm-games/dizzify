@@ -158,16 +158,22 @@ fun AppCard(
         label = "border_alpha"
     )
 
-    val infiniteTransition = rememberInfiniteTransition(label = "glow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow_alpha"
-    )
+    // Only run the glow loop while the card can actually show it; an unconditional
+    // rememberInfiniteTransition keeps a withFrameNanos loop alive for every card on every row.
+    val glowAlpha = if (isFocused && visualConfig.useGlow) {
+        val infiniteTransition = rememberInfiniteTransition(label = "glow")
+        infiniteTransition.animateFloat(
+            initialValue = 0.4f,
+            targetValue = 0.7f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1500, easing = EaseInOutSine),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "glow_alpha"
+        ).value
+    } else {
+        0.55f
+    }
 
     LaunchedEffect(isFocused) {
         if (isFocused) {
@@ -280,6 +286,16 @@ fun AppCard(
                 }
             }
             .focusable()
+            .tvPointerLongClick(
+                onClick = {
+                    view.performHapticFeedback(buttonPressFeedbackConstant())
+                    onClick()
+                },
+                onLongClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    onLongClick()
+                }
+            )
     ) {
         when (style) {
             CardStyle.STANDARD -> StandardCardContent(app, isFocused, showNewBadge)

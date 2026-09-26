@@ -1,71 +1,33 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
--keepattributes Signature
--keepattributes *Annotation*
+# Obfuscation stays off: the release build is not exercised on-device in CI, and the app
+# resolves several names reflectively (persisted enum names, sealed-class discriminators), so
+# renaming is not something to enable without a signed release smoke test. R8 still performs
+# dead-code elimination and resource shrinking.
 -dontobfuscate
+
+# kotlinx.serialization resolves generated `$$serializer` companions and nested serializers
+# reflectively. The library ships consumer rules for this, but pin them explicitly so a
+# dependency bump cannot silently break settings (de)serialization in release builds.
+-keepattributes Signature, InnerClasses, *Annotation*
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class kotlinx.serialization.json.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class app.dizzify.**$$serializer { *; }
+-keepclassmembers class app.dizzify.** {
+    *** Companion;
+}
+-keepclasseswithmembers class app.dizzify.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Sealed HomeItem is persisted polymorphically; the discriminator is the serial name of the
+# per-subclass descriptor, so the generated serializers must keep their names.
+-keep class app.dizzify.data.HomeItem$* { *; }
 
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }
-
--keep class app.dizzify.data.settings.AppSettings { *; }
--keepclassmembers class app.dizzify.data.settings.AppSettings { *; }
--keep @app.dizzify.data.settings.Setting class * { *; }
--keepclasseswithmembers class * {
-    @app.dizzify.data.settings.Setting <fields>;
-}
-
--keepattributes *Annotation*,EnclosingMethod,Signature,KotlinMetadata
-
--keep class kotlin.Metadata { *; }
-
--keep class kotlin.reflect.** { *; }
-
-
--keepattributes RuntimeVisibleAnnotations
--keepclassmembers class app.dizzify.data.settings.AppSettings {
-    @app.dizzify.data.settings.Setting *;
-}
-
-# Keep all Setting annotations
--keep @interface app.dizzify.data.settings.Setting
--keepattributes *Annotation*
-
-# Keep all enum classes used in annotations
--keepclassmembers enum app.dizzify.data.settings.SettingCategory { *; }
--keepclassmembers enum app.dizzify.data.settings.SettingType { *; }
-
-# Keep all reflection metadata
--keepattributes Signature, InnerClasses
--keep class kotlin.Metadata { *; }
--keep class kotlin.reflect.** { *; }
--keep class kotlin.jvm.internal.** { *; }
-
--keepclassmembers class app.dizzify.data.settings.AppSettings {
-    <fields>;
-    <methods>;
-}
-
--keep class app.dizzify.data.settings.SettingsManager { *; }
 
 -keep class app.dizzify.ui.screens.SettingsScreenKt { *; }

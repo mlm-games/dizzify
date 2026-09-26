@@ -16,6 +16,7 @@ import app.dizzify.helper.WallpaperHelper
 import app.dizzify.LauncherViewModel
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
+import app.dizzify.ui.components.AppOptionContext
 
 @Composable
 fun HomeScreen(
@@ -36,8 +37,7 @@ fun HomeScreen(
     val watchNext by viewModel.watchNext.collectAsState()
 
     val context = LocalContext.current
-    var selectedApp by remember { mutableStateOf<AppModel?>(null) }
-    var showOptions by remember { mutableStateOf(false) }
+    val appOptions = rememberAppOptionsState()
 
     val scrollState = rememberScrollState()
 
@@ -105,8 +105,7 @@ fun HomeScreen(
                     apps = homeApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
-                        selectedApp = app
-                        showOptions = true
+                        appOptions.open(app)
                     },
                     cardStyle = CardStyle.STANDARD,
                     accentColor = LauncherColors.AccentOrange
@@ -121,8 +120,7 @@ fun HomeScreen(
                     apps = recentApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
-                        selectedApp = app
-                        showOptions = true
+                        appOptions.open(app)
                     },
                     cardStyle = CardStyle.COMPACT,
                     accentColor = LauncherColors.AccentBlue
@@ -138,8 +136,7 @@ fun HomeScreen(
                     apps = mediaApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
-                        selectedApp = app
-                        showOptions = true
+                        appOptions.open(app)
                     },
                     cardStyle = CardStyle.BANNER,
                     accentColor = LauncherColors.AccentPurple
@@ -154,8 +151,7 @@ fun HomeScreen(
                     apps = gameApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
-                        selectedApp = app
-                        showOptions = true
+                        appOptions.open(app)
                     },
                     cardStyle = CardStyle.STANDARD,
                     accentColor = LauncherColors.AccentTeal
@@ -179,8 +175,7 @@ fun HomeScreen(
                     apps = allApps.take(15),
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
-                        selectedApp = app
-                        showOptions = true
+                        appOptions.open(app)
                     },
                     cardStyle = CardStyle.COMPACT,
                     accentColor = LauncherColors.TextSecondary
@@ -190,28 +185,27 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(LauncherSpacing.xxxl))
         }
 
-        selectedApp?.let { app ->
-            AppOptionsSheet(
-                app = app,
-                isVisible = showOptions,
-                onDismiss = {
-                    showOptions = false
-                    selectedApp = null
-                },
-                onOpen = { viewModel.launch(app) },
-                onToggleHidden = { viewModel.toggleHidden(app) },
-                onToggleFavorite = { viewModel.toggleFavorite(app) },
-                isFavorite = favoriteApps.contains(app.getKey()),
-                isHidden = hiddenApps.any { it.getKey() == app.getKey() },
-                onOpenTv = if (app.supportsBoth) ({ viewModel.launchInTvMode(app) }) else null,
-                onOpenMobile = if (app.supportsBoth) ({ viewModel.launchInMobileMode(app) }) else null,
-                launchMode = launcherState.appLaunchModes[app.getKey()] ?: AppLaunchMode.AUTO,
-                onLaunchModeChange = { viewModel.setAppLaunchMode(app, it) },
-                onRename = { viewModel.renameApp(app, it) },
-                onToggleHome = { viewModel.toggleHomeApp(app) },
-                isOnHome = homeApps.any { it.getKey() == app.getKey() },
-            )
-        }
+        AppOptionsHost(
+            state = appOptions,
+            onOpen = { viewModel.launch(it) },
+            onToggleHidden = { viewModel.toggleHidden(it) },
+            onToggleFavorite = { viewModel.toggleFavorite(it) },
+            isFavorite = { app -> favoriteApps.contains(app.getKey()) },
+            isHidden = { app -> hiddenApps.any { it.getKey() == app.getKey() } },
+            contextFor = { app ->
+                AppOptionContext.FromHome(
+                    isFavorite = favoriteApps.contains(app.getKey()),
+                    onToggleFavorite = { viewModel.toggleFavorite(app) }
+                )
+            },
+            onOpenTv = { app -> viewModel.launchInTvMode(app) },
+            onOpenMobile = { app -> viewModel.launchInMobileMode(app) },
+            launchModeFor = { app -> launcherState.appLaunchModes[app.getKey()] ?: AppLaunchMode.AUTO },
+            onLaunchModeChange = { app, mode -> viewModel.setAppLaunchMode(app, mode) },
+            onRename = { app, n -> viewModel.renameApp(app, n) },
+            onToggleHome = { app -> viewModel.toggleHomeApp(app) },
+            isOnHome = { app -> homeApps.any { it.getKey() == app.getKey() } },
+        )
     }
 }
 

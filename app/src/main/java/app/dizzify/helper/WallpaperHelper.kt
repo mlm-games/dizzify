@@ -97,12 +97,21 @@ object WallpaperHelper {
                 BitmapFactory.decodeStream(it, null, opts)
             } ?: return null
             val dir = File(appContext.filesDir, DIR).apply { mkdirs() }
-            dir.listFiles { f -> f.name.startsWith(CUSTOM) }?.forEach { it.delete() }
+            // Write to a temp file and swap: deleting the old wallpaper before the new one is
+            // committed would leave the launcher pointing at a missing file if this throws.
             val file = File(dir, "$CUSTOM.png")
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 95, out)
+            val temp = File(dir, "$CUSTOM.png.tmp")
+            try {
+                FileOutputStream(temp).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 95, out)
+                }
+                if (file.exists() && !file.delete()) {
+                    error("Could not replace the existing wallpaper")
+                }
+                if (!temp.renameTo(file)) error("Could not finalise the wallpaper file")
+            } finally {
+                if (temp.exists()) temp.delete()
             }
-            if (!bitmap.isRecycled) bitmap.recycle()
             file.absolutePath
         }.onFailure { e -> Logger.e(e) { "storeCustom failed: $uri" } }.getOrNull()
     }

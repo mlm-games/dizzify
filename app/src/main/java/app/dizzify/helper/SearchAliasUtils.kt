@@ -1,6 +1,7 @@
 package app.dizzify.helper
 
 import android.icu.text.Transliterator
+import android.os.Build
 import app.dizzify.settings.SearchAliasesMode
 import java.text.Normalizer
 import java.util.Locale
@@ -27,12 +28,14 @@ object SearchAliasUtils {
     private val NON_ASCII_REGEX = "[^\\p{ASCII}]".toRegex()
 
     // Cached ICU transliterators — creating via reflection per-app/per-query was a hot-path cost.
-    // minSdk 24 ships android.icu, so use it directly.
+    // Transliterator arrived in API 29; below that the alias builder falls back to ASCII folding.
     private val anyLatinTransliterator: Transliterator? by lazy {
-        runCatching { Transliterator.getInstance("Any-Latin") }.getOrNull()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) null
+        else runCatching { Transliterator.getInstance("Any-Latin") }.getOrNull()
     }
     private val latinCyrillicTransliterator: Transliterator? by lazy {
-        runCatching { Transliterator.getInstance("Latin-Cyrillic") }.getOrNull()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) null
+        else runCatching { Transliterator.getInstance("Latin-Cyrillic") }.getOrNull()
     }
 
     fun swapKeyboardLayout(text: String, ruToEnDirection: Boolean): String {
@@ -53,6 +56,7 @@ object SearchAliasUtils {
 
     private fun transliterate(transliterator: Transliterator?, text: String): String {
         if (transliterator == null) return text
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return text
         return synchronized(transliterator) {
             runCatching { transliterator.transliterate(text) }.getOrDefault(text)
         }

@@ -42,6 +42,7 @@ import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherState
 import app.dizzify.settings.SortOrder
 import io.github.mlmgames.settings.core.SettingsRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -233,6 +234,9 @@ suspend fun getAppsList(
             }
         }
 
+    } catch (e: CancellationException) {
+        // Never publish a half-scanned list: rethrow so the caller discards the result.
+        throw e
     } catch (e: Exception) {
         Log.e(TAG, "getAppsList failed", e)
     }

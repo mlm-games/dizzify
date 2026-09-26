@@ -11,20 +11,16 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import app.dizzify.data.WidgetConstants
 import app.dizzify.helper.PrivateSpaceReceiver
-import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.LauncherShell
 import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -46,8 +42,9 @@ class MainActivity : ComponentActivity() {
 
         setupFullscreen()
 
-        // Previously the PrivateSpaceReceiver broadcast (app.dizzify.ACTION_REFRESH_APPS)
-        // was a dead letter — nothing registered for it. Wire it up (not exported).
+        // PrivateSpaceReceiver is already declared in the manifest for these two actions, which
+        // reach the app even when it is not running. Registering again here would fire the
+        // handler twice per profile change, so only keep the runtime registration.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             privateSpaceReceiver = PrivateSpaceReceiver()
             val intentFilter = IntentFilter().apply {
@@ -67,19 +64,7 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (e: Exception) {
                 Log.e("MainActivity", "Failed to register PrivateSpaceReceiver", e)
-            }
-        }
-
-        // Apply night mode from settings (ported from CCLauncher).
-        lifecycleScope.launch {
-            launcherViewModel.settings.map { it.theme }.distinctUntilChanged().collect { theme ->
-                AppCompatDelegate.setDefaultNightMode(
-                    when (theme) {
-                        ThemeMode.Light -> AppCompatDelegate.MODE_NIGHT_NO
-                        ThemeMode.Dark -> AppCompatDelegate.MODE_NIGHT_YES
-                        else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                    }
-                )
+                privateSpaceReceiver = null
             }
         }
 
@@ -138,16 +123,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        lifecycleScope.launch {
-            val theme = launcherViewModel.settings.first().theme
-            AppCompatDelegate.setDefaultNightMode(
-                when (theme) {
-                    ThemeMode.Light -> AppCompatDelegate.MODE_NIGHT_NO
-                    ThemeMode.Dark -> AppCompatDelegate.MODE_NIGHT_YES
-                    else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                }
-            )
-        }
+
         setupFullscreen()
     }
 

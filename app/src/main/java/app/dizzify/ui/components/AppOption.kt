@@ -7,7 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -87,13 +90,11 @@ fun AppOptionsSheet(
     onOpenMobile: (() -> Unit)? = null,
     launchMode: AppLaunchMode = AppLaunchMode.AUTO,
     onLaunchModeChange: ((AppLaunchMode) -> Unit)? = null,
-    onRename: ((String?) -> Unit)? = null,
+    onRenameRequest: ((String) -> Unit)? = null,
     onToggleHome: (() -> Unit)? = null,
     isOnHome: Boolean = false,
 ) {
     val androidContext = LocalContext.current
-    var showRename by remember { mutableStateOf(false) }
-    var renameText by remember(app) { mutableStateOf(app.appLabel) }
 
     val options = remember(app, isFavorite, isHidden, isOnHome, context, launchMode) {
         buildList {
@@ -209,16 +210,13 @@ fun AppOptionsSheet(
                 }
             ))
 
-            if (onRename != null) {
+            if (onRenameRequest != null) {
                 add(AppOption(
                     id = "rename",
                     label = "Rename",
                     icon = Icons.Outlined.Edit,
                     iconTint = LauncherColors.TextSecondary,
-                    action = {
-                        renameText = app.appLabel
-                        showRename = true
-                    }
+                    action = { onRenameRequest(app.appLabel) }
                 ))
             }
 
@@ -294,14 +292,138 @@ fun AppOptionsSheet(
         }
     }
 
-    if (showRename && onRename != null) {
-        Dialog(onDismissRequest = { showRename = false }) {
+}
+
+/**
+ * Owns the options sheet plus the rename dialog so that selecting "Rename" (which closes the
+ * sheet) does not unmount the state the rename dialog lives in. Call [AppOptionsHost] once per
+ * screen; it stays composed for the whole screen lifetime.
+ */
+@Stable
+class AppOptionsState {
+    var app by mutableStateOf<AppModel?>(null)
+        private set
+    var isVisible by mutableStateOf(false)
+        private set
+    var renaming by mutableStateOf<RenameTarget?>(null)
+        private set
+
+    fun open(app: AppModel) {
+        this.app = app
+        isVisible = true
+    }
+
+    fun dismiss() {
+        isVisible = false
+        app = null
+    }
+
+    fun requestRename(initial: String) {
+        val current = app ?: return
+        renaming = RenameTarget(current, initial)
+        dismiss()
+    }
+
+    fun cancelRename() {
+        renaming = null
+    }
+
+    fun commitRename(newName: String?, onRename: (AppModel, String?) -> Unit) {
+        val target = renaming ?: return
+        renaming = null
+        onRename(target.app, newName)
+    }
+}
+
+data class RenameTarget(val app: AppModel, val initialText: String)
+
+@Composable
+fun rememberAppOptionsState(): AppOptionsState = remember { AppOptionsState() }
+
+/**
+ * Call this unconditionally, once per screen. It must not be wrapped in a
+ * `state.app?.let {}` by the caller: dismissing the sheet clears [AppOptionsState.app], and the
+ * rename dialog that follows has to outlive that.
+ */
+@Composable
+fun AppOptionsHost(
+    state: AppOptionsState,
+    onOpen: (AppModel) -> Unit,
+    onToggleHidden: (AppModel) -> Unit,
+    onToggleFavorite: (AppModel) -> Unit = {},
+    isFavorite: (AppModel) -> Boolean = { false },
+    isHidden: (AppModel) -> Boolean = { false },
+    contextFor: (AppModel) -> AppOptionContext = { AppOptionContext.FromApps(it.isHidden) },
+    onOpenTv: ((AppModel) -> Unit)? = null,
+    onOpenMobile: ((AppModel) -> Unit)? = null,
+    launchModeFor: (AppModel) -> AppLaunchMode = { AppLaunchMode.AUTO },
+    onLaunchModeChange: ((AppModel, AppLaunchMode) -> Unit)? = null,
+    onRename: ((AppModel, String?) -> Unit)? = null,
+    onToggleHome: ((AppModel) -> Unit)? = null,
+    isOnHome: (AppModel) -> Boolean = { false },
+) {
+    state.app?.let { app ->
+        AppOptionsSheet(
+            app = app,
+            isVisible = state.isVisible,
+            onDismiss = state::dismiss,
+            onOpen = { onOpen(app) },
+            onToggleHidden = { onToggleHidden(app) },
+            onToggleFavorite = { onToggleFavorite(app) },
+            isFavorite = isFavorite(app),
+            isHidden = isHidden(app),
+            context = contextFor(app),
+            onOpenTv = onOpenTv?.let { cb -> { cb(app) } },
+            onOpenMobile = onOpenMobile?.let { cb -> { cb(app) } },
+            launchMode = launchModeFor(app),
+            onLaunchModeChange = onLaunchModeChange?.let { cb -> { mode -> cb(app, mode) } },
+            onRenameRequest = onRename?.let { { initial -> state.requestRename(initial) } },
+            onToggleHome = onToggleHome?.let { cb -> { cb(app) } },
+            isOnHome = isOnHome(app)
+        )
+    }
+
+    state.renaming?.let { target ->
+        RenameAppDialog(
+            initialText = target.initialText,
+            packageName = target.app.appPackage,
+            onConfirm = { newName -> state.commitRename(newName, onRename ?: { _, _ -> }) },
+            onDismiss = state::cancelRename
+        )
+    }
+}
+
+@Composable
+private fun RenameAppDialog(
+    initialText: String,
+    packageName: String,
+    onConfirm: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var text by remember(initialText) { mutableStateOf(initialText) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        // A Dialog window does not resize for the IME. Inset the whole dialog and centre it in
+        // what is left, then scroll the contents, so Save/Cancel never sit under the keyboard.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding(),
+            contentAlignment = Alignment.Center
+        ) {
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = LauncherColors.DarkSurface,
                 modifier = Modifier.width(400.dp)
             ) {
-                Column(modifier = Modifier.padding(LauncherSpacing.lg)) {
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .padding(LauncherSpacing.lg)
+                ) {
                     Text(
                         text = "Rename app",
                         style = MaterialTheme.typography.titleLarge,
@@ -309,10 +431,10 @@ fun AppOptionsSheet(
                     )
                     Spacer(modifier = Modifier.height(LauncherSpacing.sm))
                     OutlinedTextField(
-                        value = renameText,
-                        onValueChange = { renameText = it },
+                        value = text,
+                        onValueChange = { text = it },
                         singleLine = true,
-                        placeholder = { Text(app.appPackage) },
+                        placeholder = { Text(packageName) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(LauncherSpacing.md))
@@ -320,15 +442,9 @@ fun AppOptionsSheet(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        TextButton(onClick = {
-                            showRename = false
-                        }) { Text("Cancel") }
+                        TextButton(onClick = onDismiss) { Text("Cancel") }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Button(onClick = {
-                            val trimmed = renameText.trim()
-                            onRename(trimmed.ifEmpty { null })
-                            showRename = false
-                        }) { Text("Save") }
+                        Button(onClick = { onConfirm(text.trim().ifEmpty { null }) }) { Text("Save") }
                     }
                 }
             }
@@ -353,6 +469,7 @@ private fun AppOptionsContent(
     Column(
         modifier = Modifier
             .width(420.dp)
+            .fillMaxHeight(0.85f)
             .shadow(24.dp, RoundedCornerShape(28.dp))
             .clip(RoundedCornerShape(28.dp))
             .background(
@@ -401,12 +518,15 @@ private fun AppOptionsContent(
         )
 
         Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(LauncherSpacing.xs)
         ) {
             options.forEachIndexed { index, option ->
                 OptionItem(
                     option = option,
-                    focusRequester = focusRequesters.getOrNull(index) ?: remember { FocusRequester() },
+                    focusRequester = focusRequesters[index],
                     onAction = {
                         view.performHapticFeedback(buttonPressFeedbackConstant())
                         option.action()
@@ -503,6 +623,7 @@ private fun OptionItem(
                 }
             }
             .focusable()
+            .tvPointerClick(onClick = onAction)
             .padding(LauncherSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {

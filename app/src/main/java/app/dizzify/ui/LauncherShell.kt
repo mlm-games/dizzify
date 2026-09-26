@@ -17,12 +17,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import app.dizzify.LauncherViewModel
 import app.dizzify.settings.DefaultScreen
@@ -80,8 +82,13 @@ fun LauncherShell(
             )
         }
 
-        LaunchedEffect(viewModel, settings.defaultScreen) {
-            viewModel.events.collectLatest { event ->
+        // Keyed on the view model only: keying on a settings value tears the collector down
+        // and re-subscribes, and a replay=0 SharedFlow drops anything emitted in that window.
+        val currentDefaultScreen by rememberUpdatedState(settings.defaultScreen)
+        val currentActivity by rememberUpdatedState(context)
+
+        LaunchedEffect(viewModel) {
+            viewModel.events.collect { event ->
                 when (event) {
                     is LauncherEvent.LaunchWidgetBindIntent -> {
                         runCatching { bindLauncher.launch(event.intent) }
@@ -91,30 +98,33 @@ fun LauncherShell(
                             }
                     }
                     is LauncherEvent.ConfigureWidget -> {
-                        val activity = context as? Activity
-                        if (activity != null) {
-                            runCatching {
-                                widgetHost.startWidgetConfiguration(
-                                    activity,
-                                    event.widgetId,
-                                    MainActivity.REQUEST_CONFIGURE_WIDGET
-                                )
-                            }.onFailure { e ->
-                                Log.e("LauncherShell", "Failed to start widget configuration", e)
-                                snackbarManager.show("Failed to open widget settings.")
-                            }
+                        val activity = currentActivity as? Activity
+                        if (activity == null) {
+                            snackbarManager.show("Widget settings are unavailable right now.")
+                        } else if (!widgetHost.startWidgetConfiguration(
+                                activity,
+                                event.widgetId,
+                                MainActivity.REQUEST_CONFIGURE_WIDGET
+                            )
+                        ) {
+                            // startWidgetConfiguration swallows its own failures and returns
+                            // false, so nothing else would report them.
+                            snackbarManager.show("Couldn't open widget settings.")
                         }
                     }
                     LauncherEvent.NavigateHome -> {
                         val home: LauncherKey =
-                            if (settings.defaultScreen == DefaultScreen.Apps) LauncherKey.Apps else LauncherKey.Home
-                        backStack.apply { clear(); add(home) }
+                            if (currentDefaultScreen == DefaultScreen.Apps) LauncherKey.Apps else LauncherKey.Home
+                        backStack.apply {
+                            clear()
+                            if (isEmpty()) add(home)
+                        }
                     }
                 }
             }
         }
 
-        val current = backStack.last()
+        val current = backStack.lastOrNull() ?: LauncherKey.Home
 
         val currentDestination = remember(current) {
             when (current) {
@@ -167,7 +177,7 @@ fun LauncherShell(
                     NavDisplay(
                         backStack = backStack,
                         onBack = {
-                            if (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                            backStack.removeLastOrNull()
                             // if size == 1, do nothing: launcher shouldn't "exit"
                         },
                         entryDecorators = listOf(
@@ -185,10 +195,10 @@ fun LauncherShell(
                                         // state and bind-permission fallback (was inline
                                         // allocate+bind with no fallback).
                                         viewModel.startWidgetConfiguration(providerInfo)
-                                        backStack.removeAt(backStack.lastIndex)
+                                        backStack.removeLastOrNull()
                                     },
                                     onDismiss = {
-                                        backStack.removeAt(backStack.lastIndex)
+                                        backStack.removeLastOrNull()
                                     }
                                 )
                             }
@@ -227,7 +237,7 @@ fun LauncherShell(
                                 AppDetailsScreen(
                                     appKey = key.appKey,
                                     viewModel = viewModel,
-                                    onBack = { backStack.removeAt(backStack.lastIndex) }
+                                    onBack = { backStack.removeLastOrNull() }
                                 )
                             }
                         }
@@ -237,7 +247,7 @@ fun LauncherShell(
         }
 
         BackHandler(enabled = backStack.size > 1) {
-            backStack.removeAt(backStack.lastIndex)
+            backStack.removeLastOrNull()
         }
     }
 }
@@ -268,6 +278,11 @@ sealed interface LauncherKey : NavKey {
     data class AppDetails(val appKey: String) : LauncherKey
 }
 
+/**
+ * Back stack that survives configuration changes and process death. A plain `remember` loses
+ * navigation on every Activity recreation (locale, theme, low-memory restore).
+ */
 @Composable
 fun rememberLauncherBackStack(initial: LauncherKey = LauncherKey.Home): NavBackStack<LauncherKey> =
-    remember(initial) { NavBackStack(initial) }
+    @Suppress("UNCHECKED_CAST")
+    rememberNavBackStack(initial) as NavBackStack<LauncherKey>

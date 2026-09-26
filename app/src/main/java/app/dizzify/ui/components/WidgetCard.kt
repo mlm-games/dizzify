@@ -129,6 +129,10 @@ fun WidgetCard(
                 } else false
             }
             .focusable()
+            .tvPointerClick(
+                onClick = { if (isEditMode) onConfigure() },
+                enabled = isEditMode
+            )
     ) {
         if (hostView != null) {
             AndroidView(
@@ -265,7 +269,8 @@ fun AddWidgetCard(
                     true
                 } else false
             }
-            .focusable(),
+            .focusable()
+            .tvPointerClick(onClick),
         contentAlignment = Alignment.Center
     ) {
         Column(

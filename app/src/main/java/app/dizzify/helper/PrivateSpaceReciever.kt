@@ -3,40 +3,36 @@ package app.dizzify.helper
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.UserHandle
 import android.util.Log
-import android.widget.Toast
 import app.dizzify.data.Constants
 
 /**
- * Receives broadcasts related to Private Space state changes
+ * Refreshes the app list when a secondary profile (Private Space, or a work profile) becomes
+ * available or goes away, so apps hidden behind quiet mode appear and disappear correctly.
  */
 class PrivateSpaceReceiver : BroadcastReceiver() {
-    private val TAG = "PrivateSpaceReceiver"
+    private val tag = "PrivateSpaceReceiver"
 
     override fun onReceive(context: Context, intent: Intent?) {
-        Log.d(TAG, "Received broadcast: ${intent?.action}")
+        val action = intent?.action ?: return
+        if (action != Intent.ACTION_PROFILE_AVAILABLE &&
+            action != Intent.ACTION_PROFILE_UNAVAILABLE
+        ) return
 
-        when (intent?.action) {
-            Intent.ACTION_PROFILE_AVAILABLE -> {
-                // Private Space was unlocked
-                Toast.makeText(context, "Private Space unlocked", Toast.LENGTH_LONG).show()
-
-                // Notify the launcher to refresh app list — scoped to our package so
-                // no other app can trigger reload loops.
-                val refreshIntent = Intent(Constants.ACTION_REFRESH_APPS)
-                    .setPackage(context.packageName)
-                context.sendBroadcast(refreshIntent)
-            }
-
-            Intent.ACTION_PROFILE_UNAVAILABLE -> {
-                // Private Space was locked
-                Toast.makeText(context, "Private Space locked", Toast.LENGTH_LONG).show()
-
-                // Notify the launcher to refresh app list — scoped to our package.
-                val refreshIntent = Intent(Constants.ACTION_REFRESH_APPS)
-                    .setPackage(context.packageName)
-                context.sendBroadcast(refreshIntent)
-            }
+        // Work profiles raise the same broadcasts; refreshing for those is correct, but the
+        // profile the broadcast refers to must exist for the reload to mean anything.
+        val user: UserHandle? = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_USER, UserHandle::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(Intent.EXTRA_USER)
         }
+        Log.d(tag, "Profile ${action.substringAfterLast('_')} for user=$user")
+
+        // Scoped to our own package so no other app can trigger reload loops.
+        context.sendBroadcast(
+            Intent(Constants.ACTION_REFRESH_APPS).setPackage(context.packageName)
+        )
     }
 }

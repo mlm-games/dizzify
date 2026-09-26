@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dizzify.BuildConfig
 import app.dizzify.LauncherViewModel
+import app.dizzify.data.Constants
 import app.dizzify.helper.openUrl
 import app.dizzify.settings.ImportExportState
 import app.dizzify.settings.DefaultScreen
@@ -40,6 +41,7 @@ import app.dizzify.settings.TextWeight
 import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.dialogs.PinLockDialog
 import app.dizzify.ui.theme.*
+import app.dizzify.ui.components.tvPointerClick
 import kotlinx.coroutines.launch
 
 sealed class SettingsCategory(
@@ -290,6 +292,7 @@ private fun SettingsCategoryItem(
                 } else false
             }
             .focusable()
+            .tvPointerClick(onClick)
             .padding(LauncherSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -644,14 +647,14 @@ private fun SettingsCategoryContent(
                             title = "Source Code",
                             description = "View on GitHub",
                             onClick = {
-                                context.openUrl("https://github.com/user/dizzify")
+                                context.openUrl(Constants.URL_DIZZIFY_GITHUB)
                             }
                         )
                         SettingsClickable(
                             title = "Report Issue",
                             description = "Submit bug report",
                             onClick = {
-                                context.openUrl("https://github.com/user/dizzify/issues")
+                                context.openUrl("${Constants.URL_DIZZIFY_GITHUB}/issues")
                             }
                         )
                     }
@@ -863,6 +866,7 @@ private fun SettingsToggle(
                 } else false
             }
             .focusable()
+            .tvPointerClick(onClick = { onCheckedChange(!isChecked) })
             .padding(LauncherSpacing.sm),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -916,6 +920,7 @@ private fun SettingsClickable(
                 } else false
             }
             .focusable()
+            .tvPointerClick(onClick)
             .padding(LauncherSpacing.sm),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -969,6 +974,7 @@ private fun SettingsDropdown(
                 } else false
             }
             .focusable()
+            .tvPointerClick(onClick = { expanded = true })
             .padding(LauncherSpacing.sm)
     ) {
         Row(

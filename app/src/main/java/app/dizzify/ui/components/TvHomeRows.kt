@@ -82,7 +82,6 @@ private fun TvCardContainer(
             )
             .focusRequester(focusRequester)
             .onFocusChanged { onFocused(it.isFocused) }
-            .focusable()
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown &&
                     (event.key == Key.DirectionCenter || event.key == Key.Enter)
@@ -90,7 +89,9 @@ private fun TvCardContainer(
                     onClick()
                     true
                 } else false
-            },
+            }
+            .focusable()
+            .tvPointerClick(onClick),
         content = content,
     )
 }
@@ -160,7 +161,7 @@ fun WatchNextRow(
     HomeContentRow(
         title = "Continue Watching",
         items = items,
-        keyOf = { it.id },
+        keyOf = { it.id.toString() },
         onItemClick = onItemClick,
         modifier = modifier,
         countSuffix = "${items.size} items",

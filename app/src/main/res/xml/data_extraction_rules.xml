@@ -3,8 +3,13 @@
     <cloud-backup>
         <!-- Exclude launcher settings/state (PIN hash + home layout); explicit export/import instead. -->
         <exclude domain="file" path="datastore/" />
+        <!-- Custom font and wallpaper photos are user media, not launcher data. -->
+        <exclude domain="file" path="custom_font.ttf" />
+        <exclude domain="file" path="wallpaper/" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/" />
+        <exclude domain="file" path="custom_font.ttf" />
+        <exclude domain="file" path="wallpaper/" />
     </device-transfer>
 </data-extraction-rules>
