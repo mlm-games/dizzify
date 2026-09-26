@@ -126,13 +126,13 @@ data class LauncherSettings(
 
     @Setting(
         title = "Non-TV Apps",
-        description = "Auto shows every app off-TV, TV-only on leanback",
+        description = "TV only hides apps without a leanback entry, which some TV apps lack",
         category = Tv::class,
         type = Dropdown::class,
         key = "show_non_tv_apps",
-        options = ["Auto", "TV only", "All apps"]
+        options = ["All apps", "Auto", "TV only"]
     )
-    val showNonTvApps: NonTvApps = NonTvApps.Auto,
+    val showNonTvApps: NonTvApps = NonTvApps.All,
 
     @Setting(
         title = "Prefer TV (Leanback) Launch",

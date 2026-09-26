@@ -552,13 +552,13 @@ private fun SettingsCategoryContent(
                     SettingsSection(title = "TV Options") {
                         SettingsDropdown(
                             title = "Non-TV Apps",
-                            description = "Auto shows every app off-TV, TV only on leanback",
+                            description = "TV only hides apps without a leanback entry, which some TV apps lack",
                             currentValue = when (settings.showNonTvApps) {
                                 NonTvApps.All -> "All apps"
                                 NonTvApps.TvOnly -> "TV only"
                                 NonTvApps.Auto -> "Auto"
                             },
-                            options = listOf("Auto", "TV only", "All apps"),
+                            options = listOf("All apps", "Auto", "TV only"),
                             onOptionSelected = { selected ->
                                 viewModel.updateShowNonTvApps(
                                     when (selected) {
