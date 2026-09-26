@@ -65,7 +65,6 @@
         \n\nPotražite Digital Wellbeing u postavkama telefona i omogućite ga.</string>
     <string name="app_usage_message">Da biste prikazali/sakrili vrijeme korištenja ekrana na početnom zaslonu, molimo dozvolite ili onemogućite dopuštenje korištenja aplikacije.
         \n\nNapomena: Ne prikupljaju se podaci o korištenju aplikacije. Sve se obrađuje na vašem uređaju.</string>
-    <string name="accessibility_service_description">Dozvola za pristupačnost potrebna je za omogućavanje zaključavanja dvostrukim dodirom. Bilo koji podatci prikupljeni ovim servisom neće napustiti tvoj uređaj.</string>
     <string name="lock_layout_description">lock layout description to be used a unique id to lock screen</string>
     <string name="support_clauncher_for_free">Besplatno podrži Dizzify korištenjem naše sponzorske poveznice za Amazon.</string>
     <string name="support_clauncher_message">Svaki puta kada kupiš nešto pomoću naše poveznice, mi primimo malu naknadu. Molimo spremi poveznicu i koristi ju svaki puta kada kupuješ online.\nHvala ti!</string>
@@ -95,11 +94,6 @@
     <string name="review_message">Dizzify jest i uvijek će biti potpuno besplatan. Nema reklama. Ne prikuplja podatke. Što je najvažnije, pomaže vam u smanjenju vremena koje provodite pred ekranom i živite zdravijim digitalnim životom.
         \n\nVjerujemo da je prelazak na minimalni launcher izvrsna odluka. Iako smo očito pristrani, nadamo se da uživate u iskustvu. Slobodno podijelite svoje misli s nama!</string>
 
-    <string name="accessibility_disclosure">Molimo vas da uključite ili isključite Clauncherovu uslugu pristupa u postavkama vašeg uređaja kako biste omogućili ili onemogućili ovu funkciju.\n\nImajte na umu da se ova usluga koristi samo za isključivanje ekrana vašeg uređaja pomoću geste dvostrukog dodira. Naša usluga pristupa ne prikuplja niti dijeli bilo kakve podatke.</string>
-    <string name="accept">Prihvati</string>
-    <string name="permission">Dozvola</string>
-    <string name="double_tap_lock">Dvostruki dodir za zaključavanje</string>
-    <string name="enable">Omogući</string>
     <string name="disable">Onemogući</string>
     <string name="not_working"><u>Ne radi?</u></string>
     <string name="info">Informacije</string>

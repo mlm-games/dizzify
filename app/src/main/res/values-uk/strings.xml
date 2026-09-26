@@ -65,7 +65,6 @@
         \n\nЗнайдіть Digital Wellbeing у налаштуваннях телефону та ввімкніть його.</string>
     <string name="app_usage_message">Щоб показати/ховати час роботи з екраном на головному екрані, будь ласка, дозвольте або забороніть дозвіл на використання програми.
         \n\nПримітка: Не збираються дані про використання програми. Все обробляється на вашому пристрої.</string>
-    <string name="accessibility_service_description">" Дозвіл на доступ потрібний, щоб увімкнути подвійне торкання для блокування. Будь-які дані, отримані Dizzify через цей сервіс, не залишать ваш пристрій."</string>
     <string name="support_clauncher_for_free">Підтримайте Dizzify безкоштовно, використовуючи наше партнерське посилання Amazon.</string>
     <string name="support_clauncher_message">Щоразу, коли ви купуєте щось за нашим посиланням, ми отримуємо невелику комісію. Будь ласка, збережіть посилання та використовуйте його для здійснення покупок в Інтернеті.\nСпасибі!</string>
     <string name="open">Відкрити посилання</string>
@@ -88,12 +87,6 @@
     <string name="swipe_down_for">Проведіть вниз для</string>
     <string name="search">Пошук</string>
     <string name="notifications">Повідомлення</string>
-    <string name="accessibility_disclosure">Щоб увімкнути або вимкнути цю функцію, увімкніть або відключіть службу Dizzify у налаштуваннях Вашого пристрою.
-        \n\nЗверніть увагу, що ця служба використовується тільки для того, щоб ви могли вимкнути екран вашого пристрою за допомогою подвійного торкання жесту. Наша служба доступності не збирає і не передає жодних даних.</string>
-    <string name="accept">Прийняти</string>
-    <string name="permission">Дозвіл</string>
-    <string name="double_tap_lock">Блокування подвійним дотиком</string>
-    <string name="enable">Включити</string>
     <string name="disable">Виключити</string>
     <string name="not_working"><u>Не працює?</u></string>
     <string name="info">Інформація</string>

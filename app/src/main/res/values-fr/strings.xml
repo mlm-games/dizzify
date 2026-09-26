@@ -60,7 +60,6 @@
     <string name="share_message">Bonjour, nous avons besoin de votre aide ! L\'année dernière, nous avons franchi le million de téléchargements. Cette année, nous voulons atteindre un million de plus, mais nous ne pouvons pas le faire seuls.
         \n\nAuriez-vous la gentillesse de partager Dizzify avec vos amis, s\'il vous plaît ? Merci et passez une merveilleuse journée!</string>
     <string name="keyboard_message">Bonjour, le clavier est le moyen le plus rapide de trouver et de lancer des applications dans Dizzify. Pouvons-nous vous demander de garder cela activé pendant quelques jours de plus, puis de décider? Le choix vous appartient toujours.</string>
-    <string name="accessibility_service_description">L\'autorisation d\'accessibilité est requise pour activer le double appui pour verrouiller. Toutes les données acquises par Dizzify via ce service ne quitteront pas votre appareil.</string>
     <string name="support_clauncher_for_free">Soutenez Dizzify gratuitement en utilisant notre lien d\'affiliation Amazon.</string>
     <string name="support_clauncher_message">Chaque fois que vous achetez quelque chose en utilisant notre lien, nous recevons une petite commission. Enregistrez le lien et utilisez le chaque fois que vous commandez en ligne. Merci!</string>
     <string name="open">Ouvrir le lien</string>
@@ -82,13 +81,6 @@
     <string name="swipe_down_for">Balayer vers le bas pour</string>
     <string name="search">Rechercher</string>
     <string name="notifications">Notifications</string>
-    <string name="accessibility_disclosure">Veuillez activer ou désactiver le service d\'accessibilité d\'Dizzify dans les paramètres de votre téléphone pour utiliser ou non cette fonctionnalité.
-        \n\nVeuillez noter que ce service n\'est utilisé que pour vous permettre d\'éteindre l\'écran de votre téléphone avec le geste du double appui.
-        Notre service d\'accessibilité ne collecte ni ne partage aucune donnée.</string>
-    <string name="accept">Accepter</string>
-    <string name="permission">Autorisation</string>
-    <string name="double_tap_lock">Appuyer deux fois pour verrouiller</string>
-    <string name="enable">Activer</string>
     <string name="disable">Désactiver</string>
     <string name="not_working"><u>Ne fonctionne pas?</u></string>
     <string name="info">Info</string>

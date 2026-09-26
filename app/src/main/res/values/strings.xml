@@ -86,7 +86,6 @@
         \n\nPlease search for Digital Wellbeing in your phone settings and enable it.</string>
     <string name="app_usage_message">To show/hide your screen time on the home screen, please allow or disallow the app usage permission.
         \n\nNote: No app usage data is collected. Everything is processed on your device.</string>
-    <string name="accessibility_service_description">The accessibility permission is required to enable double tap to lock. Any data acquired by Dizzify via this service will not leave your device.</string>
     <string name="support_clauncher_for_free">Support Dizzify for free by using our Amazon affiliate link.</string>
     <string name="support_clauncher_message">Every time you buy something using our link, we get a small commission. Please save the link and use it whenever you shop online.\nThank you!</string>
     <string name="open">Open link</string>
@@ -108,12 +107,6 @@
     <string name="swipe_down_for">Swipe down for</string>
     <string name="search">Search</string>
     <string name="notifications">Notifications</string>
-    <string name="accessibility_disclosure">Please turn on or off Dizzify\'s accessibility service in your device\'s settings to enable or disable this feature.
-    \n\nPlease note that this service is only used to let you turn off your device\'s screen using the double tap gesture. Our accessibility service does not collect or share any data.</string>
-    <string name="accept">Accept</string>
-    <string name="permission">Permission</string>
-    <string name="double_tap_lock">Double tap to lock</string>
-    <string name="enable">Enable</string>
     <string name="disable">Disable</string>
     <string name="not_working"><u>Not working?</u></string>
     <string name="info">Info</string>

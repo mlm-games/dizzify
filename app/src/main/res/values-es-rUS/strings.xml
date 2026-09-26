@@ -64,7 +64,6 @@
         \n\nBusque Bienestar Digital en la configuración de su teléfono y habilítelo.</string>
     <string name="app_usage_message">Para mostrar/ocultar el tiempo de pantalla en la pantalla de inicio, permita o deniegue el permiso de uso de la aplicación.
         \n\nNota: No se recopilan datos de uso de la aplicación. Todo se procesa en su dispositivo.</string>
-    <string name="accessibility_service_description">Se necesita el permiso de Accesibilidad para activar el bloqueo con doble toque. Cualquier dato recolectado por Dizzify no saldrá de su dispositivo.</string>
     <string name="support_clauncher_for_free">Apoye Dizzify de forma gratuita utilizando nuestro enlace de afiliado de Amazon.</string>
     <string name="support_clauncher_message">Cada vez que compre algo usando nuestro enlace, obtenemos una pequeña comisión. Por favor, guarde el enlace y úselo cada vez que compre en línea. ¡Gracias!</string>
     <string name="open">Abrir enlace</string>
@@ -86,11 +85,6 @@
     <string name="swipe_down_for">Deslize el dedo hacia abajo para</string>
     <string name="search">Buscar</string>
     <string name="notifications">Notificaciones</string>
-    <string name="accessibility_disclosure">Active o desactive el servicio de accesibilidad de Dizzify en la configuración de su dispositivo para habilitar o deshabilitar esta función. Tenga en cuenta que este servicio solo se utiliza para permitirle apagar el dispositivo</string>
-    <string name="accept">Aceptar</string>
-    <string name="permission">Permiso</string>
-    <string name="double_tap_lock">Tocar dos veces para bloquear</string>
-    <string name="enable">Habilitar</string>
     <string name="disable">Inutilizar</string>
     <string name="not_working"><u>¿No funciona?</u></string>
     <string name="info">Información</string>

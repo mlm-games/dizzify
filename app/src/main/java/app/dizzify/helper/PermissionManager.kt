@@ -22,12 +22,11 @@ class PermissionManager(private val context: Context) {
     data class PermissionStatus(
         val isDefaultLauncher: Boolean = false,
         val hasUsageStats: Boolean = false,
-        val hasAccessibility: Boolean = false,
         val canShowOnLockScreen: Boolean = false,
         val canDrawOverlays: Boolean = false
     ) {
         val hasAllPermissions: Boolean
-            get() = isDefaultLauncher && hasUsageStats && hasAccessibility
+            get() = isDefaultLauncher && hasUsageStats
 
         val hasEssentialPermissions: Boolean
             get() = isDefaultLauncher
@@ -40,7 +39,6 @@ class PermissionManager(private val context: Context) {
         return PermissionStatus(
             isDefaultLauncher = isDefaultLauncher(),
             hasUsageStats = hasUsageStatsPermission(),
-            hasAccessibility = hasAccessibilityPermission(),
             canShowOnLockScreen = canShowOnLockScreen(),
             canDrawOverlays = canDrawOverlays()
         )
@@ -89,32 +87,6 @@ class PermissionManager(private val context: Context) {
                 android.os.Process.myUid(),
                 context.packageName
             ) == AppOpsManager.MODE_ALLOWED
-        }
-    }
-
-    /**
-     * Check if the app has accessibility service permission
-     */
-    fun hasAccessibilityPermission(): Boolean {
-        return try {
-            val enabled = Settings.Secure.getInt(
-                context.contentResolver,
-                Settings.Secure.ACCESSIBILITY_ENABLED
-            )
-
-            if (enabled == 1) {
-                val enabledServices = Settings.Secure.getString(
-                    context.contentResolver,
-                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-                ) ?: ""
-
-                val serviceName = "${context.packageName}/${MyAccessibilityService::class.java.name}"
-                enabledServices.contains(serviceName)
-            } else {
-                false
-            }
-        } catch (_: Exception) {
-            false
         }
     }
 
@@ -185,20 +157,6 @@ class PermissionManager(private val context: Context) {
     }
 
     /**
-     * Open the accessibility settings screen
-     */
-    fun openAccessibilitySettings() {
-        try {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        } catch (_: Exception) {
-            openAppSettings()
-        }
-    }
-
-    /**
      * Open overlay permission settings (Android 6+)
      */
     @SuppressLint("ObsoleteSdkInt")
@@ -249,7 +207,6 @@ class PermissionManager(private val context: Context) {
 
         if (!status.isDefaultLauncher) missing.add("Default Launcher")
         if (!status.hasUsageStats) missing.add("Usage Stats")
-        if (!status.hasAccessibility) missing.add("Accessibility Service")
 
         return if (missing.isEmpty()) {
             "All permissions granted"

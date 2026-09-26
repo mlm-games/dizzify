@@ -27,12 +27,6 @@
     <string name="swipe_down_for">Przesuń w dół, aby</string>
     <string name="search">Szukaj</string>
     <string name="notifications">Powiadomienia</string>
-    <string name="accessibility_disclosure">Włącz lub wyłącz usługę ułatwień dostępu Dizzify w ustawieniach swojego urządzenia, aby włączyć lub wyłączyć tę funkcję.
-        \n\nNależy pamiętać, że ta usługa służy wyłącznie do wyłączania ekranu urządzenia za pomocą gestu dwukrotnego dotknięcia. Nasza usługa ułatwień dostępu nie gromadzi ani nie udostępnia żadnych danych.</string>
-    <string name="accept">Akceptuj</string>
-    <string name="permission">Uprawnienie</string>
-    <string name="double_tap_lock">Kliknij dwukrotnie, aby zablokować</string>
-    <string name="enable">Włącz</string>
     <string name="disable">Wyłącz</string>
     <string name="not_working"><u>Nie działa?</u></string>
     <string name="info">Informacje</string>
@@ -96,7 +90,6 @@
         \n\nWyszukaj opcję Cyfrowa równowaga w ustawieniach telefonu i włącz ją.</string>
     <string name="app_usage_message">Aby wyświetlić/ukryć czas ekranu na ekranie głównym, pozwól lub zabroń aplikacji na dostęp do danych o użyciu.
         \n\nUwaga: Nie są gromadzone żadne dane o użyciu aplikacji. Wszystko jest przetwarzane na Twoim urządzeniu.</string>
-    <string name="accessibility_service_description">Uprawnienia dostępu są wymagane, aby włączyć podwójne dotknięcie, aby zablokować. Wszelkie dane pozyskane przez Dizzify za pośrednictwem tej usługi nie opuszczą Twojego urządzenia.</string>
     <string name="support_clauncher_for_free">Wesprzyj Dizzify za darmo, korzystając z naszego linku afiliacyjnego Amazon.</string>
     <string name="support_clauncher_message">Za każdym razem, gdy kupujesz coś za pomocą naszego linku, otrzymujemy niewielką prowizję. Zapisz link i używaj go podczas zakupów online. Dziękuję!</string>
     <string name="open">Otwórz łącze</string>

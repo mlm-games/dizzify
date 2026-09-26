@@ -27,12 +27,6 @@
     <string name="swipe_down_for">için aşağı kaydırın</string>
     <string name="search">Aramak</string>
     <string name="notifications">Bildirimler</string>
-    <string name="accessibility_disclosure">Bu özelliği etkinleştirmek veya devre dışı bırakmak için lütfen cihazınızın ayarlarında Dizzify\'ın erişilebilirlik hizmetini açın veya kapatın.
-        \n\nLütfen bu hizmetin yalnızca cihazınızın ekranını çift dokunma hareketini kullanarak kapatmanıza izin vermek için kullanıldığını unutmayın. Erişilebilirlik hizmetimiz herhangi bir veri toplamaz veya paylaşmaz.</string>
-    <string name="accept">Kabul etmek</string>
-    <string name="permission">İzin</string>
-    <string name="double_tap_lock">Kilitlemek için iki kez dokunun</string>
-    <string name="enable">Olanak vermek</string>
     <string name="disable">Devre dışı bırakmak</string>
     <string name="not_working"><u>Çalışmıyor musunuz?</u></string>
     <string name="info">Bilgi</string>
@@ -98,7 +92,6 @@
         \n\nLütfen telefon ayarlarınızda Dijital Refah\'ı arayın ve etkinleştirin.</string>
     <string name="app_usage_message">Ana ekranınızda ekran sürenizi göstermek/gizlemek için lütfen uygulama kullanım iznini onaylayın veya reddedin.
         \n\nNot: Uygulama kullanım verileri toplanmaz. Her şey cihazınızda işlenir.</string>
-    <string name="accessibility_service_description">Kilitlemek için çift dokunmayı etkinleştirmek için erişilebilirlik izni gereklidir. Dizzify tarafından bu hizmet aracılığıyla elde edilen hiçbir veri cihazınızdan ayrılmayacaktır.</string>
     <string name="support_clauncher_for_free">Amazon ortaklık bağlantımızı kullanarak Dizzify\'ı ücretsiz olarak destekleyin.</string>
     <string name="support_clauncher_message">Bağlantımızı kullanarak her bir şey satın aldığınızda, küçük bir komisyon alırız. Lütfen bağlantıyı kaydedin ve çevrimiçi alışveriş yaptığınızda kullanın. Teşekkür ederim!</string>
     <string name="open">Linki aç</string>

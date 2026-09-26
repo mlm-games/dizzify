@@ -28,12 +28,6 @@
     <string name="swipe_down_for">下にスワイプして</string>
     <string name="search">検索</string>
     <string name="notifications">通知</string>
-    <string name="accessibility_disclosure">この機能を有効または無効にするには、デバイスの設定で Dizzify のアクセシビリティ サービスをオンまたはオフにしてください。
-        \n\nこのサービスは、ダブルタップ ジェスチャを使用してデバイスの画面をオフにするためにのみ使用されることに注意してください。 当社のアクセシビリティ サービスは、いかなるデータも収集または共有しません。</string>
-    <string name="accept">受け入れる</string>
-    <string name="permission">許可</string>
-    <string name="double_tap_lock">ダブルタップしてロックします</string>
-    <string name="enable">有効</string>
     <string name="disable">無効にする</string>
     <string name="not_working"><u>機能しない場合</u></string>
     <string name="info">情報</string>
@@ -97,7 +91,6 @@
         \n\n携帯電話の設定で Digital Wellbeing を検索し、有効にしてください。</string>
     <string name="app_usage_message">ホーム画面で画面時間を表示/非表示するには、アプリの使用権限を許可または拒否してください。
         \n\n注意: アプリの使用データは収集されません。すべての処理はあなたのデバイスで行われます。</string>
-    <string name="accessibility_service_description">ダブルタップしてロックを有効にするには、アクセシビリティ許可が必要です。このサービスを通じて Dizzify が取得したデータは、デバイスから流出することはありません。</string>
     <string name="support_clauncher_for_free">Amazon アフィリエイト リンクを使用して、Dizzify を無料でサポートしてください。</string>
     <string name="support_clauncher_message">あなたが私たちのリンクを使用して何かを購入するたびに、私たちは少額の手数料を受け取ります。リンクを保存し、オンライン ショッピングの際には必ずご利用ください。 ありがとう！</string>
     <string name="open">リンクを開く</string>

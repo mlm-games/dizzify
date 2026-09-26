@@ -28,11 +28,6 @@
     <string name="swipe_down_for">اسحب لأسفل من أجل</string>
     <string name="search">يبحث</string>
     <string name="notifications">إشعارات</string>
-    <string name="accessibility_disclosure">يرجى تشغيل أو إيقاف تشغيل خدمة الوصول في Dizzify في إعدادات جهازك لتمكين هذه الميزة أو تعطيلها.       يرجى ملاحظة أن هذه الخدمة تُستخدم فقط للسماح لك بإيقاف تشغيل شاشة جهازك باستخدام إيماءة النقر المزدوج. خدمة الوصول لدينا لا تجمع أو تشارك أي بيانات.</string>
-    <string name="accept">يقبل</string>
-    <string name="permission">إذن</string>
-    <string name="double_tap_lock">انقر نقرًا مزدوجًا للقفل</string>
-    <string name="enable">يُمكَِن</string>
     <string name="disable">إبطال</string>
     <string name="not_working">لا يعمل؟</string>
     <string name="info">معلومات</string>
@@ -95,7 +90,6 @@
         \n\nيرجى البحث عن الرفاهية الرقمية في إعدادات هاتفك وتمكينها.</string>
     <string name="app_usage_message">لعرض/إخفاء وقت استخدام الشاشة على الشاشة الرئيسية، يرجى السماح أو منع إذن استخدام التطبيق.
         \n\nملاحظة: لا يتم جمع أي بيانات حول استخدام التطبيقات. يتم معالجة كل شيء على جهازك.</string>
-    <string name="accessibility_service_description">إذن الوصول مطلوب لتمكين النقر المزدوج للقفل. أي بيانات حصل عليها Dizzify عبر هذه الخدمة لن تترك جهازك.</string>
     <string name="support_clauncher_for_free">ادعم Dizzify مجانًا باستخدام رابط الشراكة التابع لشركة Amazon.</string>
     <string name="support_clauncher_message">في كل مرة تشتري شيئًا باستخدام الرابط الخاص بنا ، نحصل على عمولة صغيرة. يرجى حفظ الرابط واستخدامه في أي وقت تتسوق فيه عبر الإنترنت. شكرًا لك!</string>
     <string name="open">افتح الرابط</string>

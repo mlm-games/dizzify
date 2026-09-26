@@ -64,7 +64,6 @@
         \n\nSilakan cari Digital Wellbeing di pengaturan ponsel Anda dan aktifkan.</string>
     <string name="app_usage_message">Untuk menampilkan/menyembunyikan waktu layar di layar utama, izinkan atau tolak izin penggunaan aplikasi.
         \n\nCatatan: Tidak ada data penggunaan aplikasi yang dikumpulkan. Semua diproses di perangkat Anda.</string>
-    <string name="accessibility_service_description">Izin aksesibilitas diperlukan untuk mengaktifkan ketuk dua kali untuk mengunci. Data apa pun yang diperoleh Dizzify melalui layanan ini tidak akan meninggalkan perangkat Anda.</string>
     <string name="support_clauncher_for_free">Dukung Dizzify secara gratis dengan menggunakan tautan afiliasi Amazon kami.</string>
     <string name="support_clauncher_message">Setiap kali Anda membeli sesuatu menggunakan tautan kami, kami mendapat komisi kecil. Harap simpan tautan dan gunakan setiap kali Anda berbelanja online.\nTerima kasih!</string>
     <string name="open">Buka tautan</string>
@@ -86,11 +85,6 @@
     <string name="swipe_down_for">Geser ke bawah untuk</string>
     <string name="search">Cari</string>
     <string name="notifications">Notifikasi</string>
-    <string name="accessibility_disclosure">Harap aktifkan atau nonaktifkan layanan aksesibilitas Dizzify di pengaturan perangkat Anda untuk mengaktifkan atau menonaktifkan fitur ini.\n\nHarap perhatikan bahwa layanan ini hanya digunakan untuk memungkinkan Anda mematikan layar perangkat menggunakan gerakan ketuk dua kali. Layanan aksesibilitas kami tidak mengumpulkan atau membagikan data apa pun.</string>
-    <string name="accept">Terima</string>
-    <string name="permission">Izin</string>
-    <string name="double_tap_lock">Ketuk dua kali untuk mengunci</string>
-    <string name="enable">Aktifkan</string>
     <string name="disable">Nonaktifkan</string>
     <string name="not_working"><u>Tidak bekerja?</u></string>
     <string name="info">Info</string>

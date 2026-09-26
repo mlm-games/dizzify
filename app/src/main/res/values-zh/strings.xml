@@ -18,12 +18,6 @@
     <string name="swipe_down_for">向下滑动查看</string>
     <string name="search">搜索</string>
     <string name="notifications">通知</string>
-    <string name="accessibility_disclosure">请在您设备的设置中打开或关闭 Dizzify 的辅助服务以启用或禁用此功能。
-        \n\n请注意，此服务仅用于让您使用双击手势关闭设备的屏幕。 我们的无障碍服务不收集或共享任何数据。</string>
-    <string name="accept">接受</string>
-    <string name="permission">允许</string>
-    <string name="double_tap_lock">双击即可锁定</string>
-    <string name="enable">启用</string>
     <string name="disable">禁用</string>
     <string name="not_working"><u>不工作？</u></string>
     <string name="info">信息</string>
@@ -98,7 +92,6 @@
         \n\n请在手机设置中搜索数字健康并启用它。</string>
     <string name="app_usage_message">要在主屏幕上显示/隐藏您的屏幕时间，请允许或拒绝应用程序使用权限。
         \n\n注意：不收集应用程序使用数据。所有数据都在您的设备上处理。</string>
-    <string name="accessibility_service_description">请在手机设置中搜索数字健康并启用它。</string>
     <string name="support_clauncher_for_free">使用我们的亚马逊附属链接免费支持 Dizzify。</string>
     <string name="support_clauncher_message">每次您使用我们的链接购买商品时，我们都会获得少量佣金。请保存链接并在网上购物时使用它。 谢谢！</string>
     <string name="open">打开链接</string>

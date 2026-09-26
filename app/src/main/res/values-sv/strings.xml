@@ -64,7 +64,6 @@
         \n\nVänligen sök efter Digitalt välmående i dina telefoninställningar och aktivera den.</string>
     <string name="app_usage_message">För att visa/dölja din skärmtid på startsidan, vänligen tillåt eller neka appanvändningsbehörigheten.
         \n\nObs: Inga data om appanvändning samlas in. Allt bearbetas på din enhet.</string>
-    <string name="accessibility_service_description">Tillgänglighetsbehörigheten krävs för att aktivera dubbeltryck för att låsa. Eventuella data förvärvade av Dizzify genom denna tjänst kommer inte att lämna din enhet.</string>
     <string name="support_clauncher_for_free">Stöd Dizzify utan kostnad genom att använda vår Amazon-affiliatelänk.</string>
     <string name="support_clauncher_message">Varje gång du köper något via vår länk får vi en liten provision. Vänligen spara länken och använd den när du handlar på nätet.\nTack!</string>
     <string name="open">Öppna länk</string>
@@ -86,12 +85,6 @@
     <string name="swipe_down_for">Svep nedåt för</string>
     <string name="search">Sök</string>
     <string name="notifications">Aviseringar</string>
-    <string name="accessibility_disclosure">Vänligen sätt på eller stäng av Claunchers tillgänglighetstjänst i din enhets inställningar för att aktivera eller inaktivera denna funktion.
-        \n\nVänligen observera att denna tjänst endast används för att låta dig stänga av skärmen på din enhet genom dubbeltrycksgesten. Vår tillgänglighetstjänst varken samlar in eller delar några data.</string>
-    <string name="accept">Godkänn</string>
-    <string name="permission">Behörighet</string>
-    <string name="double_tap_lock">Dubbeltryck för att låsa</string>
-    <string name="enable">Aktivera</string>
     <string name="disable">Inaktivera</string>
     <string name="not_working"><u>Fungerar inte?</u></string>
     <string name="info">Info</string>

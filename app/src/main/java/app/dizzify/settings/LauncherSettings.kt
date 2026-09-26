@@ -275,7 +275,4 @@ data class LauncherSettings(
 
     @Persisted(key = "show_hint_counter")
     val showHintCounter: Int = 1,
-
-    @Persisted(key = "accessibility_consent")
-    val accessibilityConsent: Boolean = false,
 )

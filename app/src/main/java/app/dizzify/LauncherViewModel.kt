@@ -25,7 +25,6 @@ import app.dizzify.data.HomeItem
 import app.dizzify.data.HomeLayout
 import app.dizzify.data.WidgetConstants
 import app.dizzify.data.repository.AppRepository
-import app.dizzify.helper.PermissionManager
 import app.dizzify.helper.SearchAliasUtils
 import app.dizzify.helper.VoiceSearch
 import app.dizzify.helper.WallpaperHelper
@@ -699,9 +698,6 @@ class LauncherViewModel(
         viewModelScope.launch { settingsRepo.update { it.copy(showHintCounter = it.showHintCounter + 1) } }
     }
 
-    fun setAccessibilityConsent(consented: Boolean) {
-        viewModelScope.launch { settingsRepo.update { it.copy(accessibilityConsent = consented) } }
-    }
     // Repo holds the hash; the VM owns dialog visibility + temporary unlock.
 
     private val _showLockDialog = MutableStateFlow(false)
@@ -802,17 +798,6 @@ class LauncherViewModel(
 
     fun resetImportExportState() {
         _importExportState.value = ImportExportState.Idle
-    }
-
-    fun lockScreen() {
-        viewModelScope.launch {
-            val pm = PermissionManager(context)
-            if (!pm.hasAccessibilityPermission()) {
-                Logger.w { "Lock requested but accessibility service not enabled" }
-                return@launch
-            }
-            Logger.i { "Lock requested; accessibility enabled, awaiting bound service action" }
-        }
     }
 
     fun updateTheme(mode: ThemeMode) {

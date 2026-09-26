@@ -27,12 +27,6 @@
     <string name="swipe_down_for">Wischen Sie nach unten für</string>
     <string name="search">Suchen</string>
     <string name="notifications">Benachrichtigungen</string>
-    <string name="accessibility_disclosure">Bitte schalten Sie den Barrierefreiheitsdienst von Dizzify in den Einstellungen Ihres Geräts ein oder aus, um diese Funktion zu aktivieren oder zu deaktivieren.
-        \n\nBitte beachten Sie, dass dieser Dienst nur dazu dient, den Bildschirm Ihres Geräts mit der Doppeltipp-Geste auszuschalten. Unser Barrierefreiheitsdienst erfasst oder gibt keine Daten weiter.</string>
-    <string name="accept">Akzeptieren</string>
-    <string name="permission">Erlaubnis</string>
-    <string name="double_tap_lock">Zum Sperren zweimal tippen</string>
-    <string name="enable">Aktivieren</string>
     <string name="disable">Deaktivieren</string>
     <string name="not_working"><u>Funktioniert nicht?</u></string>
     <string name="info">Die Info</string>
@@ -98,7 +92,6 @@
         \n\nBitte suchen Sie in Ihren Telefoneinstellungen nach Digital Wellbeing und aktivieren Sie es.</string>
     <string name="app_usage_message">Um die Bildschirmzeit auf dem Startbildschirm anzuzeigen oder zu verbergen, erteilen Sie bitte die Erlaubnis für die App-Nutzung oder verweigern Sie sie.
         \n\nHinweis: Es werden keine Daten zur App-Nutzung gesammelt. Alles wird auf Ihrem Gerät verarbeitet.</string>
-    <string name="accessibility_service_description">Die Zugriffsberechtigung ist erforderlich, um das Sperren durch Doppeltippen zu ermöglichen. Die von Dizzify über diesen Dienst erfassten Daten verlassen Ihr Gerät nicht.</string>
     <string name="support_clauncher_for_free">Unterstützen Sie Dizzify kostenlos, indem Sie unseren Amazon-Partnerlink verwenden.</string>
     <string name="support_clauncher_message">Jedes Mal, wenn Sie über unseren Link etwas kaufen, erhalten wir eine kleine Provision. Bitte speichern Sie den Link und verwenden Sie ihn bei jedem Online-Einkauf. Dan­ke­schön!</string>
     <string name="open">Verbindung öffnen</string>
