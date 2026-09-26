@@ -1180,7 +1180,9 @@ class LauncherViewModel(
                 val widthCells = 1.coerceAtLeast(ceil(providerInfo.minWidth.toDouble() / cellWidthDp).toInt())
                 val heightCells = 1.coerceAtLeast(ceil(providerInfo.minHeight.toDouble() / cellHeightDp).toInt())
 
-                val nextPos = findNextAvailableGridPosition(currentLayout, widthCells, heightCells)
+                val nextPos = findNextAvailableGridPosition(
+                    currentLayout, widthCells, heightCells, fromBottom = true
+                )
                 if (nextPos == null) {
                     snackbarManager.show("No space available for widget on the home grid.")
                     runCatching { widgetHost.deleteWidgetId(appWidgetId) }
@@ -1314,7 +1316,7 @@ class LauncherViewModel(
     }
 
     private fun findNextAvailableGridPosition(
-        layout: HomeLayout, widthSpan: Int, heightSpan: Int
+        layout: HomeLayout, widthSpan: Int, heightSpan: Int, fromBottom: Boolean = false
     ): Pair<Int, Int>? {
         val occupied = Array(layout.rows) { BooleanArray(layout.columns) }
         layout.items.forEach { item ->
@@ -1324,7 +1326,8 @@ class LauncherViewModel(
                 }
             }
         }
-        for (r in 0..layout.rows - heightSpan) {
+        val lastRow = layout.rows - heightSpan
+        for (r in if (fromBottom) lastRow downTo 0 else 0..lastRow) {
             for (c in 0..layout.columns - widthSpan) {
                 if (isSpaceFree(occupied, r, c, widthSpan, heightSpan, layout.rows, layout.columns)) {
                     return Pair(r, c)

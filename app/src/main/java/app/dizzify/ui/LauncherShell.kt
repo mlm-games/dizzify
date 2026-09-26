@@ -31,7 +31,6 @@ import app.dizzify.settings.DefaultScreen
 import app.dizzify.ui.components.SidebarDestination
 import app.dizzify.ui.components.LauncherSidebar
 import app.dizzify.ui.screens.AppsScreen
-import app.dizzify.ui.screens.AppDetailsScreen
 import app.dizzify.ui.screens.GamesScreen
 import app.dizzify.ui.screens.HiddenAppsScreen
 import app.dizzify.ui.screens.HomeScreen
@@ -87,6 +86,14 @@ fun LauncherShell(
         val currentDefaultScreen by rememberUpdatedState(settings.defaultScreen)
         val currentActivity by rememberUpdatedState(context)
 
+        // NavDisplay throws on an empty back stack, and both back handlers below can fire
+        // against a stale frame, so every pop goes through here.
+        val pop = { if (backStack.size > 1) backStack.removeLast() }
+        val resetTo = { key: LauncherKey ->
+            backStack.clear()
+            backStack.add(key)
+        }
+
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
                 when (event) {
@@ -115,16 +122,13 @@ fun LauncherShell(
                     LauncherEvent.NavigateHome -> {
                         val home: LauncherKey =
                             if (currentDefaultScreen == DefaultScreen.Apps) LauncherKey.Apps else LauncherKey.Home
-                        backStack.apply {
-                            clear()
-                            if (isEmpty()) add(home)
-                        }
+                        resetTo(home)
                     }
                 }
             }
         }
 
-        val current = backStack.lastOrNull() ?: LauncherKey.Home
+        val current = backStack.last()
 
         val currentDestination = remember(current) {
             when (current) {
@@ -134,7 +138,6 @@ fun LauncherShell(
                 LauncherKey.Hidden -> SidebarDestination.Hidden
                 LauncherKey.Settings -> SidebarDestination.Settings
                 LauncherKey.WidgetPicker -> SidebarDestination.Home
-                is LauncherKey.AppDetails -> SidebarDestination.Apps
             }
         }
 
@@ -158,14 +161,7 @@ fun LauncherShell(
                             SidebarDestination.Settings -> LauncherKey.Settings
                         }
 
-                        if (backStack.isNotEmpty()) {
-                            backStack.apply {
-                                clear()
-                                add(key)
-                            }
-                        } else {
-                            backStack.add(key)
-                        }
+                        resetTo(key)
                     },
                     modifier = Modifier.fillMaxHeight()
                 )
@@ -176,10 +172,7 @@ fun LauncherShell(
 
                     NavDisplay(
                         backStack = backStack,
-                        onBack = {
-                            backStack.removeLastOrNull()
-                            // if size == 1, do nothing: launcher shouldn't "exit"
-                        },
+                        onBack = { pop() },
                         entryDecorators = listOf(
                             rememberSaveableStateHolderNavEntryDecorator(),
                             rememberViewModelStoreNavEntryDecorator(
@@ -191,26 +184,17 @@ fun LauncherShell(
                             entry<LauncherKey.WidgetPicker> {
                                 WidgetPickerScreen(
                                     onWidgetSelected = { providerInfo ->
-                                        // Full allocate→bind→configure/add flow with pending
-                                        // state and bind-permission fallback (was inline
-                                        // allocate+bind with no fallback).
                                         viewModel.startWidgetConfiguration(providerInfo)
-                                        backStack.removeLastOrNull()
+                                        pop()
                                     },
-                                    onDismiss = {
-                                        backStack.removeLastOrNull()
-                                    }
+                                    onDismiss = { pop() }
                                 )
                             }
 
                             entry<LauncherKey.Home> {
                                 HomeScreen(
                                     viewModel = viewModel,
-                                    onNavigateToApps = {
-                                        backStack.clear(); backStack.add(
-                                        LauncherKey.Apps
-                                    )
-                                    },
+                                    onNavigateToApps = { resetTo(LauncherKey.Apps) },
                                     onNavigateToWidgetPicker = {
                                         backStack.add(LauncherKey.WidgetPicker)
                                     }
@@ -232,23 +216,13 @@ fun LauncherShell(
                             entry<LauncherKey.Settings> {
                                 SettingsScreen(viewModel = viewModel)
                             }
-
-                            entry<LauncherKey.AppDetails> { key ->
-                                AppDetailsScreen(
-                                    appKey = key.appKey,
-                                    viewModel = viewModel,
-                                    onBack = { backStack.removeLastOrNull() }
-                                )
-                            }
                         }
                     )
                 }
             }
         }
 
-        BackHandler(enabled = backStack.size > 1) {
-            backStack.removeLastOrNull()
-        }
+        BackHandler(enabled = backStack.size > 1) { pop() }
     }
 }
 
@@ -272,10 +246,6 @@ sealed interface LauncherKey : NavKey {
 
     @Serializable
     data object Settings : LauncherKey
-
-    // TODO:  appKey = AppModel.getKey() (package/userString) to resolve app from the appsAll map.
-    @Serializable
-    data class AppDetails(val appKey: String) : LauncherKey
 }
 
 /**

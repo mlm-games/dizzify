@@ -83,13 +83,6 @@ fun HomeScreen(
                 )
             )
 
-            HomeGridSection(
-                viewModel = viewModel,
-                onNavigateToWidgetPicker = onNavigateToWidgetPicker
-            )
-
-            Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
-
             if (settings.showWatchNext && watchNext.isNotEmpty()) {
                 WatchNextRow(
                     items = watchNext,
@@ -128,6 +121,13 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
             }
+
+            HomeGridSection(
+                viewModel = viewModel,
+                onNavigateToWidgetPicker = onNavigateToWidgetPicker
+            )
+
+            Spacer(modifier = Modifier.height(LauncherSpacing.sectionGap))
 
             // Media & Entertainment row
             if (mediaApps.isNotEmpty()) {
