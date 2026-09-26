@@ -1009,48 +1009,50 @@ private fun SettingsDropdown(
                 )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = currentValue,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = LauncherColors.AccentBlue
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = LauncherColors.TextSecondary
-                )
-            }
-        }
+            Box {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = currentValue,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = LauncherColors.AccentBlue
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        tint = LauncherColors.TextSecondary
+                    )
+                }
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.background(LauncherColors.DarkSurface)
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = option,
-                            color = if (option == currentValue) LauncherColors.AccentBlue else Color.White
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(LauncherColors.DarkSurface)
+                ) {
+                    options.forEach { option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = option,
+                                    color = if (option == currentValue) LauncherColors.AccentBlue else Color.White
+                                )
+                            },
+                            onClick = {
+                                onOptionSelected(option)
+                                expanded = false
+                            },
+                            leadingIcon = if (option == currentValue) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = LauncherColors.AccentBlue
+                                    )
+                                }
+                            } else null
                         )
-                    },
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false
-                    },
-                    leadingIcon = if (option == currentValue) {
-                        {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = LauncherColors.AccentBlue
-                            )
-                        }
-                    } else null
-                )
+                    }
+                }
             }
         }
     }
