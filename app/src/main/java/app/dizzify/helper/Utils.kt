@@ -2,7 +2,6 @@
 
 package app.dizzify.helper
 
-import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.content.ActivityNotFoundException
 import android.content.ClipData
@@ -381,25 +380,6 @@ fun openSearch(context: Context) {
         Log.w(TAG, "No web search handler", e)
         context.showToast(R.string.unable_to_open_app)
     }
-}
-
-@SuppressLint("WrongConstant")
-fun expandNotificationDrawer(context: Context) {
-    // expandNotificationsPanel() is hidden API — invoke it on the real
-    // StatusBarManager service instance. No "statusbar" string lookup, and no
-    // misleading fallback to notification-listener settings (removed).
-    try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val statusBarManager =
-                context.applicationContext.getSystemService(Context.STATUS_BAR_SERVICE)
-            val method = statusBarManager.javaClass.getMethod("expandNotificationsPanel")
-            method.invoke(statusBarManager)
-            return
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "expandNotificationsPanel failed", e)
-    }
-    Log.i(TAG, "expandNotificationDrawer not supported pre-R without accessibility service")
 }
 
 fun openAlarmApp(context: Context) {
