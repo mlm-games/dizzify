@@ -28,8 +28,8 @@ android {
         applicationId = "app.dizzify"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1110
-        versionName = "v1.2.0"
+        versionCode = 1120
+        versionName = "v1.2.1"
 
         androidResources {
             localeFilters += setOf("en", "ar", "de", "es-rES", "es-rUS", "fr", "hr", "hu", "in", "it", "ja", "pl", "pt-rBR", "ru-rRU", "sv", "tr", "uk", "zh")
