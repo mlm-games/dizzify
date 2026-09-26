@@ -18,13 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.focusable
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
@@ -32,6 +27,7 @@ import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
 import app.dizzify.helper.VoiceSearch
 import app.dizzify.helper.openSearch
+import app.dizzify.settings.SortOrder
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
 import androidx.compose.foundation.clickable as mainClickable
@@ -62,6 +58,11 @@ fun AppsScreen(
 
     val searchFocusRequester = remember { FocusRequester() }
     val gridState = rememberLazyGridState()
+    val focusRestorer = rememberFocusRestorer()
+
+    // Set by the A-Z strip once it has scrolled the target card into view; the card claims
+    // focus when it composes, because a requester for a card that is not composed yet is a no-op.
+    var pendingFocusKey by remember { mutableStateOf<String?>(null) }
 
     // isVoiceSearchAvailable() runs a PackageManager query, so keep it off the composition pass.
     var voiceAvailable by remember { mutableStateOf(false) }
@@ -143,6 +144,15 @@ fun AppsScreen(
                         items = apps,
                         key = { _, app -> app.getKey() }
                     ) { index, app ->
+                        val focusRequester = focusRestorer.getFocusRequester(app.getKey())
+
+                        LaunchedEffect(pendingFocusKey) {
+                            if (pendingFocusKey == app.getKey()) {
+                                runCatching { focusRequester.requestFocus() }
+                                    .onSuccess { pendingFocusKey = null }
+                            }
+                        }
+
                         StaggeredAnimatedVisibility(
                             visible = true,
                             index = index % 12 // Limit stagger to visible items
@@ -156,7 +166,8 @@ fun AppsScreen(
                                 style = if (viewMode == AppsViewMode.GRID)
                                     CardStyle.STANDARD
                                 else
-                                    CardStyle.BANNER
+                                    CardStyle.BANNER,
+                                focusRequester = focusRequester
                             )
                         }
                     }
@@ -164,14 +175,18 @@ fun AppsScreen(
             }
         }
 
-        // Alphabet quick jump indicator
-        AlphabetJumpIndicator(
-            apps = apps,
-            gridState = gridState,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = LauncherSpacing.md)
-        )
+        // Alphabet quick jump indicator. The grid only groups apps by initial while it is in
+        // A-Z order, so the strip is meaningless for Z-A/Recent (or a reversed search result).
+        if (settings.sortOrder == SortOrder.AZ && !settings.reverseSearchResults) {
+            AlphabetJumpIndicator(
+                apps = apps,
+                gridState = gridState,
+                onJumped = { app -> pendingFocusKey = app.getKey() },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = LauncherSpacing.md)
+            )
+        }
 
         // App options sheet
         AppOptionsHost(
@@ -323,6 +338,7 @@ private fun EmptySearchResult(
 private fun AlphabetJumpIndicator(
     apps: List<AppModel>,
     gridState: LazyGridState,
+    onJumped: (AppModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val alphabet = remember(apps) {
@@ -330,6 +346,7 @@ private fun AlphabetJumpIndicator(
             .distinct()
             .sorted()
     }
+    if (alphabet.isEmpty()) return
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -341,6 +358,8 @@ private fun AlphabetJumpIndicator(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         alphabet.forEach { letter ->
+            var isFocused by remember(letter) { mutableStateOf(false) }
+
             val jumpToLetter = {
                 val index = apps.indexOfFirst {
                     it.appLabel.firstOrNull()?.uppercaseChar() == letter
@@ -348,27 +367,24 @@ private fun AlphabetJumpIndicator(
                 if (index >= 0) {
                     coroutineScope.launch {
                         gridState.animateScrollToItem(index)
+                        onJumped(apps[index])
                     }
                 }
                 Unit
             }
+
             Text(
                 text = letter.toString(),
                 style = MaterialTheme.typography.labelSmall,
-                color = LauncherColors.TextSecondary,
+                color = if (isFocused) LauncherColors.AccentBlue else LauncherColors.TextSecondary,
                 modifier = Modifier
-                    .padding(vertical = 2.dp)
-                    .focusable()
-                    .tvPointerClick(onClick = { jumpToLetter() }, requestFocusOnPress = false)
-                    .onKeyEvent { event ->
-                        if (event.type == KeyEventType.KeyDown &&
-                            (event.key == Key.DirectionCenter || event.key == Key.Enter)
-                        ) {
-                            jumpToLetter()
-                            true
-                        } else false
-                    }
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(
+                        if (isFocused) LauncherColors.AccentBlue.copy(alpha = 0.2f) else Color.Transparent
+                    )
+                    .onFocusChanged { isFocused = it.isFocused }
                     .clickableNoRipple { jumpToLetter() }
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
     }

@@ -58,7 +58,6 @@ object LauncherSpacing {
     // TV-specific spacing (larger for 10-foot UI)
     val screenPadding = 48.dp
     val sidebarWidth = 80.dp
-    val sidebarExpandedWidth = 280.dp
     val cardGap = 16.dp
     val rowGap = 32.dp
     val sectionGap = 48.dp
@@ -156,7 +155,6 @@ private fun defaultTypography() = Typography(
 data class LauncherDimens(
     val screenPadding: Dp = LauncherSpacing.screenPadding,
     val sidebarWidth: Dp = LauncherSpacing.sidebarWidth,
-    val sidebarExpandedWidth: Dp = LauncherSpacing.sidebarExpandedWidth,
     val cardWidth: Dp = LauncherCardSizes.appCardWidth,
     val cardHeight: Dp = LauncherCardSizes.appCardHeight
 )

@@ -1,20 +1,13 @@
 package app.dizzify.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,7 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -127,33 +120,9 @@ fun LauncherSidebar(
         SidebarDestinations.associate { it.route to FocusRequester() }
     }
 
-    var anyItemFocused by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
-
-    // Focus hops between items emit blur-then-focus in the same pass; debounce so the
-    // expand/collapse animation is not restarted on every hop. Focus leaving the sidebar
-    // entirely collapses it again.
-    LaunchedEffect(anyItemFocused) {
-        if (!anyItemFocused) {
-            delay(200)
-            if (!anyItemFocused) isExpanded = false
-        } else {
-            isExpanded = true
-        }
-    }
-
-    val sidebarWidth by animateDpAsState(
-        targetValue = if (isExpanded) LauncherSpacing.sidebarExpandedWidth else LauncherSpacing.sidebarWidth,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "sidebar_width"
-    )
-
     Box(
         modifier = modifier
-            .width(sidebarWidth)
+            .width(LauncherSpacing.sidebarWidth)
             .fillMaxHeight()
             .background(
                 Brush.horizontalGradient(
@@ -169,13 +138,13 @@ fun LauncherSidebar(
                 .fillMaxSize()
                 .padding(vertical = LauncherSpacing.lg)
         ) {
-            SidebarClock(isExpanded = isExpanded)
+            SidebarClock()
 
             Spacer(modifier = Modifier.height(LauncherSpacing.sm))
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(LauncherSpacing.sm)
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 items(
                     count = SidebarDestinations.size,
@@ -185,23 +154,19 @@ fun LauncherSidebar(
                     SidebarItem(
                         destination = destination,
                         isSelected = currentDestination == destination,
-                        isExpanded = isExpanded,
                         onClick = { onDestinationSelected(destination) },
-                        focusRequester = focusRequesters.getValue(destination.route),
-                        onFocusedChanged = { focused ->
-                            if (focused) anyItemFocused = true
-                        }
+                        focusRequester = focusRequesters.getValue(destination.route)
                     )
                 }
             }
 
-            SidebarQuickActions(isExpanded = isExpanded)
+            SidebarQuickActions()
         }
     }
 }
 
 @Composable
-private fun SidebarClock(isExpanded: Boolean) {
+private fun SidebarClock() {
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(Unit) {
@@ -212,51 +177,26 @@ private fun SidebarClock(isExpanded: Boolean) {
     }
 
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-    val dateFormat = remember { SimpleDateFormat("EEE, MMM d", Locale.getDefault()) }
 
-    Column(
+    // The rail only fits "HH:" per line, so the minutes wrap below the colon.
+    val timeText = timeFormat.format(Date(currentTime)).replace(":", ":\n")
+
+    Text(
+        text = timeText,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = if (isExpanded) LauncherSpacing.md else LauncherSpacing.xs),
-        horizontalAlignment = if (isExpanded) Alignment.Start else Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = timeFormat.format(Date(currentTime)),
-            // The collapsed rail is only 80dp wide, so the time needs a smaller style there;
-            // headlineLarge either wrapped to two lines or clipped mid-glyph.
-            style = if (isExpanded) {
-                MaterialTheme.typography.displayMedium
-            } else {
-                MaterialTheme.typography.titleMedium
-            },
-            color = Color.White,
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Visible
-        )
-
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Text(
-                text = dateFormat.format(Date(currentTime)),
-                style = MaterialTheme.typography.bodyLarge,
-                color = LauncherColors.TextSecondary
-            )
-        }
-    }
+            .padding(horizontal = LauncherSpacing.md),
+        style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+        color = Color.White
+    )
 }
 
 @Composable
 private fun SidebarItem(
     destination: SidebarDestination,
     isSelected: Boolean,
-    isExpanded: Boolean,
     onClick: () -> Unit,
     focusRequester: FocusRequester,
-    onFocusedChanged: (Boolean) -> Unit,
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -284,25 +224,25 @@ private fun SidebarItem(
         label = "item_scale"
     )
 
+    val shape = RoundedCornerShape(20.dp)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 44.dp)
             .padding(horizontal = LauncherSpacing.sm)
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(RoundedCornerShape(16.dp))
+            .clip(shape)
             .background(backgroundColor)
             .then(
-                if (isFocused) Modifier.border(
+                if (isFocused || isSelected) Modifier.border(
                     width = 2.dp,
                     color = LauncherColors.AccentBlue.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = shape
                 ) else Modifier
             )
             .focusRequester(focusRequester)
-            .onFocusChanged { state ->
-                isFocused = state.isFocused
-                onFocusedChanged(state.isFocused)
-            }
+            .onFocusChanged { state -> isFocused = state.isFocused }
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown &&
                     (event.key == Key.DirectionCenter || event.key == Key.Enter)
@@ -312,120 +252,84 @@ private fun SidebarItem(
                 } else false
             }
             .focusable()
-            .tvPointerClick(onClick)
-            .padding(
-                horizontal = LauncherSpacing.sm,
-                vertical = if (isExpanded) LauncherSpacing.sm else 2.dp
-            ),
+            .tvPointerClick(onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = if (isSelected || isFocused) destination.iconSelected else destination.iconUnselected,
-            contentDescription = destination.label,
-            modifier = Modifier.size(if (isExpanded) 28.dp else 20.dp),
-            tint = iconColor
-        )
-
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = fadeIn() + expandHorizontally(),
-            exit = fadeOut() + shrinkHorizontally()
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
         ) {
-            Row {
-                Spacer(modifier = Modifier.width(LauncherSpacing.md))
-                Text(
-                    text = destination.label,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (isFocused || isSelected) Color.White else LauncherColors.TextSecondary
+            Icon(
+                imageVector = if (isSelected || isFocused) destination.iconSelected else destination.iconUnselected,
+                contentDescription = destination.label,
+                modifier = Modifier.size(24.dp),
+                tint = iconColor
+            )
+
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 10.dp)
+                        .size(4.dp)
+                        .background(LauncherColors.AccentBlue, CircleShape)
                 )
             }
-        }
-
-        if (isSelected && !isExpanded) {
-            Spacer(modifier = Modifier.width(LauncherSpacing.xs))
-            Box(
-                modifier = Modifier
-                    .size(4.dp)
-                    .background(LauncherColors.AccentBlue, CircleShape)
-            )
         }
     }
 }
 
 @Composable
-private fun SidebarQuickActions(isExpanded: Boolean) {
-
-    var showPowerMenu by remember { mutableStateOf(false) }
+private fun SidebarQuickActions() {
     val context = LocalContext.current
 
+    // IconButton's 48dp minimum would put three of them at 144dp in an 80dp rail, so the
+    // quick actions are plain 26dp targets.
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = LauncherSpacing.md),
-        horizontalArrangement = if (isExpanded) Arrangement.Start else Arrangement.Center,
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = { showPowerMenu = true },
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.VideoSettings,
-                contentDescription = "Settings",
-                tint = LauncherColors.TextSecondary
-            )
-        }
+        QuickAction(
+            icon = Icons.Outlined.VideoSettings,
+            contentDescription = "Settings",
+            onClick = { SettingsShortcuts.openDeviceSettings(context) }
+        )
+        QuickAction(
+            icon = Icons.Outlined.Wifi,
+            contentDescription = "Network",
+            onClick = { SettingsShortcuts.openWifi(context) }
+        )
+        QuickAction(
+            icon = Icons.Outlined.Bluetooth,
+            contentDescription = "Bluetooth",
+            onClick = { SettingsShortcuts.openBluetooth(context) }
+        )
+    }
+}
 
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = fadeIn() + expandHorizontally(),
-            exit = fadeOut() + shrinkHorizontally()
-        ) {
-            Row {
-                Spacer(modifier = Modifier.width(LauncherSpacing.sm))
+@Composable
+private fun QuickAction(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
 
-                IconButton(
-                    onClick = { SettingsShortcuts.openWifi(context) },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Wifi,
-                        contentDescription = "Network",
-                        tint = LauncherColors.TextSecondary
-                    )
-                }
-
-                IconButton(
-                    onClick = { SettingsShortcuts.openBluetooth(context) },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Bluetooth,
-                        contentDescription = "Bluetooth",
-                        tint = LauncherColors.TextSecondary
-                    )
-                }
-            }
-        }
-
-        if (showPowerMenu) {
-//            AlertDialog(
-//                onDismissRequest = { showPowerMenu = false },
-//                title = { Text("Power") },
-//                text = { Text("Choose an action") },
-////                confirmButton = {
-////                    TextButton(onClick = {
-////                        showPowerMenu = false
-////                        // lock / sleep may need accessibility?
-////                    }) { Text("Sleep") }
-////                },
-//                dismissButton = {
-//                    TextButton(onClick = {
-                        showPowerMenu = false
-                        SettingsShortcuts.openDeviceSettings(context)
-//                    }) { Text("Settings") }
-//                }
-//            )
-        }
+    Box(
+        modifier = Modifier
+            .size(26.dp)
+            .clip(CircleShape)
+            .background(if (isFocused) LauncherColors.AccentBlue.copy(alpha = 0.3f) else Color.Transparent)
+            .onFocusChanged { isFocused = it.isFocused }
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+            tint = if (isFocused) LauncherColors.AccentBlue else LauncherColors.TextSecondary
+        )
     }
 }
