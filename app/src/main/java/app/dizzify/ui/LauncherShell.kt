@@ -88,7 +88,7 @@ fun LauncherShell(
 
         // NavDisplay throws on an empty back stack, and both back handlers below can fire
         // against a stale frame, so every pop goes through here.
-        val pop = { if (backStack.size > 1) backStack.removeLast() }
+        val pop = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }
         val resetTo = { key: LauncherKey ->
             backStack.clear()
             backStack.add(key)
