@@ -28,8 +28,8 @@ android {
         applicationId = "app.dizzify"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1120
-        versionName = "v1.2.1"
+        versionCode = 1130
+        versionName = "v1.2.2"
 
         androidResources {
             generateLocaleConfig = true
