@@ -4,7 +4,7 @@
     <string name="system_font">Системный шрифт</string>
     <string name="app">Приложение</string>
     <string name="set_as_default_launcher">Сделать лаунчером по умолчанию</string>
-    <string name="set_as_default_launcher_u"><u>Сделать лаунчером по умолчанию</u></string>
+    <string name="set_as_default_launcher_u"><u>Задать лаунчером по умолчанию</u></string>
     <string name="set_as_default_launcher_first">Сделать лаунчером по умолчанию</string>
     <string name="app_text_color">Цвет текста</string>
     <string name="double_tap_to_lock_screen">Блокировка двойным тапом</string>
