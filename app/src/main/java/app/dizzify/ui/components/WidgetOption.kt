@@ -497,7 +497,7 @@ private fun SizeSelector(
             ) {
                 Icon(
                     Icons.Default.Remove,
-                    contentDescription = "Decrease",
+                    contentDescription = stringResource(R.string.decrease),
                     tint = if (value > range.first) LauncherColors.AccentBlue else LauncherColors.TextTertiary
                 )
             }
@@ -515,7 +515,7 @@ private fun SizeSelector(
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "Increase",
+                    contentDescription = stringResource(R.string.increase),
                     tint = if (value < range.last) LauncherColors.AccentBlue else LauncherColors.TextTertiary
                 )
             }

@@ -617,7 +617,7 @@ private fun NewBadge(modifier: Modifier = Modifier) {
     ) {
         Icon(
             imageVector = Icons.Default.NewReleases,
-            contentDescription = "New",
+            contentDescription = stringResource(R.string.new_badge),
             modifier = Modifier.size(12.dp),
             tint = Color.White
         )

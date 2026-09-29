@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import app.dizzify.R
 import app.dizzify.data.WidgetConstants
 import app.dizzify.helper.PrivateSpaceReceiver
 import app.dizzify.ui.LauncherShell
@@ -75,8 +76,8 @@ class MainActivity : ComponentActivity() {
                 launcherViewModel.setFirstOpen(false)
                 if (!permissionManager.isDefaultLauncher()) {
                     snackbarManager.show(
-                        message = "Set Dizzify as your default launcher",
-                        actionLabel = "Settings",
+                        message = getString(R.string.set_dizzify_as_default),
+                        actionLabel = getString(R.string.section_settings),
                         withDismissAction = true,
                         onAction = {
                             runCatching {

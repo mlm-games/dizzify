@@ -55,16 +55,19 @@ enum class NonTvApps { Auto, TvOnly, All }
 data class LauncherSettings(
     @Setting(
         title = "Theme",
+        titleKey = DizzifySettingsKeys.SETTING_THEME,
         category = General::class,
         type = Dropdown::class,
         key = "theme",
-        options = ["System", "Light", "Dark"]
+        optionsKey = DizzifySettingsKeys.SETTING_THEME_OPTIONS
     )
     val theme: ThemeMode = ThemeMode.System,
 
     @Setting(
         title = "Show Banners & Icons",
+        titleKey = DizzifySettingsKeys.SETTING_SHOW_APP_ICONS,
         description = "Display app banners and icons in launcher",
+        descriptionKey = DizzifySettingsKeys.SETTING_SHOW_APP_ICONS_DESC,
         category = General::class,
         type = Toggle::class,
         key = "show_app_icons"
@@ -83,33 +86,37 @@ data class LauncherSettings(
 
     @Setting(
         title = "Sort Order",
+        titleKey = DizzifySettingsKeys.SETTING_SORT_ORDER,
         category = Apps::class,
         type = Dropdown::class,
         key = "sort_order",
-        options = ["A-Z", "Z-A", "Recent"]
+        optionsKey = DizzifySettingsKeys.SETTING_SORT_ORDER_OPTIONS
     )
     val sortOrder: SortOrder = SortOrder.AZ,
 
     @Setting(
         title = "Search Type",
+        titleKey = DizzifySettingsKeys.SETTING_SEARCH_TYPE,
         category = Search::class,
         type = Dropdown::class,
         key = "search_type",
-        options = ["Contains", "Fuzzy", "Starts With", "Exact"]
+        optionsKey = DizzifySettingsKeys.SETTING_SEARCH_TYPE_OPTIONS
     )
     val searchType: SearchType = SearchType.Contains,
 
     @Setting(
         title = "Search Aliases",
+        titleKey = DizzifySettingsKeys.SETTING_SEARCH_ALIASES,
         category = Search::class,
         type = Dropdown::class,
         key = "search_aliases_mode",
-        options = ["Off", "Transliteration", "Keyboard Swap", "Both"]
+        optionsKey = DizzifySettingsKeys.SETTING_SEARCH_ALIASES_OPTIONS
     )
     val searchAliasesMode: SearchAliasesMode = SearchAliasesMode.Off,
 
     @Setting(
         title = "Include Package Names in Search",
+        titleKey = DizzifySettingsKeys.SETTING_SEARCH_INCLUDE_PACKAGE_NAMES,
         category = Search::class,
         type = Toggle::class,
         key = "search_include_package_names"
@@ -118,6 +125,7 @@ data class LauncherSettings(
 
     @Setting(
         title = "Show Hidden Apps in Search",
+        titleKey = DizzifySettingsKeys.SETTING_SHOW_HIDDEN_APPS_ON_SEARCH,
         category = Search::class,
         type = Toggle::class,
         key = "show_hidden_apps_on_search"
@@ -126,17 +134,21 @@ data class LauncherSettings(
 
     @Setting(
         title = "Non-TV Apps",
+        titleKey = DizzifySettingsKeys.SETTING_NON_TV_APPS,
         description = "TV only hides apps without a leanback entry, which some TV apps lack",
+        descriptionKey = DizzifySettingsKeys.SETTING_NON_TV_APPS_DESC,
         category = Tv::class,
         type = Dropdown::class,
         key = "show_non_tv_apps",
-        options = ["All apps", "Auto", "TV only"]
+        optionsKey = DizzifySettingsKeys.SETTING_NON_TV_APPS_OPTIONS
     )
     val showNonTvApps: NonTvApps = NonTvApps.All,
 
     @Setting(
         title = "Prefer TV (Leanback) Launch",
+        titleKey = DizzifySettingsKeys.SETTING_PREFER_TV_LAUNCH,
         description = "Open TV UI when app supports it (e.g. VLC, Dolphin)",
+        descriptionKey = DizzifySettingsKeys.SETTING_PREFER_TV_LAUNCH_DESC,
         category = Tv::class,
         type = Toggle::class,
         key = "prefer_tv_launch"
@@ -145,7 +157,9 @@ data class LauncherSettings(
 
     @Setting(
         title = "Show TV Inputs Row",
+        titleKey = DizzifySettingsKeys.SETTING_SHOW_TV_INPUTS,
         description = "HDMI and other TV inputs on the home screen",
+        descriptionKey = DizzifySettingsKeys.SETTING_SHOW_TV_INPUTS_DESC,
         category = Tv::class,
         type = Toggle::class,
         key = "show_tv_inputs"
@@ -154,7 +168,9 @@ data class LauncherSettings(
 
     @Setting(
         title = "Show Continue Watching",
+        titleKey = DizzifySettingsKeys.SETTING_SHOW_WATCH_NEXT,
         description = "Watch-Next programs published by your apps",
+        descriptionKey = DizzifySettingsKeys.SETTING_SHOW_WATCH_NEXT_DESC,
         category = Tv::class,
         type = Toggle::class,
         key = "show_watch_next"
@@ -166,7 +182,9 @@ data class LauncherSettings(
 
     @Setting(
         title = "Show System Apps",
+        titleKey = DizzifySettingsKeys.SETTING_SHOW_SYSTEM_APPS,
         description = "Include pre-installed system apps in the list",
+        descriptionKey = DizzifySettingsKeys.SETTING_SHOW_SYSTEM_APPS_DESC,
         category = Apps::class,
         type = Toggle::class,
         key = "show_system_apps"
@@ -175,7 +193,9 @@ data class LauncherSettings(
 
     @Setting(
         title = "Show Pinned Shortcuts",
+        titleKey = DizzifySettingsKeys.SETTING_SHOW_PINNED_SHORTCUTS,
         description = "Display pinned app shortcuts in the app list",
+        descriptionKey = DizzifySettingsKeys.SETTING_SHOW_PINNED_SHORTCUTS_DESC,
         category = Apps::class,
         type = Toggle::class,
         key = "show_pinned_shortcuts"

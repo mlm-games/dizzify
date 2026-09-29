@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.UserHandle
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.dizzify.R
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.data.AppShortcut
@@ -880,7 +881,7 @@ class LauncherViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val path = uri?.let { WallpaperHelper.storeCustom(context, it) }
             if (uri != null && path == null) {
-                snackbarManager.show(message = "Couldn't set wallpaper")
+                snackbarManager.show(message = context.getString(R.string.wallpaper_set_failed))
                 return@launch
             }
             runCatching { settingsRepo.update { it.copy(wallpaperPath = path.orEmpty()) } }

@@ -124,11 +124,19 @@ fun AppRow(
                 enter = fadeIn() + slideInHorizontally { it },
                 exit = fadeOut() + slideOutHorizontally { it }
             ) {
-                Text(
-                    text = "  •  " + stringResource(R.string.apps_count, apps.size),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LauncherColors.TextTertiary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "•",
+                        modifier = Modifier.padding(horizontal = 7.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LauncherColors.TextTertiary
+                    )
+                    Text(
+                        text = stringResource(R.string.apps_count, apps.size),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LauncherColors.TextTertiary
+                    )
+                }
             }
         }
         

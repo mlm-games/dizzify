@@ -10,12 +10,14 @@ import app.dizzify.settings.LauncherBackupHelper
 import app.dizzify.settings.LauncherSettings
 import app.dizzify.settings.LauncherSettingsSchema
 import app.dizzify.settings.LauncherStateSchema
+import app.dizzify.settings.dizzifyStringResourceProvider
 import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import io.github.mlmgames.settings.core.SettingsRepository
 import io.github.mlmgames.settings.core.datastore.createSettingsDataStore
+import io.github.mlmgames.settings.core.resources.StringResourceProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +31,8 @@ val appModule = module {
 
     // Application-scoped IO supervisor for repository work. Never leaks an Activity context.
     single { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+
+    single<StringResourceProvider> { dizzifyStringResourceProvider(androidApplication()) }
 
     single { LauncherWidgetHost(androidContext()) }
 

@@ -7,6 +7,7 @@ import android.media.tv.TvInputInfo
 import android.media.tv.TvInputManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import app.dizzify.R
 import co.touchlab.kermit.Logger
 import java.util.Locale
 
@@ -54,7 +55,7 @@ object TvInputs {
                 loadCustomLabel(context)?.toString()?.takeIf { it.isNotBlank() }
             } else null
         }.getOrNull() ?: runCatching { loadLabel(context)?.toString() }.getOrNull()
-            ?: inputIdFallback()
+            ?: inputIdFallback(context)
 
         val switchUri: String = (if (isPassthroughInput) {
             runCatching {
@@ -75,27 +76,28 @@ object TvInputs {
             inputId = id,
             label = label,
             type = type,
-            typeName = typeName(type),
+            typeName = typeName(context, type),
             isPassthrough = isPassthroughInput,
             switchIntentUri = switchUri,
             packageName = runCatching { serviceInfo?.packageName }.getOrNull(),
         )
     }
 
-    private fun TvInputInfo.inputIdFallback(): String =
-        runCatching { id.substringAfterLast('/').replace('_', ' ') }.getOrDefault("TV Input")
+    private fun TvInputInfo.inputIdFallback(context: Context): String =
+        runCatching { id.substringAfterLast('/').replace('_', ' ') }
+            .getOrDefault(context.getString(R.string.tv_input_fallback))
 
-    fun typeName(type: Int): String = when (type) {
-        TvInputInfo.TYPE_TUNER -> "Tuner"
+    fun typeName(context: Context, type: Int): String = when (type) {
+        TvInputInfo.TYPE_TUNER -> context.getString(R.string.tv_input_tuner)
         TvInputInfo.TYPE_HDMI -> "HDMI"
-        TvInputInfo.TYPE_COMPOSITE -> "Composite"
+        TvInputInfo.TYPE_COMPOSITE -> context.getString(R.string.tv_input_composite)
         TvInputInfo.TYPE_SVIDEO -> "S-Video"
         TvInputInfo.TYPE_SCART -> "SCART"
-        TvInputInfo.TYPE_COMPONENT -> "Component"
+        TvInputInfo.TYPE_COMPONENT -> context.getString(R.string.tv_input_component)
         TvInputInfo.TYPE_VGA -> "VGA"
         TvInputInfo.TYPE_DVI -> "DVI"
         TvInputInfo.TYPE_DISPLAY_PORT -> "DisplayPort"
-        TvInputInfo.TYPE_OTHER -> "Other"
-        else -> "Input"
+        TvInputInfo.TYPE_OTHER -> context.getString(R.string.tv_input_other)
+        else -> context.getString(R.string.tv_input_input)
     }
 }

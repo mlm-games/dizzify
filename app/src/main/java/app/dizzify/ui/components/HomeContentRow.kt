@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.dizzify.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -87,11 +88,19 @@ fun <T> HomeContentRow(
                 color = if (isRowFocused) Color.White else LauncherColors.TextSecondary,
             )
             if (isRowFocused && countSuffix != null) {
-                Text(
-                    text = "  •  " + countSuffix,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LauncherColors.TextTertiary,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "•",
+                        modifier = Modifier.padding(horizontal = 7.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LauncherColors.TextTertiary,
+                    )
+                    Text(
+                        text = countSuffix,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = LauncherColors.TextTertiary,
+                    )
+                }
             }
         }
 

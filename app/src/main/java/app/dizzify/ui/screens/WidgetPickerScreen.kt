@@ -159,7 +159,7 @@ private fun WidgetPickerHeader(
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.back),
                 tint = if (backFocused) LauncherColors.AccentBlue else Color.White
             )
         }
@@ -310,7 +310,7 @@ private fun WidgetInfoItem(
             if (imageBitmap != null) {
                 Image(
                     bitmap = imageBitmap,
-                    contentDescription = "Widget preview",
+                    contentDescription = stringResource(R.string.widget_preview),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 )

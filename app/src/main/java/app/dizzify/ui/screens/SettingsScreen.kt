@@ -28,13 +28,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.dizzify.BuildConfig
 import app.dizzify.LauncherViewModel
+import app.dizzify.R
 import app.dizzify.data.Constants
 import app.dizzify.helper.openUrl
 import app.dizzify.settings.ImportExportState
 import app.dizzify.settings.DefaultScreen
+import app.dizzify.settings.LauncherSettingsSchema
 import app.dizzify.settings.NonTvApps
 import app.dizzify.settings.SearchType
 import app.dizzify.settings.SortOrder
@@ -43,37 +46,39 @@ import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.dialogs.PinLockDialog
 import app.dizzify.ui.theme.*
 import app.dizzify.ui.components.tvPointerClick
+import io.github.mlmgames.settings.core.resources.StringResourceProvider
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 sealed class SettingsCategory(
-    val title: String,
+    val titleRes: Int,
     val icon: ImageVector,
-    val description: String
+    val descriptionRes: Int
 ) {
     data object Appearance : SettingsCategory(
-        "Appearance",
+        R.string.appearance,
         Icons.Outlined.Palette,
-        "Theme, icon packs, layout"
+        R.string.appearance_desc
     )
     data object HomeScreen : SettingsCategory(
-        "Home Screen",
+        R.string.home_screen,
         Icons.Outlined.Home,
-        "Favorites, rows, widgets"
+        R.string.home_screen_desc
     )
     data object AppDrawer : SettingsCategory(
-        "App Drawer",
+        R.string.app_drawer,
         Icons.Outlined.Apps,
-        "Grid size, sorting, search"
+        R.string.app_drawer_desc
     )
     data object Behavior : SettingsCategory(
-        "Behavior",
+        R.string.behavior,
         Icons.Outlined.TouchApp,
-        "Gestures, animations"
+        R.string.behavior_desc
     )
     data object About : SettingsCategory(
-        "About",
+        R.string.about,
         Icons.Outlined.Info,
-        "Version, licenses, feedback"
+        R.string.about_desc
     )
 }
 
@@ -93,6 +98,7 @@ fun SettingsScreen(
     val locked by viewModel.effectiveLockState.collectAsState()
     var pinError by remember { mutableStateOf<String?>(null) }
     var pinErrorNonce by remember { mutableIntStateOf(0) }
+    val wrongPinError = stringResource(R.string.wrong_pin_try_again)
     LaunchedEffect(showLockDialog) { if (!showLockDialog) pinError = null }
 
     val categories = listOf(
@@ -166,7 +172,7 @@ fun SettingsScreen(
                     } else {
                         scope.launch {
                             if (!viewModel.validatePin(pin)) {
-                                pinError = "Wrong PIN, try again"
+                                pinError = wrongPinError
                                 pinErrorNonce += 1
                             }
                         }
@@ -195,18 +201,18 @@ private fun LockedSettingsGate(
         )
         Spacer(modifier = Modifier.height(LauncherSpacing.lg))
         Text(
-            text = "Settings are locked",
+            text = stringResource(R.string.settings_are_locked),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
         Text(
-            text = "Enter your PIN to make changes",
+            text = stringResource(R.string.enter_pin_to_make_changes),
             style = MaterialTheme.typography.bodyLarge,
             color = LauncherColors.TextSecondary
         )
         Spacer(modifier = Modifier.height(LauncherSpacing.lg))
         Button(onClick = onUnlock) {
-            Text("Unlock Settings")
+            Text(stringResource(R.string.unlock_settings))
         }
     }
 }
@@ -222,7 +228,7 @@ private fun SettingsCategoriesList(
         modifier = modifier.padding(LauncherSpacing.lg)
     ) {
         Text(
-            text = "Settings",
+            text = stringResource(R.string.section_settings),
             style = MaterialTheme.typography.displayMedium,
             color = Color.White
         )
@@ -323,12 +329,12 @@ private fun SettingsCategoryItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = category.title,
+                text = stringResource(category.titleRes),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (isSelected || isFocused) Color.White else LauncherColors.TextPrimary
             )
             Text(
-                text = category.description,
+                text = stringResource(category.descriptionRes),
                 style = MaterialTheme.typography.bodyMedium,
                 color = LauncherColors.TextSecondary
             )
@@ -359,7 +365,7 @@ private fun SettingsCategoryContent(
     ) {
         item {
             Text(
-                text = category.title,
+                text = stringResource(category.titleRes),
                 style = MaterialTheme.typography.headlineLarge,
                 color = Color.White
             )
@@ -369,48 +375,60 @@ private fun SettingsCategoryContent(
         when (category) {
             is SettingsCategory.Appearance -> {
                 item {
-                    SettingsSection(title = "Theme") {
+                    SettingsSection(title = stringResource(R.string.theme)) {
                         SettingsDropdown(
-                            title = "Theme Mode",
-                            description = "Choose app theme",
-                            currentValue = settings.theme.name,
-                            options = ThemeMode.entries.map { it.name },
-                            onOptionSelected = { selected ->
-                                val mode = ThemeMode.valueOf(selected)
-                                viewModel.updateTheme(mode)
+                            title = stringResource(R.string.theme_mode),
+                            description = stringResource(R.string.choose_app_theme),
+                            currentValue = when (settings.theme) {
+                                ThemeMode.System -> stringResource(R.string.system_default)
+                                ThemeMode.Light -> stringResource(R.string.light)
+                                ThemeMode.Dark -> stringResource(R.string.dark)
+                            },
+                            options = listOf(
+                                stringResource(R.string.system_default),
+                                stringResource(R.string.light),
+                                stringResource(R.string.dark)
+                            ),
+                            onOptionSelected = { index ->
+                                viewModel.updateTheme(ThemeMode.entries.getOrElse(index) { ThemeMode.System })
                             }
                         )
 
                         SettingsToggle(
-                            title = "Show Banners & Icons",
-                            description = "Display app banners and icons in launcher",
+                            title = stringResource(R.string.show_banners_icons),
+                            description = stringResource(R.string.display_app_banners_icons),
                             isChecked = settings.showAppIcons,
                             onCheckedChange = { viewModel.updateShowAppIcons(it) }
                         )
 
                         SettingsToggle(
-                            title = "Show App Names",
-                            description = "Show labels under app icons",
+                            title = stringResource(R.string.show_app_names),
+                            description = stringResource(R.string.show_labels_under_app_icons),
                             isChecked = settings.showAppNames,
                             onCheckedChange = { viewModel.updateShowAppNames(it) }
                         )
 
                         SettingsDropdown(
-                            title = "Text Size",
-                            description = "Scale text across the launcher",
+                            title = stringResource(R.string.text_size),
+                            description = stringResource(R.string.scale_text_across_launcher),
                             currentValue = when {
-                                settings.textSizeScale <= 0.9f -> "Small"
-                                settings.textSizeScale >= 1.25f -> "Extra Large"
-                                settings.textSizeScale > 1.05f -> "Large"
-                                else -> "Normal"
+                                settings.textSizeScale <= 0.9f -> stringResource(R.string.text_size_small)
+                                settings.textSizeScale >= 1.25f -> stringResource(R.string.text_size_extra_large)
+                                settings.textSizeScale > 1.05f -> stringResource(R.string.text_size_large)
+                                else -> stringResource(R.string.text_size_normal)
                             },
-                            options = listOf("Small", "Normal", "Large", "Extra Large"),
-                            onOptionSelected = { selected ->
+                            options = listOf(
+                                stringResource(R.string.text_size_small),
+                                stringResource(R.string.text_size_normal),
+                                stringResource(R.string.text_size_large),
+                                stringResource(R.string.text_size_extra_large)
+                            ),
+                            onOptionSelected = { index ->
                                 viewModel.updateTextSizeScale(
-                                    when (selected) {
-                                        "Small" -> 0.85f
-                                        "Large" -> 1.15f
-                                        "Extra Large" -> 1.3f
+                                    when (index) {
+                                        0 -> 0.85f
+                                        2 -> 1.15f
+                                        3 -> 1.3f
                                         else -> 1.0f
                                     }
                                 )
@@ -430,30 +448,30 @@ private fun SettingsCategoryContent(
 
             is SettingsCategory.HomeScreen -> {
                 item {
-                    SettingsSection(title = "Layout") {
+                    SettingsSection(title = stringResource(R.string.layout)) {
                         SettingsClickable(
-                            title = "Edit Favorites",
-                            description = "Long-press apps to add to favorites",
+                            title = stringResource(R.string.edit_favorites),
+                            description = stringResource(R.string.edit_favorites_desc),
                             onClick = { /* Navigate to home and show hint */ }
                         )
 
                         SettingsDropdown(
-                            title = "Home Grid Rows",
-                            description = "Vertical density of the home grid",
+                            title = stringResource(R.string.home_grid_rows),
+                            description = stringResource(R.string.home_grid_rows_desc),
                             currentValue = settings.homeScreenRows.toString(),
                             options = (4..12).map { it.toString() },
-                            onOptionSelected = { selected ->
-                                selected.toIntOrNull()?.let { viewModel.updateHomeScreenRows(it) }
+                            onOptionSelected = { index ->
+                                (4..12).elementAtOrNull(index)?.let { viewModel.updateHomeScreenRows(it) }
                             }
                         )
 
                         SettingsDropdown(
-                            title = "Home Grid Columns",
-                            description = "Horizontal density of the home grid",
+                            title = stringResource(R.string.home_grid_columns),
+                            description = stringResource(R.string.home_grid_columns_desc),
                             currentValue = settings.homeScreenColumns.toString(),
                             options = (2..8).map { it.toString() },
-                            onOptionSelected = { selected ->
-                                selected.toIntOrNull()?.let { viewModel.updateHomeScreenColumns(it) }
+                            onOptionSelected = { index ->
+                                (2..8).elementAtOrNull(index)?.let { viewModel.updateHomeScreenColumns(it) }
                             }
                         )
                     }
@@ -462,30 +480,28 @@ private fun SettingsCategoryContent(
 
             is SettingsCategory.AppDrawer -> {
                 item {
-                    SettingsSection(title = "Sorting") {
+                    SettingsSection(title = stringResource(R.string.sorting)) {
                         SettingsDropdown(
-                            title = "Sort Order",
-                            description = "How apps are sorted",
+                            title = stringResource(R.string.sort_order),
+                            description = stringResource(R.string.sort_order_desc),
                             currentValue = when (settings.sortOrder) {
-                                SortOrder.AZ -> "A-Z"
-                                SortOrder.ZA -> "Z-A"
-                                SortOrder.Recent -> "Recent"
+                                SortOrder.AZ -> stringResource(R.string.sort_option_a_z)
+                                SortOrder.ZA -> stringResource(R.string.sort_option_z_a)
+                                SortOrder.Recent -> stringResource(R.string.recent_label)
                             },
-                            options = listOf("A-Z", "Z-A", "Recent"),
-                            onOptionSelected = { selected ->
-                                val order = when (selected) {
-                                    "A-Z" -> SortOrder.AZ
-                                    "Z-A" -> SortOrder.ZA
-                                    "Recent" -> SortOrder.Recent
-                                    else -> SortOrder.AZ
-                                }
-                                viewModel.updateSortOrder(order)
+                            options = listOf(
+                                stringResource(R.string.sort_option_a_z),
+                                stringResource(R.string.sort_option_z_a),
+                                stringResource(R.string.recent_label)
+                            ),
+                            onOptionSelected = { index ->
+                                viewModel.updateSortOrder(SortOrder.entries.getOrElse(index) { SortOrder.AZ })
                             }
                         )
 
                         SettingsToggle(
-                            title = "Show System Apps",
-                            description = "Include pre-installed system apps",
+                            title = stringResource(R.string.show_system_apps),
+                            description = stringResource(R.string.show_system_apps_desc),
                             isChecked = settings.showSystemApps,
                             onCheckedChange = { viewModel.updateShowSystemApps(it) }
                         )
@@ -493,53 +509,53 @@ private fun SettingsCategoryContent(
                 }
 
                 item {
-                    SettingsSection(title = "Search") {
+                    SettingsSection(title = stringResource(R.string.search)) {
                         SettingsDropdown(
-                            title = "Search Type",
-                            description = "How search matches apps",
+                            title = stringResource(R.string.search_type),
+                            description = stringResource(R.string.search_type_desc),
                             currentValue = when (settings.searchType) {
-                                SearchType.Contains -> "Contains"
-                                SearchType.Fuzzy -> "Fuzzy"
-                                SearchType.StartsWith -> "Starts With"
-                                SearchType.Exact -> "Exact"
+                                SearchType.Contains -> stringResource(R.string.search_type_contains)
+                                SearchType.Fuzzy -> stringResource(R.string.search_type_fuzzy)
+                                SearchType.StartsWith -> stringResource(R.string.search_type_starts_with)
+                                SearchType.Exact -> stringResource(R.string.search_type_exact)
                             },
-                            options = listOf("Contains", "Fuzzy", "Starts With", "Exact"),
-                            onOptionSelected = { selected ->
-                                val type = when (selected) {
-                                    "Contains" -> SearchType.Contains
-                                    "Fuzzy" -> SearchType.Fuzzy
-                                    "Starts With" -> SearchType.StartsWith
-                                    "Exact" -> SearchType.Exact
-                                    else -> SearchType.Contains
-                                }
-                                viewModel.updateSearchType(type)
+                            options = listOf(
+                                stringResource(R.string.search_type_contains),
+                                stringResource(R.string.search_type_fuzzy),
+                                stringResource(R.string.search_type_starts_with),
+                                stringResource(R.string.search_type_exact)
+                            ),
+                            onOptionSelected = { index ->
+                                viewModel.updateSearchType(
+                                    SearchType.entries.getOrElse(index) { SearchType.Contains }
+                                )
                             }
                         )
 
                         SettingsToggle(
-                            title = "Search Package Names",
-                            description = "Include package names in search",
+                            title = stringResource(R.string.search_package_names),
+                            description = stringResource(R.string.search_package_names_desc),
                             isChecked = settings.searchIncludePackageNames,
                             onCheckedChange = { viewModel.updateSearchIncludePackageNames(it) }
                         )
 
                         SettingsToggle(
-                            title = "Show Hidden in Search",
-                            description = "Include hidden apps in search results",
+                            title = stringResource(R.string.show_hidden_in_search),
+                            description = stringResource(R.string.show_hidden_in_search_desc),
                             isChecked = settings.showHiddenAppsOnSearch,
                             onCheckedChange = { viewModel.updateShowHiddenAppsOnSearch(it) }
                         )
 
                         SettingsToggle(
-                            title = "Auto-Open Single Result",
-                            description = "Launch immediately when search has one match",
+                            title = stringResource(R.string.auto_open_single_result),
+                            description = stringResource(R.string.auto_open_single_result_desc),
                             isChecked = settings.autoOpenFilteredApp,
                             onCheckedChange = { viewModel.updateAutoOpenFilteredApp(it) }
                         )
 
                         SettingsToggle(
-                            title = "Web Search Option",
-                            description = "Offer web search when nothing matches",
+                            title = stringResource(R.string.web_search_option),
+                            description = stringResource(R.string.web_search_option_desc),
                             isChecked = settings.showWebSearchOption,
                             onCheckedChange = { viewModel.updateShowWebSearchOption(it) }
                         )
@@ -549,63 +565,74 @@ private fun SettingsCategoryContent(
 
             is SettingsCategory.Behavior -> {
                 item {
-                    SettingsSection(title = "TV Options") {
+                    SettingsSection(title = stringResource(R.string.tv_options)) {
                         SettingsDropdown(
-                            title = "Non-TV Apps",
-                            description = "TV only hides apps without a leanback entry, which some TV apps lack",
+                            title = stringResource(R.string.non_tv_apps),
+                            description = stringResource(R.string.non_tv_apps_desc),
                             currentValue = when (settings.showNonTvApps) {
-                                NonTvApps.All -> "All apps"
-                                NonTvApps.TvOnly -> "TV only"
-                                NonTvApps.Auto -> "Auto"
+                                NonTvApps.All -> stringResource(R.string.all_apps)
+                                NonTvApps.TvOnly -> stringResource(R.string.tv_only)
+                                NonTvApps.Auto -> stringResource(R.string.auto)
                             },
-                            options = listOf("All apps", "Auto", "TV only"),
-                            onOptionSelected = { selected ->
+                            options = listOf(
+                                stringResource(R.string.all_apps),
+                                stringResource(R.string.auto),
+                                stringResource(R.string.tv_only)
+                            ),
+                            onOptionSelected = { index ->
                                 viewModel.updateShowNonTvApps(
-                                    when (selected) {
-                                        "All apps" -> NonTvApps.All
-                                        "TV only" -> NonTvApps.TvOnly
-                                        else -> NonTvApps.Auto
+                                    when (index) {
+                                        0 -> NonTvApps.All
+                                        1 -> NonTvApps.Auto
+                                        else -> NonTvApps.TvOnly
                                     }
                                 )
                             }
                         )
 
                         SettingsToggle(
-                            title = "Prefer TV Launch",
-                            description = "Open TV UI when app supports it (VLC, Dolphin)",
+                            title = stringResource(R.string.prefer_tv_launch),
+                            description = stringResource(R.string.prefer_tv_launch_desc),
                             isChecked = settings.preferTvLaunch,
                             onCheckedChange = { viewModel.updatePreferTvLaunch(it) }
                         )
 
                         SettingsToggle(
-                            title = "TV Inputs Row",
-                            description = "Show HDMI and other TV inputs on Home",
+                            title = stringResource(R.string.tv_inputs_row),
+                            description = stringResource(R.string.tv_inputs_row_desc),
                             isChecked = settings.showTvInputs,
                             onCheckedChange = { viewModel.updateShowTvInputs(it) }
                         )
 
                         SettingsToggle(
-                            title = "Continue Watching",
-                            description = "Show Watch-Next programs from your apps",
+                            title = stringResource(R.string.continue_watching),
+                            description = stringResource(R.string.continue_watching_desc),
                             isChecked = settings.showWatchNext,
                             onCheckedChange = { viewModel.updateShowWatchNext(it) }
                         )
 
                         SettingsToggle(
-                            title = "Return to Home",
-                            description = "Go back to Home after opening an app",
+                            title = stringResource(R.string.return_to_home),
+                            description = stringResource(R.string.return_to_home_desc),
                             isChecked = settings.returnToHomeAfterApp,
                             onCheckedChange = { viewModel.updateReturnToHomeAfterApp(it) }
                         )
 
                         SettingsDropdown(
-                            title = "Default Screen",
-                            description = "Where the launcher starts and Home returns",
-                            currentValue = if (settings.defaultScreen == DefaultScreen.Apps) "Apps" else "Home",
-                            options = listOf("Home", "Apps"),
-                            onOptionSelected = { selected ->
+                            title = stringResource(R.string.default_screen),
+                            description = stringResource(R.string.default_screen_desc),
+                            currentValue = if (settings.defaultScreen == DefaultScreen.Apps) {
+                                stringResource(R.string.section_apps)
+                            } else {
+                                stringResource(R.string.sidebar_home)
+                            },
+                            options = listOf(
+                                stringResource(R.string.sidebar_home),
+                                stringResource(R.string.section_apps)
+                            ),
+                            onOptionSelected = { index ->
                                 viewModel.updateDefaultScreen(
-                                    if (selected == "Apps") DefaultScreen.Apps else DefaultScreen.Home
+                                    DefaultScreen.entries.getOrElse(index) { DefaultScreen.Home }
                                 )
                             }
                         )
@@ -613,10 +640,10 @@ private fun SettingsCategoryContent(
                 }
 
                 item {
-                    SettingsSection(title = "Settings Lock") {
+                    SettingsSection(title = stringResource(R.string.settings_lock)) {
                         SettingsToggle(
-                            title = "Lock Settings",
-                            description = "Require PIN to change settings",
+                            title = stringResource(R.string.lock_settings),
+                            description = stringResource(R.string.lock_settings_desc),
                             isChecked = settings.lockSettings,
                             onCheckedChange = { locked ->
                                 if (locked && settings.settingsLockPin.isEmpty()) {
@@ -629,8 +656,12 @@ private fun SettingsCategoryContent(
                         )
 
                         SettingsClickable(
-                            title = if (settings.settingsLockPin.isEmpty()) "Set PIN" else "Change PIN",
-                            description = "6 digits max, stored as salted hash",
+                            title = if (settings.settingsLockPin.isEmpty()) {
+                                stringResource(R.string.set_pin)
+                            } else {
+                                stringResource(R.string.change_pin)
+                            },
+                            description = stringResource(R.string.change_pin_desc),
                             onClick = { viewModel.setShowLockDialog(true, true) }
                         )
                     }
@@ -639,13 +670,13 @@ private fun SettingsCategoryContent(
 
             is SettingsCategory.About -> {
                 item {
-                    SettingsSection(title = "App Info") {
+                    SettingsSection(title = stringResource(R.string.app_info)) {
                         SettingsInfo(
-                            title = "Version",
+                            title = stringResource(R.string.version),
                             value = BuildConfig.VERSION_NAME
                         )
                         SettingsInfo(
-                            title = "Build",
+                            title = stringResource(R.string.build),
                             value = BuildConfig.BUILD_TYPE.replaceFirstChar { it.uppercase() }
                         )
                     }
@@ -656,17 +687,17 @@ private fun SettingsCategoryContent(
                 }
 
                 item {
-                    SettingsSection(title = "Links") {
+                    SettingsSection(title = stringResource(R.string.links)) {
                         SettingsClickable(
-                            title = "Source Code",
-                            description = "View on GitHub",
+                            title = stringResource(R.string.source_code),
+                            description = stringResource(R.string.source_code_desc),
                             onClick = {
                                 context.openUrl(Constants.URL_DIZZIFY_GITHUB)
                             }
                         )
                         SettingsClickable(
-                            title = "Report Issue",
-                            description = "Submit bug report",
+                            title = stringResource(R.string.report_issue),
+                            description = stringResource(R.string.report_issue_desc),
                             onClick = {
                                 context.openUrl("${Constants.URL_DIZZIFY_GITHUB}/issues")
                             }
@@ -678,6 +709,9 @@ private fun SettingsCategoryContent(
     }
 }
 
+private fun settingMeta(key: String) =
+    LauncherSettingsSchema.fields.firstOrNull { it.meta?.key == key }?.meta
+
 @Composable
 private fun WallpaperSettingsSection(viewModel: LauncherViewModel) {
     val settings by viewModel.settings.collectAsState()
@@ -688,22 +722,26 @@ private fun WallpaperSettingsSection(viewModel: LauncherViewModel) {
         if (uri != null) viewModel.setWallpaperImage(uri)
     }
 
-    SettingsSection(title = "Wallpaper") {
+    SettingsSection(title = stringResource(R.string.wallpaper)) {
         SettingsInfo(
-            title = "Home Background",
-            value = if (settings.wallpaperPath.isNotBlank()) "Custom image" else "Default",
+            title = stringResource(R.string.home_background),
+            value = if (settings.wallpaperPath.isNotBlank()) {
+                stringResource(R.string.custom_image)
+            } else {
+                stringResource(R.string.wallpaper_default)
+            },
         )
 
         SettingsClickable(
-            title = "Choose Wallpaper Image",
-            description = "Stored locally; used when the TV has no system wallpaper",
+            title = stringResource(R.string.choose_wallpaper_image),
+            description = stringResource(R.string.choose_wallpaper_image_desc),
             onClick = { wallpaperPicker.launch("image/*") },
         )
 
         if (settings.wallpaperPath.isNotBlank()) {
             SettingsClickable(
-                title = "Reset Wallpaper",
-                description = "Back to the default background",
+                title = stringResource(R.string.reset_wallpaper),
+                description = stringResource(R.string.reset_wallpaper_desc),
                 onClick = { viewModel.clearWallpaper() },
             )
         }
@@ -721,45 +759,51 @@ private fun FontSettingsSection(viewModel: LauncherViewModel) {
         if (uri != null) viewModel.setCustomFont(uri)
     }
 
-    val weightNames = listOf("Thin", "Light", "Normal", "Medium", "Bold", "Black")
+    val weightNames = listOf(
+        stringResource(R.string.font_weight_thin),
+        stringResource(R.string.font_weight_light),
+        stringResource(R.string.font_weight_normal),
+        stringResource(R.string.font_weight_medium),
+        stringResource(R.string.font_weight_bold),
+        stringResource(R.string.font_weight_black)
+    )
     val weightValues = TextWeight.entries
 
-    SettingsSection(title = "Font") {
+    SettingsSection(title = stringResource(R.string.font)) {
         SettingsInfo(
-            title = "Current Font",
+            title = stringResource(R.string.current_font),
             value = fontInfo?.let { (name, size) ->
                 "$name (${size / 1024} KB)"
-            } ?: "System font"
+            } ?: stringResource(R.string.system_font)
         )
 
         SettingsToggle(
-            title = "Use System Font",
-            description = "Off when a custom font file is active",
+            title = stringResource(R.string.use_system_font),
+            description = stringResource(R.string.use_system_font_desc),
             isChecked = settings.useSystemFont,
             onCheckedChange = { viewModel.updateUseSystemFont(it) }
         )
 
         SettingsDropdown(
-            title = "Font Weight",
-            description = "Bolder text reads better from the couch",
+            title = stringResource(R.string.font_weight),
+            description = stringResource(R.string.font_weight_desc),
             currentValue = weightNames[settings.fontWeight.ordinal.coerceIn(weightNames.indices)],
             options = weightNames,
-            onOptionSelected = { selected ->
-                val index = weightNames.indexOf(selected).coerceIn(weightValues.indices)
-                viewModel.updateFontWeight(weightValues[index])
+            onOptionSelected = { index ->
+                viewModel.updateFontWeight(weightValues.getOrElse(index) { TextWeight.Normal })
             }
         )
 
         SettingsClickable(
-            title = "Choose Font File",
-            description = "Pick a .ttf/.otf file (copied locally, 5 MB max)",
+            title = stringResource(R.string.choose_font_file),
+            description = stringResource(R.string.choose_font_file_desc),
             onClick = { fontPicker.launch(arrayOf("font/*", "application/*", "*/*")) }
         )
 
         if (fontInfo != null) {
             SettingsClickable(
-                title = "Reset to System Font",
-                description = "Delete the custom font file",
+                title = stringResource(R.string.reset_to_system_font),
+                description = stringResource(R.string.reset_to_system_font_desc),
                 onClick = { viewModel.clearCustomFont() }
             )
         }
@@ -783,10 +827,13 @@ private fun BackupRestoreSection(viewModel: LauncherViewModel) {
         else viewModel.resetImportExportState()
     }
 
-    SettingsSection(title = "Backup & Restore") {
+    val stringProvider: StringResourceProvider = koinInject()
+    val statusLabel = stringResource(R.string.status)
+
+    SettingsSection(title = stringResource(R.string.backup_restore)) {
         SettingsClickable(
-            title = "Export Settings",
-            description = "Save setup to a file (layout, hidden, renames)",
+            title = stringResource(R.string.export_settings),
+            description = stringResource(R.string.export_settings_desc),
             onClick = {
                 viewModel.resetImportExportState()
                 exportLauncher.launch("dizzify-backup.json")
@@ -794,8 +841,8 @@ private fun BackupRestoreSection(viewModel: LauncherViewModel) {
         )
 
         SettingsClickable(
-            title = "Import Settings",
-            description = "Restore setup from a backup file",
+            title = stringResource(R.string.import_settings),
+            description = stringResource(R.string.import_settings_desc),
             onClick = {
                 viewModel.resetImportExportState()
                 importLauncher.launch(arrayOf("application/json"))
@@ -805,23 +852,30 @@ private fun BackupRestoreSection(viewModel: LauncherViewModel) {
         when (val s = backupState) {
             ImportExportState.Idle -> Unit
             ImportExportState.Loading -> {
-                SettingsInfo(title = "Status", value = "Working…")
+                SettingsInfo(title = statusLabel, value = stringResource(R.string.status_working))
             }
             ImportExportState.ExportSuccess -> {
-                SettingsInfo(title = "Status", value = "Backup saved")
+                SettingsInfo(title = statusLabel, value = stringResource(R.string.status_backup_saved))
             }
             is ImportExportState.ImportSuccess -> {
+                val importSummary = stringResource(
+                    R.string.status_applied_skipped,
+                    s.appliedCount,
+                    s.skippedCount
+                )
+                val importSummaryErrors = stringResource(R.string.status_errors, s.errors.size)
                 val summary = buildString {
-                    append("Applied ${s.appliedCount}, skipped ${s.skippedCount}")
-                    if (s.errors.isNotEmpty()) append(", ${s.errors.size} errors")
+                    append(importSummary)
+                    if (s.errors.isNotEmpty()) append(importSummaryErrors)
                 }
-                SettingsInfo(title = "Status", value = summary)
+                SettingsInfo(title = statusLabel, value = summary)
                 s.errors.take(3).forEach { (key, msg) ->
-                    SettingsInfo(title = key, value = msg)
+                    val label = settingMeta(key)?.resolvedTitle(stringProvider) ?: key
+                    SettingsInfo(title = label, value = msg)
                 }
             }
             is ImportExportState.Error -> {
-                SettingsInfo(title = "Error", value = s.message)
+                SettingsInfo(title = stringResource(R.string.error), value = s.message)
             }
         }
     }
@@ -966,7 +1020,7 @@ private fun SettingsDropdown(
     description: String,
     currentValue: String,
     options: List<String>,
-    onOptionSelected: (String) -> Unit
+    onOptionSelected: (Int) -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
@@ -1029,7 +1083,7 @@ private fun SettingsDropdown(
                     onDismissRequest = { expanded = false },
                     modifier = Modifier.background(LauncherColors.DarkSurface)
                 ) {
-                    options.forEach { option ->
+                    options.forEachIndexed { index, option ->
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -1038,7 +1092,7 @@ private fun SettingsDropdown(
                                 )
                             },
                             onClick = {
-                                onOptionSelected(option)
+                                onOptionSelected(index)
                                 expanded = false
                             },
                             leadingIcon = if (option == currentValue) {
