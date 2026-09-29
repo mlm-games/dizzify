@@ -41,10 +41,13 @@ fun LauncherSearchBar(
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search apps...",
+    placeholder: String,
     focusRequester: FocusRequester = remember { FocusRequester() },
     onVoiceSearch: (() -> Unit)? = null
 ) {
+    val hint = if (placeholder.isNotEmpty()) placeholder
+               else stringResource(R.string.search_apps_hint)
+
     var isFocused by remember { mutableStateOf(false) }
     
     val backgroundColor by animateColorAsState(
@@ -123,7 +126,7 @@ fun LauncherSearchBar(
             
             if (query.isEmpty()) {
                 Text(
-                    text = placeholder,
+                    text = hint,
                     style = MaterialTheme.typography.bodyLarge,
                     color = LauncherColors.TextTertiary
                 )

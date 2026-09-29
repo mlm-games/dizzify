@@ -49,6 +49,11 @@ fun PinLockDialog(
 
     val entering = if (!isSettingPin) pin else if (phase == 0) pin else confirmPin
 
+    val errPinEmpty = stringResource(R.string.pin_cannot_be_empty)
+    val errConfirmPin = stringResource(R.string.pin_confirm_prompt)
+    val errPinMismatch = stringResource(R.string.pin_mismatch)
+    val errEnterPin = stringResource(R.string.pin_enter_prompt)
+
     fun appendDigit(d: Char) {
         localError = ""
         if (isSettingPin && phase == 1) {
@@ -71,16 +76,16 @@ fun PinLockDialog(
         if (isSettingPin) {
             if (phase == 0) {
                 if (pin.isEmpty()) {
-                    localError = "PIN cannot be empty"
+                    localError = errPinEmpty
                 } else {
                     phase = 1
                     localError = ""
                 }
             } else {
                 if (confirmPin.isEmpty()) {
-                    localError = "Please confirm the PIN"
+                    localError = errConfirmPin
                 } else if (pin != confirmPin) {
-                    localError = "PINs do not match"
+                    localError = errPinMismatch
                     pin = ""
                     confirmPin = ""
                     phase = 0
@@ -90,7 +95,7 @@ fun PinLockDialog(
             }
         } else {
             if (pin.isEmpty()) {
-                localError = "Please enter PIN"
+                localError = errEnterPin
             } else {
                 onConfirm(pin)
             }

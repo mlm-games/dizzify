@@ -98,11 +98,27 @@ fun AppOptionsSheet(
 ) {
     val androidContext = LocalContext.current
 
+    val lblOpen = stringResource(R.string.action_open)
+    val lblOpenTv = stringResource(R.string.open_tv_version)
+    val lblOpenPhone = stringResource(R.string.open_phone_version)
+    val lblRemoveFav = stringResource(R.string.remove_from_favorites)
+    val lblRemoveRecent = stringResource(R.string.remove_from_recent)
+    val lblAppInfo = stringResource(R.string.app_info)
+    val lblRename = stringResource(R.string.action_rename)
+    val lblPlayStore = stringResource(R.string.open_in_play_store)
+    val lblUnhide = stringResource(R.string.action_unhide)
+    val lblHide = stringResource(R.string.action_hide)
+    val lblUninstall = stringResource(R.string.action_uninstall)
+    val tapToChange = stringResource(R.string.tap_to_change)
+    val lblDefaultTv = stringResource(R.string.default_tv_version)
+    val lblDefaultPhone = stringResource(R.string.default_phone_version)
+    val lblDefaultAuto = stringResource(R.string.default_auto)
+
     val options = remember(app, isFavorite, isHidden, isOnHome, context, launchMode) {
         buildList {
             add(AppOption(
                 id = "open",
-                label = "Open",
+                label = lblOpen,
                 icon = Icons.Filled.PlayArrow,
                 iconTint = LauncherColors.AccentBlue,
                 action = onOpen
@@ -112,7 +128,7 @@ fun AppOptionsSheet(
                 if (onOpenTv != null) {
                     add(AppOption(
                         id = "open_tv",
-                        label = "Open TV version",
+                        label = lblOpenTv,
                         icon = Icons.Filled.Tv,
                         iconTint = LauncherColors.AccentTeal,
                         action = onOpenTv
@@ -121,7 +137,7 @@ fun AppOptionsSheet(
                 if (onOpenMobile != null) {
                     add(AppOption(
                         id = "open_mobile",
-                        label = "Open phone version",
+                        label = lblOpenPhone,
                         icon = Icons.Filled.Smartphone,
                         iconTint = LauncherColors.AccentPurple,
                         action = onOpenMobile
@@ -134,13 +150,13 @@ fun AppOptionsSheet(
                         AppLaunchMode.MOBILE -> AppLaunchMode.AUTO
                     }
                     val label = when (launchMode) {
-                        AppLaunchMode.TV -> "Default: TV version"
-                        AppLaunchMode.MOBILE -> "Default: Phone version"
-                        AppLaunchMode.AUTO -> "Default: Auto"
+                        AppLaunchMode.TV -> lblDefaultTv
+                        AppLaunchMode.MOBILE -> lblDefaultPhone
+                        AppLaunchMode.AUTO -> lblDefaultAuto
                     }
                     add(AppOption(
                         id = "launch_mode",
-                        label = "$label (tap to change)",
+                        label = "$label $tapToChange",
                         icon = Icons.Outlined.Tune,
                         iconTint = LauncherColors.TextSecondary,
                         action = { onLaunchModeChange(next) }
@@ -152,7 +168,7 @@ fun AppOptionsSheet(
                 is AppOptionContext.FromHome -> {
                     add(AppOption(
                         id = "favorite",
-                        label = "Remove from Favorites",
+                        label = lblRemoveFav,
                         icon = Icons.Filled.Favorite,
                         iconTint = LauncherColors.Error,
                         action = context.onToggleFavorite
@@ -172,7 +188,7 @@ fun AppOptionsSheet(
                 is AppOptionContext.FromRecent -> {
                     add(AppOption(
                         id = "clear_recent",
-                        label = "Remove from Recent",
+                        label = lblRemoveRecent,
                         icon = Icons.Outlined.History,
                         iconTint = LauncherColors.TextSecondary,
                         action = context.onClearFromRecent
@@ -204,7 +220,7 @@ fun AppOptionsSheet(
 
             add(AppOption(
                 id = "info",
-                label = "App Info",
+                label = lblAppInfo,
                 icon = Icons.Outlined.Info,
                 action = {
                     val user = getUserHandleFromString(androidContext, app.userString)
@@ -215,7 +231,7 @@ fun AppOptionsSheet(
             if (onRenameRequest != null) {
                 add(AppOption(
                     id = "rename",
-                    label = "Rename",
+                    label = lblRename,
                     icon = Icons.Outlined.Edit,
                     iconTint = LauncherColors.TextSecondary,
                     action = { onRenameRequest(app.appLabel) }
@@ -224,7 +240,7 @@ fun AppOptionsSheet(
 
             add(AppOption(
                 id = "store",
-                label = "Open in Play Store",
+                label = lblPlayStore,
                 icon = Icons.Outlined.Shop,
                 iconTint = LauncherColors.TextSecondary,
                 action = { AppLaunchResolver.openInPlayStore(androidContext, app.appPackage) }
@@ -234,7 +250,7 @@ fun AppOptionsSheet(
                 is AppOptionContext.FromHidden -> {
                     add(AppOption(
                         id = "unhide",
-                        label = "Unhide",
+                        label = lblUnhide,
                         icon = Icons.Filled.Visibility,
                         iconTint = LauncherColors.AccentTeal,
                         action = onToggleHidden
@@ -244,7 +260,7 @@ fun AppOptionsSheet(
                 is AppOptionContext.FromApps, is AppOptionContext.FromGames, is AppOptionContext.FromRecent -> {
                     add(AppOption(
                         id = "hide",
-                        label = "Hide",
+                        label = lblHide,
                         icon = Icons.Outlined.VisibilityOff,
                         action = onToggleHidden
                     ))
@@ -255,7 +271,7 @@ fun AppOptionsSheet(
 
             add(AppOption(
                 id = "uninstall",
-                label = "Uninstall",
+                label = lblUninstall,
                 icon = Icons.Outlined.Delete,
                 iconTint = LauncherColors.Error,
                 isDestructive = true,

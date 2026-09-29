@@ -267,6 +267,7 @@ private fun AppsHeader(
             onSearch = onSearch,
             focusRequester = searchFocusRequester,
             onVoiceSearch = onVoiceSearch,
+            placeholder = stringResource(R.string.search_apps_hint),
             modifier = Modifier.fillMaxWidth()
         )
     }

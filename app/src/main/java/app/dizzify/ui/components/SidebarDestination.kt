@@ -60,41 +60,41 @@ import java.util.Locale
 
 sealed class SidebarDestination(
     val route: String,
-    val label: String,
+    val labelRes: Int,
     val iconSelected: ImageVector,
     val iconUnselected: ImageVector
 ) {
     data object Home : SidebarDestination(
         route = "home",
-        label = "Home",
+        labelRes = R.string.sidebar_home,
         iconSelected = Icons.Filled.Home,
         iconUnselected = Icons.Outlined.Home
     )
 
     data object Apps : SidebarDestination(
         route = "apps",
-        label = "Apps",
+        labelRes = R.string.sidebar_apps,
         iconSelected = Icons.Filled.Apps,
         iconUnselected = Icons.Filled.Apps
     )
 
     data object Games : SidebarDestination(
         route = "games",
-        label = "Games",
+        labelRes = R.string.sidebar_games,
         iconSelected = Icons.Filled.SportsEsports,
         iconUnselected = Icons.Outlined.SportsEsports
     )
 
     data object Hidden : SidebarDestination(
         route = "hidden",
-        label = "Hidden",
+        labelRes = R.string.sidebar_hidden,
         iconSelected = Icons.Filled.VisibilityOff,
         iconUnselected = Icons.Outlined.VisibilityOff
     )
 
     data object Settings : SidebarDestination(
         route = "settings",
-        label = "Settings",
+        labelRes = R.string.sidebar_settings,
         iconSelected = Icons.Filled.Settings,
         iconUnselected = Icons.Outlined.Settings
     )
@@ -263,7 +263,7 @@ private fun SidebarItem(
         ) {
             Icon(
                 imageVector = if (isSelected || isFocused) destination.iconSelected else destination.iconUnselected,
-                contentDescription = destination.label,
+                contentDescription = stringResource(destination.labelRes),
                 modifier = Modifier.size(24.dp),
                 tint = iconColor
             )

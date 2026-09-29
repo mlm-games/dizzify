@@ -56,11 +56,16 @@ fun WidgetOptionsSheet(
 ) {
     var showResizeDialog by remember { mutableStateOf(false) }
 
-    val options = remember(widget) {
+        val lblMove = stringResource(R.string.widget_move)
+    val lblConfigure = stringResource(R.string.configure_widget)
+    val lblResize = stringResource(R.string.resize_widget)
+    val lblRemove = stringResource(R.string.widget_remove)
+
+val options = remember(widget) {
         buildList {
             add(WidgetOption(
                 id = "move",
-                label = "Move Widget",
+                label = lblMove,
                 icon = Icons.Outlined.OpenWith,
                 iconTint = LauncherColors.AccentTeal,
                 action = onMove
@@ -68,7 +73,7 @@ fun WidgetOptionsSheet(
 
             add(WidgetOption(
                 id = "configure",
-                label = "Configure Widget",
+                label = lblConfigure,
                 icon = Icons.Outlined.Settings,
                 iconTint = LauncherColors.AccentBlue,
                 action = onConfigure
@@ -76,7 +81,7 @@ fun WidgetOptionsSheet(
 
             add(WidgetOption(
                 id = "resize",
-                label = "Resize Widget",
+                label = lblResize,
                 icon = Icons.Outlined.AspectRatio,
                 iconTint = LauncherColors.AccentTeal,
                 action = { showResizeDialog = true }
@@ -84,7 +89,7 @@ fun WidgetOptionsSheet(
 
             add(WidgetOption(
                 id = "remove",
-                label = "Remove Widget",
+                label = lblRemove,
                 icon = Icons.Outlined.Delete,
                 iconTint = LauncherColors.Error,
                 isDestructive = true,

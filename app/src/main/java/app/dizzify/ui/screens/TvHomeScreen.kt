@@ -222,13 +222,13 @@ private fun WelcomeHeader(modifier: Modifier = Modifier) {
         }
     }
 
-    val greeting = remember(currentTime) {
-        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        when {
-            hour < 12 -> "Good Morning"
-            hour < 17 -> "Good Afternoon"
-            else -> "Good Evening"
-        }
+    val hour = remember(currentTime) {
+        java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    }
+    val greeting = when {
+        hour < 12 -> stringResource(R.string.good_morning)
+        hour < 17 -> stringResource(R.string.good_afternoon)
+        else -> stringResource(R.string.good_evening)
     }
 
     Column(modifier = modifier) {
