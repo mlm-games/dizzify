@@ -3,8 +3,13 @@ name: Android App Releases
 on:
   workflow_dispatch:
     inputs:
-      upload_releases:
-        description: 'Upload releases'
+      upload_to_play:
+        description: 'Upload AAB to Google Play'
+        required: true
+        default: true
+        type: boolean
+      publish_github_release:
+        description: 'Publish GitHub release'
         required: true
         default: true
         type: boolean
@@ -38,12 +43,13 @@ jobs:
   release:
     uses: mlm-games/ci/.github/workflows/android-release.yml@v1
     with:
+      publish-release: ${{ inputs.publish_github_release }}
       app-name: 'Dizzify'
       app-slug: 'dizzify'
       application-id: 'app.dizzify'
       java-version: '21'
       java-distribution: 'corretto'
-      play-track: ${{ inputs.play_track }}
+      play-track: ${{ inputs.upload_to_play && inputs.play_track || 'none' }}
       prerelease: ${{ inputs.mark_prerelease }}
       bump-type: ${{ inputs.bump_type }}
     secrets:
