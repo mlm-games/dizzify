@@ -30,8 +30,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.dizzify.R
 import app.dizzify.platform.tv.TvInputEntry
 import app.dizzify.platform.tv.WatchNextItem
 import app.dizzify.ui.theme.*
@@ -103,12 +105,12 @@ fun TvInputsRow(
     modifier: Modifier = Modifier,
 ) {
     HomeContentRow(
-        title = "TV Inputs",
+        title = stringResource(R.string.tv_inputs),
         items = inputs,
         keyOf = { it.inputId },
         onItemClick = onInputClick,
         modifier = modifier,
-        countSuffix = "${inputs.size} inputs",
+        countSuffix = stringResource(R.string.inputs_count, inputs.size),
         accentColor = LauncherColors.AccentTeal,
         cardWidth = LauncherCardSizes.bannerCardWidth,
     ) { item, focused, focusRequester, onFocused, onClick ->
@@ -159,12 +161,12 @@ fun WatchNextRow(
     modifier: Modifier = Modifier,
 ) {
     HomeContentRow(
-        title = "Continue Watching",
+        title = stringResource(R.string.continue_watching),
         items = items,
         keyOf = { it.id.toString() },
         onItemClick = onItemClick,
         modifier = modifier,
-        countSuffix = "${items.size} items",
+        countSuffix = stringResource(R.string.items_count, items.size),
         accentColor = LauncherColors.AccentOrange,
         cardWidth = LauncherCardSizes.bannerCardWidth,
     ) { item, focused, focusRequester, onFocused, onClick ->

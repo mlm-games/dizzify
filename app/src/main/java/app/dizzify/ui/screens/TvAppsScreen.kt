@@ -21,10 +21,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
+import app.dizzify.R
 import app.dizzify.helper.VoiceSearch
 import app.dizzify.helper.openSearch
 import app.dizzify.settings.SortOrder
@@ -225,12 +227,12 @@ private fun AppsHeader(
         ) {
             Column {
                 Text(
-                    text = "All Apps",
+                    text = stringResource(R.string.all_apps),
                     style = MaterialTheme.typography.displayMedium,
                     color = Color.White
                 )
                 Text(
-                    text = "$appCount apps installed",
+                    text = stringResource(R.string.apps_installed_count, appCount),
                     style = MaterialTheme.typography.bodyMedium,
                     color = LauncherColors.TextSecondary
                 )
@@ -314,13 +316,13 @@ private fun EmptySearchResult(
         Spacer(modifier = Modifier.height(LauncherSpacing.lg))
 
         Text(
-            text = "No apps found",
+            text = stringResource(R.string.no_apps_found),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
 
         Text(
-            text = "No results for \"$query\"",
+            text = stringResource(R.string.no_results_for, query),
             style = MaterialTheme.typography.bodyLarge,
             color = LauncherColors.TextSecondary
         )
@@ -328,7 +330,7 @@ private fun EmptySearchResult(
         if (showWebSearch) {
             Spacer(modifier = Modifier.height(LauncherSpacing.lg))
             Button(onClick = onWebSearch) {
-                Text("Search the web")
+                Text(stringResource(R.string.search_the_web))
             }
         }
     }

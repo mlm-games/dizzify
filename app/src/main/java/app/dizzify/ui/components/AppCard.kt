@@ -30,10 +30,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.dizzify.R
 import app.dizzify.data.AppModel
 import app.dizzify.ui.theme.*
 
@@ -314,7 +316,7 @@ private fun TvBadge(modifier: Modifier = Modifier) {
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "TV",
+            text = stringResource(R.string.tv_badge),
             style = MaterialTheme.typography.labelSmall,
             color = Color.White
         )

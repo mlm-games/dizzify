@@ -28,9 +28,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import app.dizzify.R
 import app.dizzify.ui.theme.*
 
 @Composable
@@ -88,7 +90,7 @@ fun LauncherSearchBar(
     ) {
         Icon(
             imageVector = Icons.Default.Search,
-            contentDescription = "Search",
+            contentDescription = stringResource(R.string.search_desc),
             modifier = Modifier.size(24.dp),
             tint = if (isFocused) LauncherColors.AccentBlue else LauncherColors.TextSecondary
         )
@@ -140,7 +142,7 @@ fun LauncherSearchBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Clear",
+                    contentDescription = stringResource(R.string.clear_desc),
                     tint = LauncherColors.TextSecondary
                 )
             }
@@ -156,7 +158,7 @@ fun LauncherSearchBar(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Mic,
-                    contentDescription = "Voice search",
+                    contentDescription = stringResource(R.string.voice_search_desc),
                     tint = LauncherColors.TextSecondary
                 )
             }

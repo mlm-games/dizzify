@@ -16,10 +16,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import app.dizzify.R
 import app.dizzify.ui.theme.*
 import app.dizzify.ui.components.tvPointerClick
 
@@ -135,9 +137,9 @@ fun PinLockDialog(
             ) {
                 Text(
                     text = when {
-                        !isSettingPin -> "Enter PIN"
-                        phase == 0 -> "Set PIN"
-                        else -> "Confirm PIN"
+                        !isSettingPin -> stringResource(R.string.enter_pin)
+                        phase == 0 -> stringResource(R.string.set_pin)
+                        else -> stringResource(R.string.confirm_pin)
                     },
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White
@@ -189,7 +191,7 @@ fun PinLockDialog(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        PinKey(label = "Clear", wide = true, onClick = {
+                        PinKey(label = stringResource(R.string.clear_button), wide = true, onClick = {
                             localError = ""
                             if (isSettingPin && phase == 1) confirmPin = "" else pin = ""
                         })
@@ -204,9 +206,9 @@ fun PinLockDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { submit() }) { Text("Confirm") }
+                    Button(onClick = { submit() }) { Text(stringResource(R.string.confirm)) }
                 }
             }
         }

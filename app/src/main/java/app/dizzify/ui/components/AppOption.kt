@@ -31,9 +31,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import app.dizzify.R
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.helper.AppLaunchResolver
@@ -425,7 +427,7 @@ private fun RenameAppDialog(
                         .padding(LauncherSpacing.lg)
                 ) {
                     Text(
-                        text = "Rename app",
+                        text = stringResource(R.string.rename_app),
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White
                     )
@@ -442,9 +444,9 @@ private fun RenameAppDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        TextButton(onClick = onDismiss) { Text("Cancel") }
+                        TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Button(onClick = { onConfirm(text.trim().ifEmpty { null }) }) { Text("Save") }
+                        Button(onClick = { onConfirm(text.trim().ifEmpty { null }) }) { Text(stringResource(R.string.save)) }
                     }
                 }
             }
@@ -539,7 +541,7 @@ private fun AppOptionsContent(
         Spacer(modifier = Modifier.height(LauncherSpacing.md))
 
         Text(
-            text = "Hold SELECT for options • Press BACK to close",
+            text = stringResource(R.string.hold_select_hint),
             style = MaterialTheme.typography.labelSmall,
             color = LauncherColors.TextTertiary
         )

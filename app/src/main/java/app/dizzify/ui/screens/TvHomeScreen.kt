@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import app.dizzify.R
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.helper.WallpaperHelper
@@ -94,7 +96,7 @@ fun HomeScreen(
 
             if (homeApps.isNotEmpty()) {
                 AppRow(
-                    title = "Favorites",
+                    title = stringResource(R.string.favorites),
                     apps = homeApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
@@ -109,7 +111,7 @@ fun HomeScreen(
 
             if (recentApps.isNotEmpty()) {
                 AppRow(
-                    title = "Recently Used",
+                    title = stringResource(R.string.recently_used),
                     apps = recentApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
@@ -132,7 +134,7 @@ fun HomeScreen(
             // Media & Entertainment row
             if (mediaApps.isNotEmpty()) {
                 AppRow(
-                    title = "Media & Entertainment",
+                    title = stringResource(R.string.media_entertainment),
                     apps = mediaApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
@@ -147,7 +149,7 @@ fun HomeScreen(
 
             if (gameApps.isNotEmpty()) {
                 AppRow(
-                    title = "Games",
+                    title = stringResource(R.string.games_label),
                     apps = gameApps,
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
@@ -171,7 +173,7 @@ fun HomeScreen(
 
             if (allApps.isNotEmpty()) {
                 AppRow(
-                    title = "All Apps",
+                    title = stringResource(R.string.all_apps),
                     apps = allApps.take(15),
                     onAppClick = { app -> viewModel.launch(app) },
                     onAppLongClick = { app ->
@@ -237,7 +239,7 @@ private fun WelcomeHeader(modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = "Feeling Dizzy?",
+            text = stringResource(R.string.feeling_dizzy),
             style = MaterialTheme.typography.bodyLarge,
             color = LauncherColors.TextSecondary
         )

@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
+import app.dizzify.R
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
 import app.dizzify.ui.components.AppOptionContext
@@ -46,12 +48,12 @@ fun HiddenAppsScreen(
                 )
             ) {
                 Text(
-                    text = "Hidden Apps",
+                    text = stringResource(R.string.hidden_apps),
                     style = MaterialTheme.typography.displayMedium,
                     color = Color.White
                 )
                 Text(
-                    text = "${hiddenApps.size} apps hidden",
+                    text = stringResource(R.string.apps_hidden_count, hiddenApps.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = LauncherColors.TextSecondary
                 )
@@ -129,7 +131,7 @@ private fun EmptyHiddenState(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(LauncherSpacing.lg))
 
         Text(
-            text = "No Hidden Apps",
+            text = stringResource(R.string.no_hidden_apps),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
@@ -137,7 +139,7 @@ private fun EmptyHiddenState(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(LauncherSpacing.sm))
 
         Text(
-            text = "Long-press any app and select 'Hide' to add it here",
+            text = stringResource(R.string.hidden_apps_hint),
             style = MaterialTheme.typography.bodyLarge,
             color = LauncherColors.TextSecondary
         )

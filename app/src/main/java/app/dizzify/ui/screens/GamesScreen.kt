@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.dizzify.data.AppLaunchMode
 import app.dizzify.data.AppModel
 import app.dizzify.LauncherViewModel
+import app.dizzify.R
 import app.dizzify.ui.components.*
 import app.dizzify.ui.theme.*
 import app.dizzify.ui.components.AppOptionContext
@@ -57,12 +59,12 @@ fun GamesScreen(
                 )
             ) {
                 Text(
-                    text = "Games",
+                    text = stringResource(R.string.games_label),
                     style = MaterialTheme.typography.displayMedium,
                     color = Color.White
                 )
                 Text(
-                    text = "${games.size} games found",
+                    text = stringResource(R.string.games_found_count, games.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = LauncherColors.TextSecondary
                 )
@@ -141,7 +143,7 @@ private fun EmptyGamesState(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(LauncherSpacing.lg))
         
         Text(
-            text = "No Games Found",
+            text = stringResource(R.string.no_games_found),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
@@ -149,7 +151,7 @@ private fun EmptyGamesState(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(LauncherSpacing.sm))
         
         Text(
-            text = "Install some games to see them here",
+            text = stringResource(R.string.no_games_hint),
             style = MaterialTheme.typography.bodyLarge,
             color = LauncherColors.TextSecondary
         )

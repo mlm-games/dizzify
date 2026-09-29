@@ -88,7 +88,7 @@ fun <T> HomeContentRow(
             )
             if (isRowFocused && countSuffix != null) {
                 Text(
-                    text = "  •  $countSuffix",
+                    text = "  •  " + countSuffix,
                     style = MaterialTheme.typography.bodyMedium,
                     color = LauncherColors.TextTertiary,
                 )

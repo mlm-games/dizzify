@@ -25,9 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import app.dizzify.R
 import app.dizzify.data.HomeItem
 import app.dizzify.ui.theme.*
 
@@ -175,7 +177,7 @@ fun WidgetCard(
                     ) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "Configure",
+                            contentDescription = stringResource(R.string.widget_configure),
                             tint = Color.White
                         )
                     }
@@ -188,7 +190,7 @@ fun WidgetCard(
                     ) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Remove",
+                            contentDescription = stringResource(R.string.widget_remove),
                             tint = Color.White
                         )
                     }
@@ -278,13 +280,13 @@ fun AddWidgetCard(
         ) {
             Icon(
                 Icons.Default.Widgets,
-                contentDescription = "Add Widget",
+                contentDescription = stringResource(R.string.add_widget_desc),
                 modifier = Modifier.size(32.dp),
                 tint = if (isFocused) LauncherColors.AccentBlue else LauncherColors.TextSecondary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Add Widget",
+                text = stringResource(R.string.add_widget),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (isFocused) Color.White else LauncherColors.TextSecondary
             )

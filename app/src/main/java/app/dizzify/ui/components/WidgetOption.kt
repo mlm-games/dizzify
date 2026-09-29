@@ -27,9 +27,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import app.dizzify.R
 import app.dizzify.data.HomeItem
 import app.dizzify.ui.theme.*
 
@@ -190,7 +192,7 @@ private fun WidgetOptionsContent(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Widget Options",
+                    text = stringResource(R.string.widget_options),
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color.White
                 )
@@ -229,7 +231,7 @@ private fun WidgetOptionsContent(
         Spacer(modifier = Modifier.height(LauncherSpacing.md))
 
         Text(
-            text = "Press BACK to close",
+            text = stringResource(R.string.press_back_to_close),
             style = MaterialTheme.typography.labelSmall,
             color = LauncherColors.TextTertiary
         )
@@ -355,7 +357,7 @@ private fun WidgetResizeDialog(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Resize Widget",
+            text = stringResource(R.string.resize_widget),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White
         )
@@ -364,7 +366,7 @@ private fun WidgetResizeDialog(
 
         // Row span selector
         SizeSelector(
-            label = "Height",
+            label = stringResource(R.string.widget_height),
             value = rowSpan,
             range = 1..4,
             onValueChange = { rowSpan = it },
@@ -375,7 +377,7 @@ private fun WidgetResizeDialog(
 
         // Column span selector
         SizeSelector(
-            label = "Width",
+            label = stringResource(R.string.widget_width),
             value = columnSpan,
             range = 1..4,
             onValueChange = { columnSpan = it }
@@ -396,7 +398,7 @@ private fun WidgetResizeDialog(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "${columnSpan}×${rowSpan}",
+                text = stringResource(R.string.widget_span_size, columnSpan, rowSpan),
                 style = MaterialTheme.typography.titleMedium,
                 color = LauncherColors.AccentBlue
             )
@@ -413,7 +415,7 @@ private fun WidgetResizeDialog(
                 onClick = onDismiss,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
 
             Button(
@@ -423,7 +425,7 @@ private fun WidgetResizeDialog(
                     containerColor = LauncherColors.AccentBlue
                 )
             ) {
-                Text("Apply")
+                Text(stringResource(R.string.apply))
             }
         }
     }

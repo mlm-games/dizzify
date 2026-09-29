@@ -46,7 +46,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.dizzify.R
 import app.dizzify.platform.SettingsShortcuts
 import app.dizzify.ui.theme.LauncherAnimation
 import app.dizzify.ui.theme.LauncherColors
@@ -292,17 +294,17 @@ private fun SidebarQuickActions() {
     ) {
         QuickAction(
             icon = Icons.Outlined.VideoSettings,
-            contentDescription = "Settings",
+            contentDescription = stringResource(R.string.section_settings),
             onClick = { SettingsShortcuts.openDeviceSettings(context) }
         )
         QuickAction(
             icon = Icons.Outlined.Wifi,
-            contentDescription = "Network",
+            contentDescription = stringResource(R.string.network_label),
             onClick = { SettingsShortcuts.openWifi(context) }
         )
         QuickAction(
             icon = Icons.Outlined.Bluetooth,
-            contentDescription = "Bluetooth",
+            contentDescription = stringResource(R.string.bluetooth_label),
             onClick = { SettingsShortcuts.openBluetooth(context) }
         )
     }

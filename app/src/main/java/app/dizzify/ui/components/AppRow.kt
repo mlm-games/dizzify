@@ -16,7 +16,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.dizzify.R
 import app.dizzify.data.AppModel
 import app.dizzify.ui.theme.*
 import kotlinx.coroutines.launch
@@ -123,7 +125,7 @@ fun AppRow(
                 exit = fadeOut() + slideOutHorizontally { it }
             ) {
                 Text(
-                    text = "  •  ${apps.size} apps",
+                    text = "  •  " + stringResource(R.string.apps_count, apps.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = LauncherColors.TextTertiary
                 )

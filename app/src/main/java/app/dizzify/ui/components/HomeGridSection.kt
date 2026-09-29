@@ -13,10 +13,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.dizzify.LauncherViewModel
+import app.dizzify.R
 import app.dizzify.data.AppModel
 import app.dizzify.data.HomeItem
 import app.dizzify.ui.theme.*
@@ -63,16 +65,16 @@ fun HomeGridSection(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "My Home",
+                    text = stringResource(R.string.my_home),
                     style = MaterialTheme.typography.headlineLarge,
                     color = Color.White
                 )
                 Text(
                     text = when {
-                        movingItem != null -> "Arrows move • OK done • Back cancel"
-                        editMode -> "Menu for options • arrows navigate"
-                        layout.items.isNotEmpty() -> "${layout.items.size} items • Edit to rearrange"
-                        else -> "Add widgets and apps to your home grid"
+                        movingItem != null -> stringResource(R.string.home_grid_hint_arrows)
+                        editMode -> stringResource(R.string.home_grid_hint_menu)
+                        layout.items.isNotEmpty() -> stringResource(R.string.home_grid_items_edit_hint, layout.items.size)
+                        else -> stringResource(R.string.home_grid_empty)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (movingItem != null) LauncherColors.AccentTeal
@@ -83,7 +85,7 @@ fun HomeGridSection(
                 Button(onClick = {
                     if (movingItem == null) editMode = !editMode
                 }) {
-                    Text(if (editMode) "Done" else "Edit")
+                    Text(if (editMode) stringResource(R.string.done) else stringResource(R.string.edit))
                 }
             }
         }

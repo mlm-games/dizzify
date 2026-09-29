@@ -32,8 +32,10 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.dizzify.R
 import app.dizzify.helper.BitmapUtils
 import app.dizzify.ui.components.buttonPressFeedbackConstant
 import app.dizzify.ui.theme.*
@@ -166,12 +168,12 @@ private fun WidgetPickerHeader(
 
         Column {
             Text(
-                text = "Add Widget",
+                text = stringResource(R.string.add_widget),
                 style = MaterialTheme.typography.headlineLarge,
                 color = Color.White
             )
             Text(
-                text = "$widgetCount widgets available",
+                text = stringResource(R.string.widgets_available_count, widgetCount),
                 style = MaterialTheme.typography.bodyMedium,
                 color = LauncherColors.TextSecondary
             )
@@ -362,7 +364,7 @@ private fun WidgetInfoItem(
                 color = LauncherColors.AccentBlue.copy(alpha = 0.1f)
             ) {
                 Text(
-                    text = "Configurable",
+                    text = stringResource(R.string.configurable),
                     style = MaterialTheme.typography.labelSmall,
                     color = LauncherColors.AccentBlue,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -391,13 +393,13 @@ private fun EmptyWidgetsState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(LauncherSpacing.lg))
 
             Text(
-                text = "No Widgets Available",
+                text = stringResource(R.string.no_widgets_available),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White
             )
 
             Text(
-                text = "Install apps with widgets to see them here",
+                text = stringResource(R.string.no_widgets_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = LauncherColors.TextSecondary
             )
