@@ -118,7 +118,6 @@
     <string name="show_app_names">إظهار أسماء التطبيقات</string>
     <string name="set">تعيين</string>
     <string name="widget_permission_failed">تعذّر طلب إذن عنصر الواجهة: %1$s</string>
-    <string name="widget_configuration_failed">تعذّر إعداد عنصر الواجهة. يرجى التحقق من أذونات التطبيق.</string>
     <string name="tap_to_move_app">اضغط في المكان الذي تريد نقل التطبيق إليه</string>
     <string name="tap_to_move_widget">اضغط في المكان الذي تريد نقل عنصر الواجهة إليه</string>
     <string name="private_space">المساحة الخاصة</string>

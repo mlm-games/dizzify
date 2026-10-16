@@ -120,7 +120,6 @@
     <string name="show_app_names">Visa appnamn</string>
     <string name="set">Ange</string>
     <string name="widget_permission_failed">Kunde inte begära widgetbehörighet: %1$s</string>
-    <string name="widget_configuration_failed">Kunde inte konfigurera widgeten. Kontrollera appens behörigheter.</string>
     <string name="tap_to_move_app">Tryck där du vill flytta appen</string>
     <string name="tap_to_move_widget">Tryck där du vill flytta widgeten</string>
     <string name="private_space">Privat utrymme</string>

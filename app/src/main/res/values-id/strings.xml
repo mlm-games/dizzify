@@ -119,7 +119,6 @@
     <string name="show_app_names">Tampilkan nama aplikasi</string>
     <string name="set">Atur</string>
     <string name="widget_permission_failed">Gagal meminta izin widget: %1$s</string>
-    <string name="widget_configuration_failed">Gagal mengonfigurasi widget. Periksa izin aplikasi.</string>
     <string name="tap_to_move_app">Ketuk tempat Anda ingin memindahkan aplikasi</string>
     <string name="tap_to_move_widget">Ketuk tempat Anda ingin memindahkan widget</string>
     <string name="private_space">Ruang Pribadi</string>

@@ -113,7 +113,6 @@
     <string name="show_app_names">Hiện tên ứng dụng</string>
     <string name="set">Đặt</string>
     <string name="widget_permission_failed">Không thể yêu cầu quyền cho tiện ích: %1$s</string>
-    <string name="widget_configuration_failed">Không thể cấu hình tiện ích. Vui lòng kiểm tra quyền của ứng dụng.</string>
     <string name="tap_to_move_app">Chạm vào nơi bạn muốn di chuyển ứng dụng</string>
     <string name="tap_to_move_widget">Chạm vào nơi bạn muốn di chuyển tiện ích</string>
     <string name="private_space">Không gian riêng</string>

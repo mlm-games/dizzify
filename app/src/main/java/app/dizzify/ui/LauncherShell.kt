@@ -220,7 +220,10 @@ fun LauncherShell(
                             }
 
                             entry<LauncherKey.Settings> {
-                                SettingsScreen(viewModel = viewModel)
+                                SettingsScreen(
+                                    viewModel = viewModel,
+                                    onEditFavorites = { resetTo(LauncherKey.Home) }
+                                )
                             }
                         }
                     )

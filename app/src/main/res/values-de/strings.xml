@@ -121,7 +121,6 @@
     <string name="show_app_names">App-Namen anzeigen</string>
     <string name="set">Festlegen</string>
     <string name="widget_permission_failed">Widget-Berechtigung konnte nicht angefordert werden: %1$s</string>
-    <string name="widget_configuration_failed">Widget konnte nicht konfiguriert werden. Bitte prüfen Sie die App-Berechtigungen.</string>
     <string name="tap_to_move_app">Tippen Sie auf die Stelle, an die die App verschoben werden soll</string>
     <string name="tap_to_move_widget">Tippen Sie auf die Stelle, an die das Widget verschoben werden soll</string>
     <string name="private_space">Privater Bereich</string>

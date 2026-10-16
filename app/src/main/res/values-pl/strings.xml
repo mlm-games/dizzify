@@ -119,7 +119,6 @@
     <string name="show_app_names">Pokazuj nazwy aplikacji</string>
     <string name="set">Ustaw</string>
     <string name="widget_permission_failed">Nie udało się poprosić o uprawnienie do widżetu: %1$s</string>
-    <string name="widget_configuration_failed">Nie udało się skonfigurować widżetu. Sprawdź uprawnienia aplikacji.</string>
     <string name="tap_to_move_app">Dotknij miejsca, w które chcesz przenieść aplikację</string>
     <string name="tap_to_move_widget">Dotknij miejsca, w które chcesz przenieść widżet</string>
     <string name="private_space">Przestrzeń prywatna</string>

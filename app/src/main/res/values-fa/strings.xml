@@ -113,7 +113,6 @@
     <string name="show_app_names">نمایش نام برنامه‌ها</string>
     <string name="set">تنظیم</string>
     <string name="widget_permission_failed">درخواست مجوز ویجت ناموفق بود: %1$s</string>
-    <string name="widget_configuration_failed">پیکربندی ویجت ناموفق بود. مجوزهای برنامه را بررسی کنید.</string>
     <string name="tap_to_move_app">در جایی که می‌خواهید برنامه جابه‌جا شود ضربه بزنید</string>
     <string name="tap_to_move_widget">در جایی که می‌خواهید ویجت جابه‌جا شود ضربه بزنید</string>
     <string name="private_space">فضای خصوصی</string>

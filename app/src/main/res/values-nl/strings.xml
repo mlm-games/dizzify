@@ -113,7 +113,6 @@
     <string name="show_app_names">Appnamen tonen</string>
     <string name="set">Instellen</string>
     <string name="widget_permission_failed">Kan widget-toestemming niet aanvragen: %1$s</string>
-    <string name="widget_configuration_failed">Kan widget niet configureren. Controleer de app-toestemmingen.</string>
     <string name="tap_to_move_app">Tik waar je de app naartoe wilt verplaatsen</string>
     <string name="tap_to_move_widget">Tik waar je de widget naartoe wilt verplaatsen</string>
     <string name="private_space">Privéruimte</string>

@@ -121,7 +121,6 @@
     <string name="show_app_names">Uygulama adlarını göster</string>
     <string name="set">Ayarla</string>
     <string name="widget_permission_failed">Araç izni istenemedi: %1$s</string>
-    <string name="widget_configuration_failed">Araç yapılandırılamadı. Lütfen uygulama izinlerini kontrol edin.</string>
     <string name="tap_to_move_app">Uygulamayı taşımak istediğiniz yere dokunun</string>
     <string name="tap_to_move_widget">Araçı taşımak istediğiniz yere dokunun</string>
     <string name="private_space">Özel alan</string>

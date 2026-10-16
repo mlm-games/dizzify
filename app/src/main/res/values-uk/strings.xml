@@ -121,7 +121,6 @@
     <string name="show_app_names">Показувати назви застосунків</string>
     <string name="set">Задати</string>
     <string name="widget_permission_failed">Не вдалося запитати дозвіл для віджета: %1$s</string>
-    <string name="widget_configuration_failed">Не вдалося налаштувати віджет. Перевірте дозволи застосунку.</string>
     <string name="tap_to_move_app">Торкніться місця, куди потрібно перемістити застосунок</string>
     <string name="tap_to_move_widget">Торкніться місця, куди потрібно перемістити віджет</string>
     <string name="private_space">Особистий простір</string>

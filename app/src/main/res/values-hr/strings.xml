@@ -120,7 +120,6 @@
     <string name="show_app_names">Prikaži nazive aplikacija</string>
     <string name="set">Postavi</string>
     <string name="widget_permission_failed">Neuspjelo traženje dopuštenja za widget: %1$s</string>
-    <string name="widget_configuration_failed">Neuspjelo postavljanje widgeta. Provjerite dopuštenja aplikacije.</string>
     <string name="tap_to_move_app">Dodirnite mjesto na koje želite premjestiti aplikaciju</string>
     <string name="tap_to_move_widget">Dodirnite mjesto na koje želite premjestiti widget</string>
     <string name="private_space">Privatni prostor</string>

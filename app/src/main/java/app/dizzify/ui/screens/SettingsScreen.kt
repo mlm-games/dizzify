@@ -9,7 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,6 +45,7 @@ import app.dizzify.settings.TextWeight
 import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.dialogs.PinLockDialog
 import app.dizzify.ui.theme.*
+import app.dizzify.ui.components.snackbar.SnackbarManager
 import app.dizzify.ui.components.tvPointerClick
 import io.github.mlmgames.settings.core.locale.AppLanguage
 import io.github.mlmgames.settings.core.resources.StringResourceProvider
@@ -87,6 +88,7 @@ sealed class SettingsCategory(
 @Composable
 fun SettingsScreen(
     viewModel: LauncherViewModel,
+    onEditFavorites: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val settings by viewModel.settings.collectAsState()
@@ -153,6 +155,7 @@ fun SettingsScreen(
                     SettingsCategoryContent(
                         category = effectiveCategory,
                         viewModel = viewModel,
+                        onEditFavorites = onEditFavorites,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -226,6 +229,11 @@ private fun SettingsCategoriesList(
     onCategorySelected: (SettingsCategory) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val firstCategoryFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        runCatching { firstCategoryFocus.requestFocus() }
+    }
+
     Column(
         modifier = modifier.padding(LauncherSpacing.lg)
     ) {
@@ -240,11 +248,12 @@ private fun SettingsCategoriesList(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(LauncherSpacing.sm)
         ) {
-            items(categories) { category ->
+            itemsIndexed(categories) { index, category ->
                 SettingsCategoryItem(
                     category = category,
                     isSelected = selectedCategory == category,
-                    onClick = { onCategorySelected(category) }
+                    onClick = { onCategorySelected(category) },
+                    focusRequester = if (index == 0) firstCategoryFocus else remember { FocusRequester() }
                 )
             }
         }
@@ -255,10 +264,10 @@ private fun SettingsCategoriesList(
 private fun SettingsCategoryItem(
     category: SettingsCategory,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    focusRequester: FocusRequester
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
 
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -356,10 +365,12 @@ private fun SettingsCategoryItem(
 private fun SettingsCategoryContent(
     category: SettingsCategory,
     viewModel: LauncherViewModel,
+    onEditFavorites: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val settings by viewModel.settings.collectAsState()
     val context = LocalContext.current
+    val snackbarManager: SnackbarManager = koinInject()
 
     LazyColumn(
         modifier = modifier.padding(LauncherSpacing.lg),
@@ -481,11 +492,15 @@ private fun SettingsCategoryContent(
 
             is SettingsCategory.HomeScreen -> {
                 item {
+                    val favoritesHint = stringResource(R.string.edit_favorites_desc)
                     SettingsSection(title = stringResource(R.string.layout)) {
                         SettingsClickable(
                             title = stringResource(R.string.edit_favorites),
                             description = stringResource(R.string.edit_favorites_desc),
-                            onClick = { /* Navigate to home and show hint */ }
+                            onClick = {
+                                onEditFavorites()
+                                snackbarManager.show(favoritesHint)
+                            }
                         )
 
                         SettingsDropdown(

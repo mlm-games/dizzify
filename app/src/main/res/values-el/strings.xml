@@ -113,7 +113,6 @@
     <string name="show_app_names">Εμφάνιση ονομάτων εφαρμογών</string>
     <string name="set">Ορισμός</string>
     <string name="widget_permission_failed">Αποτυχία αιτήματος άδειας βιντζέτ: %1$s</string>
-    <string name="widget_configuration_failed">Αποτυχία διαμόρφωσης βιντζέτ. Ελέγξτε τις άδειες της εφαρμογής.</string>
     <string name="tap_to_move_app">Πατήστε εκεί που θέλετε να μετακινήσετε την εφαρμογή</string>
     <string name="tap_to_move_widget">Πατήστε εκεί που θέλετε να μετακινήσετε το βιντζέτ</string>
     <string name="private_space">Ιδιωτικός χώρος</string>

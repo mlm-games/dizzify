@@ -122,7 +122,6 @@
     <string name="show_app_names">Alkalmazásnevek megjelenítése</string>
     <string name="set">Beállítás</string>
     <string name="widget_permission_failed">A widget engedélyének kérése nem sikerült: %1$s</string>
-    <string name="widget_configuration_failed">A widget beállítása nem sikerült. Ellenőrizze az alkalmazás engedélyeit.</string>
     <string name="tap_to_move_app">Érintse meg azt a helyet, ahová az alkalmazást szeretné áthelyezni</string>
     <string name="tap_to_move_widget">Érintse meg azt a helyet, ahová a widgetet szeretné áthelyezni</string>
     <string name="private_space">Magánterület</string>

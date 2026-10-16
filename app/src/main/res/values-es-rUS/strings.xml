@@ -119,7 +119,6 @@
     <string name="show_app_names">Mostrar nombres de aplicaciones</string>
     <string name="set">Establecer</string>
     <string name="widget_permission_failed">No se ha podido solicitar el permiso del widget: %1$s</string>
-    <string name="widget_configuration_failed">No se ha podido configurar el widget. Comprueba los permisos de la aplicación.</string>
     <string name="tap_to_move_app">Toca donde quieras mover la aplicación</string>
     <string name="tap_to_move_widget">Toca donde quieras mover el widget</string>
     <string name="private_space">Espacio privado</string>

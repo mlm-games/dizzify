@@ -113,7 +113,6 @@
     <string name="show_app_names">앱 이름 표시</string>
     <string name="set">설정</string>
     <string name="widget_permission_failed">위젯 권한을 요청하지 못했습니다: %1$s</string>
-    <string name="widget_configuration_failed">위젯을 설정하지 못했습니다. 앱 권한을 확인하세요.</string>
     <string name="tap_to_move_app">앱을 옮길 위치를 누르세요</string>
     <string name="tap_to_move_widget">위젯을 옮길 위치를 누르세요</string>
     <string name="private_space">개인 공간</string>

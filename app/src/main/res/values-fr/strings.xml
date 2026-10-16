@@ -119,7 +119,6 @@
     <string name="show_app_names">Afficher les noms des applications</string>
     <string name="set">Définir</string>
     <string name="widget_permission_failed">Échec de la demande d\\\'autorisation du widget : %1$s</string>
-    <string name="widget_configuration_failed">Échec de la configuration du widget. Veuillez vérifier les autorisations de l\\\'application.</string>
     <string name="tap_to_move_app">Appuyez à l\\\'endroit où vous voulez déplacer l\\\'application</string>
     <string name="tap_to_move_widget">Appuyez à l\\\'endroit où vous voulez déplacer le widget</string>
     <string name="private_space">Espace privé</string>

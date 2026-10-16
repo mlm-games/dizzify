@@ -113,7 +113,6 @@
     <string name="show_app_names">הצגת שמות אפליקציות</string>
     <string name="set">הגדר</string>
     <string name="widget_permission_failed">בקשת הרשאת וידג׳ט נכשלה: %1$s</string>
-    <string name="widget_configuration_failed">הגדרת הווידג׳ט נכשלה. בדוק את הרשאות האפליקציה.</string>
     <string name="tap_to_move_app">הקש במקום שבו תרצה להעביר את האפליקציה</string>
     <string name="tap_to_move_widget">הקש במקום שבו תרצה להעביר את הווידג׳ט</string>
     <string name="private_space">מרחב פרטי</string>

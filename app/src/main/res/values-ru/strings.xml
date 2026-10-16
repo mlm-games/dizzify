@@ -121,7 +121,6 @@
     <string name="show_app_names">Показывать названия приложений</string>
     <string name="set">Задать</string>
     <string name="widget_permission_failed">Не удалось запросить разрешение для виджета: %1$s</string>
-    <string name="widget_configuration_failed">Не удалось настроить виджет. Проверьте разрешения приложения.</string>
     <string name="tap_to_move_app">Коснитесь места, куда нужно переместить приложение</string>
     <string name="tap_to_move_widget">Коснитесь места, куда нужно переместить виджет</string>
     <string name="private_space">Личное пространство</string>

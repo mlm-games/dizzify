@@ -113,7 +113,6 @@
     <string name="show_app_names">Zobrazit názvy aplikací</string>
     <string name="set">Nastavit</string>
     <string name="widget_permission_failed">Oprávnění widgetu se nepodařilo vyžádat: %1$s</string>
-    <string name="widget_configuration_failed">Widget se nepodařilo nakonfigurovat. Zkontrolujte oprávnění aplikace.</string>
     <string name="tap_to_move_app">Klepněte tam, kam chcete aplikaci přesunout</string>
     <string name="tap_to_move_widget">Klepněte tam, kam chcete widget přesunout</string>
     <string name="private_space">Soukromý prostor</string>

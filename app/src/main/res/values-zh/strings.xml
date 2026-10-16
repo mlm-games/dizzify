@@ -121,7 +121,6 @@
     <string name="show_app_names">显示应用名称</string>
     <string name="set">设置</string>
     <string name="widget_permission_failed">请求小组件权限失败：%1$s</string>
-    <string name="widget_configuration_failed">配置小组件失败。请检查应用权限。</string>
     <string name="tap_to_move_app">点按你想把应用移动到的位置</string>
     <string name="tap_to_move_widget">点按你想把小组件移动到的位置</string>
     <string name="private_space">私密空间</string>
