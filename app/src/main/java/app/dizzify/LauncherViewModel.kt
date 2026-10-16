@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.dizzify.R
@@ -102,6 +103,16 @@ class LauncherViewModel(
         _events.tryEmit(event)
     }
 
+    /**
+     * The application context does not carry the per-app locale on API < 33 (AppCompat applies it to
+     * activities only), so snackbar text has to resolve through a language-aware context.
+     */
+    private fun localizedString(resId: Int, vararg formatArgs: Any): String {
+        val localized = ContextCompat.getContextForLanguage(context)
+        return if (formatArgs.isEmpty()) localized.getString(resId)
+        else localized.getString(resId, *formatArgs)
+    }
+
     private data class PendingWidgetInfo(
         val appWidgetId: Int,
         val providerInfo: AppWidgetProviderInfo,
@@ -152,7 +163,6 @@ class LauncherViewModel(
             delay(250)
             runCatching {
                 appRepository.loadApps(forceEmit = forceEmit)
-                appRepository.loadHiddenApps()
                 _tvInputs.value = TvInputs.list(context)
                 if (settingsRepo.flow.first().showWatchNext) {
                     _watchNext.value = WatchNext.query(context)
@@ -214,7 +224,6 @@ class LauncherViewModel(
             Logger.d { "Initializing LauncherViewModel - loading apps" }
             runCatching {
                 appRepository.loadApps()
-                appRepository.loadHiddenApps()
             }.onFailure { e ->
                 Logger.e(e) { "Failed to load apps on init" }
             }
@@ -396,7 +405,7 @@ class LauncherViewModel(
                 }
                 .onFailure { e ->
                     Logger.e(e) { "Failed to launch ${app.appLabel}" }
-                    snackbarManager.show("Couldn't open ${app.appLabel}")
+                    snackbarManager.show(localizedString(R.string.couldnt_open, app.appLabel))
                 }
         }
     }
@@ -434,7 +443,6 @@ class LauncherViewModel(
             _ui.update { it.copy(isLoading = true) }
             runCatching {
                 appRepository.loadApps()
-                appRepository.loadHiddenApps()
             }.onFailure { e ->
                 Logger.e(e) { "Failed to refresh apps" }
             }
@@ -478,7 +486,7 @@ class LauncherViewModel(
                 if (settings.value.returnToHomeAfterApp) emitEvent(LauncherEvent.NavigateHome)
             }.onFailure { e ->
                 Logger.e(e) { "Failed to open shortcut $shortcutId" }
-                snackbarManager.show("Couldn't open shortcut")
+                snackbarManager.show(localizedString(R.string.couldnt_open_shortcut))
             }
         }
     }
@@ -871,7 +879,7 @@ class LauncherViewModel(
     fun switchTvInput(entry: TvInputEntry) {
         viewModelScope.launch(Dispatchers.IO) {
             if (!TvInputs.switch(context, entry)) {
-                snackbarManager.show(message = "Couldn't switch to ${entry.label}")
+                snackbarManager.show(message = localizedString(R.string.couldnt_switch_input, entry.label))
             }
         }
     }
@@ -879,7 +887,7 @@ class LauncherViewModel(
     fun playWatchNext(item: WatchNextItem) {
         viewModelScope.launch(Dispatchers.IO) {
             if (!WatchNext.play(context, item)) {
-                snackbarManager.show(message = "Couldn't open ${item.title}")
+                snackbarManager.show(message = localizedString(R.string.couldnt_open, item.title))
             }
         }
     }
@@ -888,7 +896,7 @@ class LauncherViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val path = uri?.let { WallpaperHelper.storeCustom(context, it) }
             if (uri != null && path == null) {
-                snackbarManager.show(message = context.getString(R.string.wallpaper_set_failed))
+                snackbarManager.show(message = localizedString(R.string.wallpaper_set_failed))
                 return@launch
             }
             runCatching { settingsRepo.update { it.copy(wallpaperPath = path.orEmpty()) } }
@@ -936,7 +944,6 @@ class LauncherViewModel(
                 .onSuccess {
                     runCatching {
                         appRepository.loadApps()
-                        appRepository.loadHiddenApps()
                     }
                 }
                 .onFailure { e ->
@@ -1027,7 +1034,7 @@ class LauncherViewModel(
                 // than only other apps, otherwise a new tile can land on top of a widget.
                 val next = findNextAvailableGridPosition(currentLayout, 1, 1)
                 if (next == null) {
-                    snackbarManager.show("No space available on the home grid.")
+                    snackbarManager.show(localizedString(R.string.home_grid_no_space))
                     return@update state
                 }
 
@@ -1096,7 +1103,7 @@ class LauncherViewModel(
                 val componentName = providerInfo.provider
                     ?: run {
                         Logger.e { "Widget provider component name missing" }
-                        snackbarManager.show("Internal error: widget component missing.")
+                        snackbarManager.show(localizedString(R.string.widget_component_missing))
                         return@launch
                     }
                 val appWidgetId = widgetHost.allocateWidgetId()
@@ -1118,7 +1125,7 @@ class LauncherViewModel(
                 }
             } catch (e: Exception) {
                 Logger.e(e) { "Error in startWidgetConfiguration" }
-                snackbarManager.show("Failed to add widget: ${e.message}")
+                snackbarManager.show(localizedString(R.string.widget_add_failed, e.message.orEmpty()))
             }
         }
     }
@@ -1147,7 +1154,7 @@ class LauncherViewModel(
                 viewModelScope.launch(Dispatchers.IO) {
                     runCatching { widgetHost.deleteWidgetId(widgetId) }
                 }
-                snackbarManager.show("Widget configuration cancelled.")
+                snackbarManager.show(localizedString(R.string.widget_config_cancelled))
             }
         }
     }
@@ -1155,7 +1162,7 @@ class LauncherViewModel(
     fun requestWidgetReconfigure(widgetItem: HomeItem.Widget) {
         val info = widgetHost.getWidgetInfo(widgetItem.appWidgetId)
         if (info?.configure == null) {
-            snackbarManager.show("This widget has no settings screen.")
+            snackbarManager.show(localizedString(R.string.widget_no_settings_screen))
             return
         }
         pendingWidgetInfo = PendingWidgetInfo(widgetItem.appWidgetId, info, isNewWidget = false)
@@ -1178,7 +1185,7 @@ class LauncherViewModel(
                     currentLayout, widthCells, heightCells, fromBottom = true
                 )
                 if (nextPos == null) {
-                    snackbarManager.show("No space available for widget on the home grid.")
+                    snackbarManager.show(localizedString(R.string.home_grid_no_widget_space))
                     runCatching { widgetHost.deleteWidgetId(appWidgetId) }
                     return@launch
                 }
@@ -1207,7 +1214,7 @@ class LauncherViewModel(
                 runCatching { appWidgetManager.updateAppWidgetOptions(appWidgetId, options) }
             } catch (e: Exception) {
                 Logger.e(e) { "Error adding widget to layout" }
-                snackbarManager.show("Failed to add widget: ${e.message}")
+                snackbarManager.show(localizedString(R.string.widget_add_failed, e.message.orEmpty()))
                 runCatching { widgetHost.deleteWidgetId(appWidgetId) }
             }
         }

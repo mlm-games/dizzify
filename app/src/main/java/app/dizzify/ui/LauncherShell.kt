@@ -27,6 +27,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import app.dizzify.LauncherViewModel
+import app.dizzify.R
 import app.dizzify.settings.DefaultScreen
 import app.dizzify.ui.components.SidebarDestination
 import app.dizzify.ui.components.LauncherSidebar
@@ -101,13 +102,18 @@ fun LauncherShell(
                         runCatching { bindLauncher.launch(event.intent) }
                             .onFailure { e ->
                                 Log.e("LauncherShell", "Failed to launch widget bind", e)
-                                snackbarManager.show("Failed to request widget permission.")
+                                snackbarManager.show(
+                                    context.getString(
+                                        R.string.widget_permission_failed,
+                                        e.message.orEmpty()
+                                    )
+                                )
                             }
                     }
                     is LauncherEvent.ConfigureWidget -> {
                         val activity = currentActivity as? Activity
                         if (activity == null) {
-                            snackbarManager.show("Widget settings are unavailable right now.")
+                            snackbarManager.show(context.getString(R.string.widget_settings_unavailable))
                         } else if (!widgetHost.startWidgetConfiguration(
                                 activity,
                                 event.widgetId,
@@ -116,7 +122,7 @@ fun LauncherShell(
                         ) {
                             // startWidgetConfiguration swallows its own failures and returns
                             // false, so nothing else would report them.
-                            snackbarManager.show("Couldn't open widget settings.")
+                            snackbarManager.show(context.getString(R.string.widget_settings_open_failed))
                         }
                     }
                     LauncherEvent.NavigateHome -> {

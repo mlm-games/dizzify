@@ -30,6 +30,7 @@ import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import app.dizzify.R
 import app.dizzify.data.AnimationConstants
@@ -118,6 +119,9 @@ suspend fun getAppsList(
         val myUser = android.os.Process.myUserHandle()
 
         val profiles = getLauncherVisibleProfiles(userManager, launcherApps)
+        // Resolves strings through the per-app locale, which the application context does not carry
+        // on API < 33 (AppCompat applies it to activities only).
+        val localizedContext = ContextCompat.getContextForLanguage(context)
 
         for (profile in profiles) {
             // Skip locked private-space profiles
@@ -171,49 +175,50 @@ suspend fun getAppsList(
 
                 val userString = profile.toString()
                 val appKey = AppKey.of(pkg, userString)
-
-                val defaultLabel = displayActivity.label.toString() +
-                        if (profile != myUser) " (Clone)" else ""
-
-                val shownLabel = renamedApps[appKey] ?: defaultLabel
-
-                val appIcon = if (includeIcons) {
-                    // Try to get TV banner first
-                    val banner = getTvBanner(appContext, pkg)
-                    if (banner != null) {
-                        BitmapUtils.drawableToBitmap(banner)?.asImageBitmap()
-                    } else {
-                        iconCache.getIcon(
-                            packageName = pkg,
-                            className = displayClass,
-                            user = profile,
-                            iconPackName = selectedIconPack
-                        )
-                    }
-                } else null
-
-                val hasBanner = hasTvBanner(appContext, pkg)
-
-                val model = AppModel(
-                    appLabel = shownLabel,
-                    key = collator.getCollationKey(displayActivity.label.toString()),
-                    appPackage = pkg,
-                    activityClassName = displayClass,
-                    isNew = (System.currentTimeMillis() - displayActivity.firstInstallTime) < AnimationConstants.ONE_HOUR_IN_MILLIS,
-                    user = profile,
-                    appIcon = appIcon,
-                    isHidden = hiddenApps.contains(appKey),
-                    userString = userString,
-                    lastLaunchTime = recentHistory[appKey] ?: 0L,
-                    hasBanner = hasBanner,
-                    leanbackActivityClassName = resolvedLeanbackClass,
-                    mobileActivityClassName = resolvedMobileClass?.takeIf { it != resolvedLeanbackClass },
-                )
-
                 val isHidden = hiddenApps.contains(appKey)
-                when {
-                    isHidden && includeHiddenApps -> appList.add(model.copy(isHidden = true))
-                    !isHidden && includeRegularApps -> appList.add(model)
+
+                // Skip label/icon/banner work for apps this call will not return; callers that want
+                // only hidden apps would otherwise pay full icon decoding for every installed app.
+                if ((isHidden && includeHiddenApps) || (!isHidden && includeRegularApps)) {
+                    val baseLabel = displayActivity.label.toString()
+                    val defaultLabel =
+                        if (profile != myUser) localizedContext.getString(R.string.clone_profile, baseLabel)
+                        else baseLabel
+
+                    val shownLabel = renamedApps[appKey] ?: defaultLabel
+
+                    val appIcon = if (includeIcons) {
+                        // Try to get TV banner first
+                        val banner = getTvBanner(appContext, pkg)
+                        if (banner != null) {
+                            BitmapUtils.drawableToBitmap(banner)?.asImageBitmap()
+                        } else {
+                            iconCache.getIcon(
+                                packageName = pkg,
+                                className = displayClass,
+                                user = profile,
+                                iconPackName = selectedIconPack
+                            )
+                        }
+                    } else null
+
+                    appList.add(
+                        AppModel(
+                            appLabel = shownLabel,
+                            key = collator.getCollationKey(baseLabel),
+                            appPackage = pkg,
+                            activityClassName = displayClass,
+                            isNew = (System.currentTimeMillis() - displayActivity.firstInstallTime) < AnimationConstants.ONE_HOUR_IN_MILLIS,
+                            user = profile,
+                            appIcon = appIcon,
+                            isHidden = isHidden,
+                            userString = userString,
+                            lastLaunchTime = recentHistory[appKey] ?: 0L,
+                            hasBanner = hasTvBanner(appContext, pkg),
+                            leanbackActivityClassName = resolvedLeanbackClass,
+                            mobileActivityClassName = resolvedMobileClass?.takeIf { it != resolvedLeanbackClass },
+                        )
+                    )
                 }
             }
         }

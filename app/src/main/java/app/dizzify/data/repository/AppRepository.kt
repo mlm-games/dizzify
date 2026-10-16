@@ -79,7 +79,6 @@ class AppRepository(
                 .drop(1)
                 .collect {
                     loadApps(forceEmit = true)
-                    loadHiddenApps()
                 }
         }
 
@@ -91,7 +90,6 @@ class AppRepository(
                 .drop(1)
                 .collect {
                     loadApps()
-                    loadHiddenApps()
                 }
         }
     }
@@ -208,24 +206,6 @@ class AppRepository(
     private fun sameAppList(oldList: List<AppModel>, newList: List<AppModel>): Boolean =
         oldList.uiSignature() == newList.uiSignature()
 
-    suspend fun loadHiddenApps() = withContext(Dispatchers.IO) {
-        try {
-            val settings = settingsRepo.flow.first()
-
-            _hiddenApps.value = getAppsList(
-                context = appContext,
-                settingsRepo = settingsRepo,
-                stateRepo = stateRepo,
-                iconCache = iconCache,
-                includeRegularApps = false,
-                includeHiddenApps = true,
-                filterTvApps = shouldFilterTvApps(settings.showNonTvApps)
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "loadHiddenApps failed", e)
-        }
-    }
-
     private fun shouldFilterTvApps(setting: NonTvApps): Boolean = when (setting) {
         NonTvApps.All -> false
         NonTvApps.TvOnly -> true
@@ -236,7 +216,6 @@ class AppRepository(
         val appKey = app.getKey()
         stateRepo.toggleHidden(appKey)
         loadApps(forceEmit = true)
-        loadHiddenApps()
     }
 
     /**

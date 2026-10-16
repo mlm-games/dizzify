@@ -68,7 +68,12 @@ class ConfirmPinShortcutActivity : Activity() {
             val accepted = request.accept()
 
             if (accepted) {
-                snackbarManager.show("Shortcut '${shortcutInfo.shortLabel}' added")
+                snackbarManager.show(
+                    getString(
+                        R.string.shortcut_added,
+                        shortcutInfo.shortLabel ?: shortcutInfo.id
+                    )
+                )
 
                 val refreshIntent = Intent(Constants.ACTION_REFRESH_APPS)
                 refreshIntent.`package` = applicationContext.packageName
