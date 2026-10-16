@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.entryProvider
@@ -87,6 +88,18 @@ fun LauncherShell(
         val currentDefaultScreen by rememberUpdatedState(settings.defaultScreen)
         val currentActivity by rememberUpdatedState(context)
 
+        // Resolved in composition and kept current: reading strings off LocalContext inside the
+        // long-lived collector below is not configuration-aware.
+        val widgetPermissionFailed by rememberUpdatedState(
+            stringResource(R.string.widget_permission_failed)
+        )
+        val widgetSettingsUnavailable by rememberUpdatedState(
+            stringResource(R.string.widget_settings_unavailable)
+        )
+        val widgetSettingsOpenFailed by rememberUpdatedState(
+            stringResource(R.string.widget_settings_open_failed)
+        )
+
         // NavDisplay throws on an empty back stack, and both back handlers below can fire
         // against a stale frame, so every pop goes through here.
         val pop = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }
@@ -103,17 +116,14 @@ fun LauncherShell(
                             .onFailure { e ->
                                 Log.e("LauncherShell", "Failed to launch widget bind", e)
                                 snackbarManager.show(
-                                    context.getString(
-                                        R.string.widget_permission_failed,
-                                        e.message.orEmpty()
-                                    )
+                                    widgetPermissionFailed.format(e.message.orEmpty())
                                 )
                             }
                     }
                     is LauncherEvent.ConfigureWidget -> {
                         val activity = currentActivity as? Activity
                         if (activity == null) {
-                            snackbarManager.show(context.getString(R.string.widget_settings_unavailable))
+                            snackbarManager.show(widgetSettingsUnavailable)
                         } else if (!widgetHost.startWidgetConfiguration(
                                 activity,
                                 event.widgetId,
@@ -122,7 +132,7 @@ fun LauncherShell(
                         ) {
                             // startWidgetConfiguration swallows its own failures and returns
                             // false, so nothing else would report them.
-                            snackbarManager.show(context.getString(R.string.widget_settings_open_failed))
+                            snackbarManager.show(widgetSettingsOpenFailed)
                         }
                     }
                     LauncherEvent.NavigateHome -> {
