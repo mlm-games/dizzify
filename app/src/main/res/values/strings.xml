@@ -70,6 +70,7 @@
     <string name="gestures">Gestures</string>
     <string name="theme_mode">Theme mode</string>
     <string name="language">Language</string>
+    <string name="app_language">App language</string>
     <string name="language_desc">Choose the language used by the launcher</string>
     <string name="system_default">System</string>
     <string name="dark">Dark</string>
