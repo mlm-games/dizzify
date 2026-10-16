@@ -61,6 +61,7 @@ import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
 import io.github.mlmgames.settings.core.SettingsRepository
 import io.github.mlmgames.settings.core.backup.ImportResult as BackupImportResult
+import io.github.mlmgames.settings.core.locale.AppLanguage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -804,6 +805,12 @@ class LauncherViewModel(
     fun updateTheme(mode: ThemeMode) {
         viewModelScope.launch {
             settingsRepo.update { it.copy(theme = mode) }
+        }
+    }
+
+    fun updateLanguage(language: AppLanguage) {
+        viewModelScope.launch {
+            settingsRepo.update { it.copy(language = language) }
         }
     }
 

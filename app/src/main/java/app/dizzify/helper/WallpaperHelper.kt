@@ -110,6 +110,7 @@ object WallpaperHelper {
                 }
                 if (!temp.renameTo(file)) error("Could not finalise the wallpaper file")
             } finally {
+                bitmap.recycle()
                 if (temp.exists()) temp.delete()
             }
             file.absolutePath

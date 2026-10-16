@@ -46,6 +46,7 @@ import app.dizzify.settings.ThemeMode
 import app.dizzify.ui.dialogs.PinLockDialog
 import app.dizzify.ui.theme.*
 import app.dizzify.ui.components.tvPointerClick
+import io.github.mlmgames.settings.core.locale.AppLanguage
 import io.github.mlmgames.settings.core.resources.StringResourceProvider
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -374,6 +375,37 @@ private fun SettingsCategoryContent(
 
         when (category) {
             is SettingsCategory.Appearance -> {
+                item {
+                    val systemLanguageLabel = stringResource(R.string.system_default)
+                    val languages = remember {
+                        val allowed = settingMeta("language")?.languages.orEmpty()
+                        buildList {
+                            add(AppLanguage.System)
+                            AppLanguage.entries.forEach { language ->
+                                val tag = language.languageTag
+                                if (tag != null && (allowed.isEmpty() || tag in allowed)) add(language)
+                            }
+                        }
+                    }
+                    val languageLabels = languages.map { language ->
+                        if (language == AppLanguage.System) systemLanguageLabel else language.endonym
+                    }
+                    val currentLanguage = languages.indexOf(settings.language)
+                    SettingsSection(title = stringResource(R.string.language)) {
+                        SettingsDropdown(
+                            title = stringResource(R.string.language),
+                            description = stringResource(R.string.language_desc),
+                            currentValue = languageLabels.getOrElse(currentLanguage) {
+                                settings.language.endonym.ifEmpty { systemLanguageLabel }
+                            },
+                            options = languageLabels,
+                            onOptionSelected = { index ->
+                                languages.getOrNull(index)?.let { viewModel.updateLanguage(it) }
+                            }
+                        )
+                    }
+                }
+
                 item {
                     SettingsSection(title = stringResource(R.string.theme)) {
                         SettingsDropdown(

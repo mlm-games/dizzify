@@ -3,6 +3,7 @@ package app.dizzify.settings
 import android.content.Context
 import app.dizzify.R
 import io.github.mlmgames.settings.core.resources.AndroidStringResourceProvider
+import io.github.mlmgames.settings.core.resources.SettingsTextKeys
 import io.github.mlmgames.settings.core.resources.StringResourceProvider
 
 /**
@@ -12,6 +13,8 @@ import io.github.mlmgames.settings.core.resources.StringResourceProvider
  * keys resolve to these resources through SettingMeta.resolvedTitle and friends.
  */
 private val settingsResources: Map<String, Int> = mapOf(
+    SettingsTextKeys.LANGUAGE to R.string.language,
+    SettingsTextKeys.LANGUAGE_SYSTEM to R.string.system_default,
     DizzifySettingsKeys.SETTING_THEME to R.string.theme,
     DizzifySettingsKeys.SETTING_THEME_OPTIONS to R.array.setting_theme_options,
     DizzifySettingsKeys.SETTING_SHOW_APP_ICONS to R.string.show_banners_icons,

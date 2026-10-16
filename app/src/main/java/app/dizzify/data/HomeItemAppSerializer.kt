@@ -156,7 +156,8 @@ object HomeItemWidgetSerializer : KSerializer<HomeItem.Widget> {
                     6 -> rowSpan = decodeIntElement(descriptor, index)
                     7 -> columnSpan = decodeIntElement(descriptor, index)
                     CompositeDecoder.DECODE_DONE -> break
-                    else -> error("Unexpected index: $index")
+                    // Tolerant: ignore unknown future fields instead of crashing (matches HomeItemAppSerializer).
+                    else -> decodeStringElement(descriptor, index)
                 }
             }
         }

@@ -69,6 +69,8 @@
     <string name="appearance">Appearance</string>
     <string name="gestures">Gestures</string>
     <string name="theme_mode">Theme mode</string>
+    <string name="language">Language</string>
+    <string name="language_desc">Choose the language used by the launcher</string>
     <string name="system_default">System</string>
     <string name="dark">Dark</string>
     <string name="light">Light</string>
@@ -245,6 +247,9 @@
     <string name="default_phone_version">Default: Phone version</string>
     <string name="default_auto">Default: Auto</string>
     <string name="remove_from_favorites">Remove from Favorites</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="remove_from_home">Remove from Home</string>
+    <string name="add_to_home">Add to Home</string>
     <string name="remove_from_recent">Remove from Recent</string>
     <string name="action_rename">Rename</string>
     <string name="open_in_play_store">Open in Play Store</string>

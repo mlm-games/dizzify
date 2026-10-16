@@ -102,6 +102,7 @@ fun AppOptionsSheet(
     val lblOpenTv = stringResource(R.string.open_tv_version)
     val lblOpenPhone = stringResource(R.string.open_phone_version)
     val lblRemoveFav = stringResource(R.string.remove_from_favorites)
+    val lblAddFav = stringResource(R.string.add_to_favorites)
     val lblRemoveRecent = stringResource(R.string.remove_from_recent)
     val lblAppInfo = stringResource(R.string.app_info)
     val lblRename = stringResource(R.string.action_rename)
@@ -113,6 +114,8 @@ fun AppOptionsSheet(
     val lblDefaultTv = stringResource(R.string.default_tv_version)
     val lblDefaultPhone = stringResource(R.string.default_phone_version)
     val lblDefaultAuto = stringResource(R.string.default_auto)
+    val lblRemoveHome = stringResource(R.string.remove_from_home)
+    val lblAddHome = stringResource(R.string.add_to_home)
 
     val options = remember(app, isFavorite, isHidden, isOnHome, context, launchMode) {
         buildList {
@@ -178,7 +181,7 @@ fun AppOptionsSheet(
                 is AppOptionContext.FromApps, is AppOptionContext.FromGames -> {
                     add(AppOption(
                         id = "favorite",
-                        label = if (isFavorite) "Remove from Favorites" else "Add to Favorites",
+                        label = if (isFavorite) lblRemoveFav else lblAddFav,
                         icon = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         iconTint = if (isFavorite) LauncherColors.Error else LauncherColors.AccentOrange,
                         action = onToggleFavorite
@@ -196,7 +199,7 @@ fun AppOptionsSheet(
 
                     add(AppOption(
                         id = "favorite",
-                        label = if (isFavorite) "Remove from Favorites" else "Add to Favorites",
+                        label = if (isFavorite) lblRemoveFav else lblAddFav,
                         icon = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         iconTint = if (isFavorite) LauncherColors.Error else LauncherColors.AccentOrange,
                         action = onToggleFavorite
@@ -211,7 +214,7 @@ fun AppOptionsSheet(
             ) {
                 add(AppOption(
                     id = "home",
-                    label = if (isOnHome) "Remove from Home" else "Add to Home",
+                    label = if (isOnHome) lblRemoveHome else lblAddHome,
                     icon = if (isOnHome) Icons.Filled.Home else Icons.Outlined.Home,
                     iconTint = if (isOnHome) LauncherColors.Error else LauncherColors.AccentTeal,
                     action = onToggleHome
