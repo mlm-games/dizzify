@@ -4,6 +4,8 @@ import io.github.mlmgames.settings.core.annotations.CategoryDefinition
 import io.github.mlmgames.settings.core.annotations.Persisted
 import io.github.mlmgames.settings.core.annotations.SchemaVersion
 import io.github.mlmgames.settings.core.annotations.Setting
+import io.github.mlmgames.settings.core.locale.AppLanguage
+import io.github.mlmgames.settings.core.resources.SettingsTextKeys
 import io.github.mlmgames.settings.core.types.Dropdown
 import io.github.mlmgames.settings.core.types.Toggle
 import kotlinx.serialization.Serializable
@@ -53,6 +55,16 @@ enum class NonTvApps { Auto, TvOnly, All }
 @SchemaVersion(version = 5)
 @Serializable
 data class LauncherSettings(
+    @Setting(
+        title = "Language",
+        titleKey = SettingsTextKeys.LANGUAGE,
+        category = General::class,
+        type = Dropdown::class,
+        key = "language",
+        languages = ["en", "ar", "cs", "de", "el", "es", "fa", "fi", "fr", "he", "hr", "hu", "id", "it", "ja", "ko", "nl", "pl", "pt", "ru", "sv", "tr", "uk", "vi", "zh-CN"]
+    )
+    val language: AppLanguage = AppLanguage.System,
+
     @Setting(
         title = "Theme",
         titleKey = DizzifySettingsKeys.SETTING_THEME,

@@ -30,14 +30,6 @@ android {
         versionCode = 1130
         versionName = "v1.2.2"
 
-        androidResources {
-            generateLocaleConfig = true
-            localeFilters += setOf(
-                "ar", "cs", "de", "el", "en", "es", "es-rES", "es-rUS", "fa", "fi", "fr", "he", "hr", "hu",
-                "id", "it", "ja", "ko", "nl", "pl", "pt", "pt-rBR", "ru", "ru-rRU", "sv", "tr", "uk", "vi",
-                "zh",
-            )
-        }
     }
 
     compileOptions {

@@ -9,8 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import app.dizzify.R
 import app.dizzify.data.WidgetConstants
 import app.dizzify.helper.PrivateSpaceReceiver
+import app.dizzify.settings.applyAppLocale
 import app.dizzify.ui.LauncherShell
 import app.dizzify.ui.components.LauncherWidgetHost
 import app.dizzify.ui.components.snackbar.SnackbarManager
@@ -26,7 +27,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private var privateSpaceReceiver: PrivateSpaceReceiver? = null
     private val launcherViewModel: LauncherViewModel by viewModel()
@@ -91,6 +92,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LauncherShell(viewModel = launcherViewModel)
+        }
+
+        lifecycleScope.launch {
+            launcherViewModel.settings.collect { settings ->
+                applyAppLocale(settings.language.languageTag)
+            }
         }
 
         lifecycleScope.launch {
